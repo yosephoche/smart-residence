@@ -9,6 +9,11 @@ export const authConfig: NextAuthConfig = {
   },
   callbacks: {
     async session({ session, token }) {
+      // Type guard: ensure token has required properties
+      if (!token.id || !token.role || token.isFirstLogin === undefined) {
+        throw new Error("Invalid session token: missing required properties");
+      }
+
       session.user.id = token.id;
       session.user.role = token.role;
       session.user.isFirstLogin = token.isFirstLogin;
