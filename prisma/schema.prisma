@@ -1,0 +1,80 @@
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
+enum PaymentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model User {
+  id             String          @id @default(cuid())
+  name           String
+  email          String          @unique
+  password       String
+  role           Role            @default(USER)
+  isFirstLogin   Boolean         @default(true)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  houses         House[]
+  payments       Payment[]
+  approvedPayments Payment[]     @relation("ApprovedBy")
+}
+
+model HouseType {
+  id          String   @id @default(cuid())
+  typeName    String
+  price       Decimal
+  description String?
+  houses      House[]
+}
+
+model House {
+  id          String     @id @default(cuid())
+  houseNumber String
+  block       String
+  houseTypeId String
+  userId     String?
+  houseType   HouseType  @relation(fields: [houseTypeId], references: [id])
+  user        User?      @relation(fields: [userId], references: [id])
+  payments    Payment[]
+}
+
+model Payment {
+  id             String        @id @default(cuid())
+  userId        String
+  houseId        String
+  amountMonths   Int
+  totalAmount    Decimal
+  proofImagePath String
+  status         PaymentStatus @default(PENDING)
+  rejectionNote  String?
+  approvedBy     String?
+  approvedAt     DateTime?
+  createdAt      DateTime      @default(now())
+  user           User          @relation(fields: [userId], references: [id])
+  house          House         @relation(fields: [houseId], references: [id])
+  approver       User?         @relation("ApprovedBy", fields: [approvedBy], references: [id])
+  paymentMonths  PaymentMonth[]
+}
+
+model PaymentMonth {
+  id        String  @id @default(cuid())
+  paymentId String
+  year      Int
+  month     Int
+  payment   Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  @@unique([paymentId, year, month])
+}
