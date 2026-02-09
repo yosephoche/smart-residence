@@ -21,8 +21,8 @@ declare module "next-auth" {
 
 declare module "next-auth/jwt" {
   interface JWT extends DefaultJWT {
-    id: string;
-    role: "ADMIN" | "USER";
-    isFirstLogin: boolean;
+    id?: string;
+    role?: "ADMIN" | "USER";
+    isFirstLogin?: boolean;
   }
 }
