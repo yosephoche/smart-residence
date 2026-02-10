@@ -219,10 +219,10 @@ export default function ImportHousesForm({
         </p>
         <ul className="list-disc list-inside text-sm text-blue-800 space-y-1">
           <li>
-            <strong>houseNumber</strong> - Required (e.g., "S2-25")
+            <strong>houseNumber</strong> - Required (e.g., &quot;S2-25&quot;)
           </li>
           <li>
-            <strong>block</strong> - Required (e.g., "Sakura 2")
+            <strong>block</strong> - Required (e.g., &quot;Sakura 2&quot;)
           </li>
           <li>
             <strong>houseTypeId</strong> - Required (valid house type ID)
