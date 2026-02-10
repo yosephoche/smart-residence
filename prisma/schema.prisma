@@ -19,6 +19,16 @@ enum PaymentStatus {
   REJECTED
 }
 
+enum ExpenseCategory {
+  MAINTENANCE
+  SECURITY
+  UTILITIES
+  CLEANING
+  LANDSCAPING
+  ADMINISTRATION
+  OTHER
+}
+
 model User {
   id             String          @id @default(cuid())
   name           String
@@ -31,6 +41,7 @@ model User {
   houses         House[]
   payments       Payment[]
   approvedPayments Payment[]     @relation("ApprovedBy")
+  expenses       Expense[]
 }
 
 model HouseType {
@@ -77,4 +88,17 @@ model PaymentMonth {
   month     Int
   payment   Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
   @@unique([paymentId, year, month])
+}
+
+model Expense {
+  id          String          @id @default(cuid())
+  date        DateTime
+  category    ExpenseCategory
+  amount      Decimal
+  description String
+  notes       String?
+  createdBy   String
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  creator     User            @relation(fields: [createdBy], references: [id])
 }

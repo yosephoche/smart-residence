@@ -1,5 +1,5 @@
 import { formatCurrency, formatDate } from "@/lib/utils";
-import { formatPaymentMonth } from "@/lib/calculations";
+import { formatPaymentMonth, getExpenseCategoryLabel } from "@/lib/calculations";
 
 // --- CSV export ---
 
@@ -138,6 +138,44 @@ export function mapUnpaidHousesForExport(houses: UnpaidHouse[]): { headers: stri
     h.houseType?.typeName ?? "",
     h.houseType?.price != null ? formatCurrency(Number(h.houseType.price)) : "",
     "Belum Bayar",
+  ]);
+
+  return { headers, rows };
+}
+
+interface Expense {
+  id: string;
+  date: string | Date;
+  category: string;
+  description: string;
+  amount: number;
+  notes?: string | null;
+  creator?: { name: string } | null;
+  createdAt: string | Date;
+}
+
+export function mapExpensesForExport(expenses: Expense[]): {
+  headers: string[];
+  rows: string[][];
+} {
+  const headers = [
+    "Date",
+    "Category",
+    "Description",
+    "Amount",
+    "Notes",
+    "Created By",
+    "Created At",
+  ];
+
+  const rows = expenses.map((e) => [
+    formatDate(e.date),
+    getExpenseCategoryLabel(e.category),
+    e.description,
+    formatCurrency(Number(e.amount)),
+    e.notes || "-",
+    e.creator?.name ?? "-",
+    formatDate(e.createdAt),
   ]);
 
   return { headers, rows };

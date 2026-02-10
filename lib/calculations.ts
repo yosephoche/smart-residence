@@ -101,3 +101,44 @@ export function formatPaymentMonth({ year, month }: { year: number; month: numbe
 export function formatPaymentMonthShort({ month }: { month: number }): string {
   return MONTH_NAMES_SHORT[month - 1];
 }
+
+/**
+ * Get expense category label in Indonesian
+ */
+export function getExpenseCategoryLabel(category: string): string {
+  const labels: Record<string, string> = {
+    MAINTENANCE: "Pemeliharaan",
+    SECURITY: "Keamanan",
+    UTILITIES: "Utilitas",
+    CLEANING: "Kebersihan",
+    LANDSCAPING: "Taman",
+    ADMINISTRATION: "Administrasi",
+    OTHER: "Lainnya",
+  };
+  return labels[category] ?? category;
+}
+
+/**
+ * Get all expense category options for dropdowns
+ */
+export function getExpenseCategoryOptions() {
+  return [
+    { value: "MAINTENANCE", label: "Pemeliharaan" },
+    { value: "SECURITY", label: "Keamanan" },
+    { value: "UTILITIES", label: "Utilitas" },
+    { value: "CLEANING", label: "Kebersihan" },
+    { value: "LANDSCAPING", label: "Taman" },
+    { value: "ADMINISTRATION", label: "Administrasi" },
+    { value: "OTHER", label: "Lainnya" },
+  ];
+}
+
+/**
+ * Calculate net revenue (revenue - expenses)
+ */
+export function calculateNetRevenue(
+  totalRevenue: number,
+  totalExpenses: number
+): number {
+  return totalRevenue - totalExpenses;
+}

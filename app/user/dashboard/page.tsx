@@ -30,16 +30,26 @@ export default function UserDashboardPage() {
   const { user } = useAuth();
   const [houses, setHouses] = useState<House[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
+  const [totalRevenue, setTotalRevenue] = useState(0);
+  const [monthlyExpenses, setMonthlyExpenses] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (!user) return;
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1;
+
     Promise.all([
       fetch(`/api/houses?userId=${user.id}`).then((r) => r.json()),
       fetch("/api/payments").then((r) => r.json()),
-    ]).then(([housesData, paymentsData]) => {
+      fetch("/api/payments/stats").then((r) => r.json()),
+      fetch(`/api/expenses/monthly?year=${currentYear}&month=${currentMonth}`).then((r) => r.json()),
+    ]).then(([housesData, paymentsData, statsData, expData]) => {
       setHouses(housesData);
       setPayments(paymentsData);
+      setTotalRevenue(statsData.totalRevenue);
+      setMonthlyExpenses(expData.total);
       setIsLoading(false);
     });
   }, [user]);
@@ -79,8 +89,8 @@ export default function UserDashboardPage() {
           <Skeleton className="h-5 w-48" />
         </div>
         <Skeleton className="h-40" />
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {[...Array(4)].map((_, i) => (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {[...Array(6)].map((_, i) => (
             <Skeleton key={i} className="h-28" />
           ))}
         </div>
@@ -139,6 +149,7 @@ export default function UserDashboardPage() {
 
       {/* Payment Summary */}
       {house && (
+        <>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="bg-white rounded-xl border-2 border-gray-200 p-5 shadow-sm">
             <p className="text-sm font-medium text-gray-600 mb-1">Paid Months</p>
@@ -192,6 +203,20 @@ export default function UserDashboardPage() {
             <p className="text-xs text-warning-700 mt-1">awaiting approval</p>
           </div>
         </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="bg-primary-50 rounded-xl border-2 border-primary-200 p-5 shadow-sm">
+            <p className="text-sm font-medium text-primary-700 mb-1">Total Revenue</p>
+            <p className="text-xl font-bold text-primary-900">{formatCurrency(totalRevenue)}</p>
+            <p className="text-xs text-primary-700 mt-1">All residents</p>
+          </div>
+          <div className="bg-danger-50 rounded-xl border-2 border-danger-200 p-5 shadow-sm">
+            <p className="text-sm font-medium text-danger-700 mb-1">Monthly Expenses</p>
+            <p className="text-xl font-bold text-danger-900">{formatCurrency(monthlyExpenses)}</p>
+            <p className="text-xs text-danger-700 mt-1">Current month</p>
+          </div>
+        </div>
+        </>
       )}
 
       {/* Quick Actions & Recent Payments */}

@@ -7,11 +7,12 @@ import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Table, { Column } from "@/components/ui/Table";
 import Badge from "@/components/ui/Badge";
-import { ConfirmModal } from "@/components/ui/Modal";
+import Modal, { ConfirmModal } from "@/components/ui/Modal";
 import Alert from "@/components/ui/Alert";
 import { Skeleton } from "@/components/ui/Loading";
 import { House, User } from "@/types";
 import { formatCurrency } from "@/lib/utils";
+import ImportHousesForm from "@/components/forms/ImportHousesForm";
 
 export default function HousesPage() {
   const router = useRouter();
@@ -24,6 +25,7 @@ export default function HousesPage() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [houseToDelete, setHouseToDelete] = useState<House | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [importModalOpen, setImportModalOpen] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
 
   const fetchData = async () => {
@@ -241,14 +243,22 @@ export default function HousesPage() {
             Manage residential properties and assignments
           </p>
         </div>
-        <Link href="/admin/houses/create">
-          <Button variant="primary" size="lg">
+        <div className="flex gap-3">
+          <Button variant="secondary" size="lg" onClick={() => setImportModalOpen(true)}>
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
             </svg>
-            Add House
+            Import CSV/XLSX
           </Button>
-        </Link>
+          <Link href="/admin/houses/create">
+            <Button variant="primary" size="lg">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              Add House
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Success Message */}
@@ -338,6 +348,23 @@ export default function HousesPage() {
         variant="danger"
         isLoading={isDeleting}
       />
+
+      {/* Import Modal */}
+      <Modal
+        isOpen={importModalOpen}
+        onClose={() => setImportModalOpen(false)}
+        title="Import Houses"
+        size="lg"
+      >
+        <ImportHousesForm
+          onSuccess={() => {
+            fetchData();
+            setImportModalOpen(false);
+            setSuccessMessage("Houses imported successfully!");
+          }}
+          onClose={() => setImportModalOpen(false)}
+        />
+      </Modal>
     </div>
   );
 }

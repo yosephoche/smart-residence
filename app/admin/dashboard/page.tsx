@@ -46,19 +46,29 @@ export default function AdminDashboardPage() {
   const [houses, setHouses] = useState<House[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [stats, setStats] = useState<PaymentStats | null>(null);
+  const [monthlyExpenses, setMonthlyExpenses] = useState(0);
+  const [totalExpenses, setTotalExpenses] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1;
+
     Promise.all([
       fetch("/api/users").then((r) => r.json()),
       fetch("/api/houses").then((r) => r.json()),
       fetch("/api/payments").then((r) => r.json()),
       fetch("/api/payments/stats").then((r) => r.json()),
-    ]).then(([usersData, housesData, paymentsData, statsData]) => {
+      fetch(`/api/expenses/monthly?year=${currentYear}&month=${currentMonth}`).then((r) => r.json()),
+      fetch("/api/expenses/stats").then((r) => r.json()),
+    ]).then(([usersData, housesData, paymentsData, statsData, monthlyExpData, expStatsData]) => {
       setUsers(usersData);
       setHouses(housesData);
       setPayments(paymentsData);
       setStats(statsData);
+      setMonthlyExpenses(monthlyExpData.total);
+      setTotalExpenses(expStatsData.totalAmount);
       setIsLoading(false);
     });
   }, []);
@@ -67,6 +77,7 @@ export default function AdminDashboardPage() {
   const occupiedHouses = houses.filter((h) => h.userId).length;
   const totalHouses = houses.length;
   const pendingPayments = payments.filter((p) => p.status === "PENDING");
+  const netRevenue = (stats?.totalRevenue ?? 0) - totalExpenses;
 
   if (isLoading) {
     return (
@@ -75,8 +86,13 @@ export default function AdminDashboardPage() {
           <Skeleton className="h-9 w-64 mb-2" />
           <Skeleton className="h-5 w-96" />
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[...Array(4)].map((_, i) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          {[...Array(2)].map((_, i) => (
+            <Skeleton key={i} className="h-32" />
+          ))}
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[...Array(3)].map((_, i) => (
             <Skeleton key={i} className="h-32" />
           ))}
         </div>
@@ -100,8 +116,35 @@ export default function AdminDashboardPage() {
         </p>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* Financial Metrics Row */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <StatCard
+          title="Total Revenue"
+          value={formatCurrency(stats?.totalRevenue ?? 0)}
+          subtitle={`${stats?.approved ?? 0} approved payments`}
+          variant="success"
+          icon={
+            <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          }
+        />
+
+        <StatCard
+          title="Monthly Expenses"
+          value={formatCurrency(monthlyExpenses)}
+          subtitle="Current month expenses"
+          variant="danger"
+          icon={
+            <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          }
+        />
+      </div>
+
+      {/* Operational Metrics Row */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <StatCard
           title="Total Residents"
           value={totalUsers}
@@ -134,18 +177,6 @@ export default function AdminDashboardPage() {
           icon={
             <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          }
-        />
-
-        <StatCard
-          title="Total Revenue"
-          value={formatCurrency(stats?.totalRevenue ?? 0)}
-          subtitle={`${stats?.approved ?? 0} approved payments`}
-          variant="success"
-          icon={
-            <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           }
         />
@@ -272,6 +303,29 @@ export default function AdminDashboardPage() {
             <div className="p-4 bg-danger-50 rounded-lg border-2 border-danger-200">
               <p className="text-xs font-medium text-danger-700 mb-1">Rejected</p>
               <p className="text-2xl font-bold text-danger-900">{stats?.rejected ?? 0}</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Net Revenue Card */}
+      <Card>
+        <CardHeader>Net Revenue</CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600 mb-1">Total Revenue - Total Expenses</p>
+              <p className="text-3xl font-bold text-gray-900">{formatCurrency(netRevenue)}</p>
+              <p className="text-xs text-gray-500 mt-1">
+                {formatCurrency(stats?.totalRevenue ?? 0)} - {formatCurrency(totalExpenses)}
+              </p>
+            </div>
+            <div className={`w-16 h-16 rounded-full flex items-center justify-center ${
+              netRevenue >= 0 ? "bg-success-100" : "bg-danger-100"
+            }`}>
+              <svg className={`w-8 h-8 ${netRevenue >= 0 ? "text-success-600" : "text-danger-600"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={netRevenue >= 0 ? "M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" : "M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"} />
+              </svg>
             </div>
           </div>
         </CardContent>
