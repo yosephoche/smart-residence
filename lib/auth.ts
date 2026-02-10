@@ -63,10 +63,14 @@ export const {
         if (dbUser) {
           token.isFirstLogin = dbUser.isFirstLogin;
         } else {
-          // User removed from DB (e.g. after re-seed) — invalidate session
-          delete token.id;
-          delete token.role;
-          delete token.isFirstLogin;
+          // User removed from DB - return clean token to force re-auth
+          console.warn("[Auth] User not found in DB for token.id:", token.id);
+          return {
+            ...token,
+            id: undefined,
+            role: undefined,
+            isFirstLogin: undefined,
+          };
         }
       }
       return token;

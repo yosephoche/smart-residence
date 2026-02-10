@@ -268,3 +268,24 @@ Error: [next-auth] Missing NEXTAUTH_URL or callback URL mismatch
 - Set `NEXTAUTH_URL` di env Vercel menjadi URL produksi yang **persis** diakses (termasuk protocol `https://`, tanpa trailing slash).
 - Jika menggunakan custom domain, update `NEXTAUTH_URL` setelah domain aktif.
 - Untuk Preview deployment, set `NEXTAUTH_URL` di environment `Preview` dengan URL preview yang sesuai, atau gunakan `VERCEL_URL` env var yang disediakan Vercel secara otomatis.
+
+### NextAuth: Session Callback Errors / Infinite Redirect Loop
+
+**Symptoms:** App continuously redirects to login page, or shows Vercel login instead of app
+
+**Common Causes:**
+1. `NEXTAUTH_SECRET` not set or doesn't match between environments
+2. `NEXTAUTH_URL` is incorrect or still pointing to localhost
+3. JWT token corruption due to environment variable mismatch
+4. Database user not found (token contains deleted user ID)
+
+**Solutions:**
+- Verify `NEXTAUTH_SECRET` is set in Vercel env vars (generate new with `openssl rand -base64 32`)
+- Verify `NEXTAUTH_URL` matches exact production URL (https://your-domain.vercel.app)
+- Clear browser cookies/localStorage and try fresh login
+- Check Vercel logs for "[Auth] Invalid session token" errors
+- If user was deleted from DB during dev/testing, log out all sessions and re-create user
+
+**For Preview Deployments:**
+- Don't set NEXTAUTH_URL for Preview environment (let it auto-detect from VERCEL_URL)
+- Or set to: `https://$VERCEL_URL` (Vercel will substitute automatically)
