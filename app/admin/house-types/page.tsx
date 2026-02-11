@@ -5,12 +5,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
-import Table, { Column } from "@/components/ui/Table";
+import Table, { Column, Pagination } from "@/components/ui/Table";
 import { ConfirmModal } from "@/components/ui/Modal";
 import Alert from "@/components/ui/Alert";
 import { Skeleton } from "@/components/ui/Loading";
 import { HouseType, House } from "@/types";
 import { formatCurrency } from "@/lib/utils";
+import { usePagination } from "@/lib/hooks/usePagination";
 
 export default function HouseTypesPage() {
   const router = useRouter();
@@ -57,6 +58,20 @@ export default function HouseTypesPage() {
       type.typeName.toLowerCase().includes(query)
     );
   }, [houseTypes, searchQuery]);
+
+  // Pagination
+  const {
+    paginatedData,
+    currentPage,
+    totalPages,
+    pageSize,
+    totalItems,
+    handlePageChange,
+    handlePageSizeChange,
+  } = usePagination(filteredTypes, {
+    initialPageSize: 25,
+    resetDeps: [searchQuery],
+  });
 
   const handleDeleteClick = (type: HouseType) => {
     // Check if any houses use this type
@@ -274,11 +289,23 @@ export default function HouseTypesPage() {
 
       {/* House Types Table */}
       <Table
-        data={filteredTypes}
+        data={paginatedData}
         columns={columns}
         keyExtractor={(type) => type.id}
         emptyMessage="No house types found"
       />
+
+      {/* Pagination */}
+      {paginatedData.length > 0 && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+          pageSize={pageSize}
+          onPageSizeChange={handlePageSizeChange}
+          totalItems={totalItems}
+        />
+      )}
 
       {/* Delete Confirmation Modal */}
       <ConfirmModal

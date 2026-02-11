@@ -5,12 +5,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
-import Table, { Column } from "@/components/ui/Table";
+import Table, { Column, Pagination } from "@/components/ui/Table";
 import Badge from "@/components/ui/Badge";
 import { ConfirmModal } from "@/components/ui/Modal";
 import Alert from "@/components/ui/Alert";
 import { Skeleton } from "@/components/ui/Loading";
 import { formatDate } from "@/lib/utils";
+import { usePagination } from "@/lib/hooks/usePagination";
 
 interface User {
   id: string;
@@ -58,6 +59,20 @@ export default function UsersPage() {
     }
     return filtered;
   }, [users, searchQuery, roleFilter]);
+
+  // Pagination
+  const {
+    paginatedData,
+    currentPage,
+    totalPages,
+    pageSize,
+    totalItems,
+    handlePageChange,
+    handlePageSizeChange,
+  } = usePagination(filteredUsers, {
+    initialPageSize: 25,
+    resetDeps: [searchQuery, roleFilter],
+  });
 
   const handleDeleteClick = (user: User) => {
     setUserToDelete(user);
@@ -212,7 +227,19 @@ export default function UsersPage() {
         </div>
       </div>
 
-      <Table data={filteredUsers} columns={columns} keyExtractor={(user) => user.id} emptyMessage="No users found" />
+      <Table data={paginatedData} columns={columns} keyExtractor={(user) => user.id} emptyMessage="No users found" />
+
+      {/* Pagination */}
+      {paginatedData.length > 0 && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+          pageSize={pageSize}
+          onPageSizeChange={handlePageSizeChange}
+          totalItems={totalItems}
+        />
+      )}
 
       <ConfirmModal
         isOpen={deleteModalOpen}

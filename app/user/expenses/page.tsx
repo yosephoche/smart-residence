@@ -3,12 +3,13 @@
 import { useState, useEffect, useMemo } from "react";
 import { Card, CardHeader, CardContent } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
-import Table from "@/components/ui/Table";
+import Table, { Pagination } from "@/components/ui/Table";
 import ExpenseCategoryBadge from "@/components/expenses/ExpenseCategoryBadge";
 import { Skeleton } from "@/components/ui/Loading";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { getExpenseCategoryOptions } from "@/lib/calculations";
 import { exportCSV, exportXLSX, mapExpensesForExport } from "@/lib/utils/export";
+import { usePagination } from "@/lib/hooks/usePagination";
 
 export default function UserExpensesPage() {
   const [expenses, setExpenses] = useState<any[]>([]);
@@ -55,6 +56,20 @@ export default function UserExpensesPage() {
 
     return result;
   }, [expenses, categoryFilter, filterYear, filterMonth]);
+
+  // Pagination
+  const {
+    paginatedData,
+    currentPage,
+    totalPages,
+    pageSize,
+    totalItems,
+    handlePageChange,
+    handlePageSizeChange,
+  } = usePagination(filteredExpenses, {
+    initialPageSize: 25,
+    resetDeps: [categoryFilter, filterYear, filterMonth],
+  });
 
   // Dynamic years from data
   const availableYears = useMemo(() => {
@@ -197,10 +212,24 @@ export default function UserExpensesPage() {
               { key: "amount", header: "Amount", sortable: true, render: (val) => formatCurrency(Number(val)) },
               { key: "notes", header: "Notes", render: (val) => val || "-" },
             ]}
-            data={filteredExpenses}
+            data={paginatedData}
             keyExtractor={(row) => row.id}
             emptyMessage="No expenses found"
           />
+
+          {/* Pagination */}
+          {paginatedData.length > 0 && (
+            <div className="mt-4">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                pageSize={pageSize}
+                onPageSizeChange={handlePageSizeChange}
+                totalItems={totalItems}
+              />
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

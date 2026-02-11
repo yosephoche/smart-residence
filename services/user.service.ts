@@ -37,30 +37,58 @@ export async function createUser(
   name: string,
   email: string,
   role: "ADMIN" | "USER",
-  password: string = "IPL2026"
+  password: string = "IPL2026",
+  houseId?: string // Optional house assignment
 ) {
   const hashedPassword = await bcrypt.hash(password, 10);
 
-  const user = await prisma.user.create({
-    data: {
-      name,
-      email,
-      password: hashedPassword,
-      role,
-      isFirstLogin: true,
-    },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      role: true,
-      isFirstLogin: true,
-      createdAt: true,
-      updatedAt: true,
-    },
-  });
+  // If houseId provided, verify it's vacant
+  if (houseId) {
+    const house = await prisma.house.findUnique({
+      where: { id: houseId },
+      select: { userId: true },
+    });
 
-  return user;
+    if (!house) {
+      throw new Error("House not found");
+    }
+    if (house.userId) {
+      throw new Error("House is already occupied");
+    }
+  }
+
+  // Use transaction for atomicity
+  return await prisma.$transaction(async (tx) => {
+    // Create user
+    const user = await tx.user.create({
+      data: {
+        name,
+        email,
+        password: hashedPassword,
+        role,
+        isFirstLogin: true,
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        isFirstLogin: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    // If houseId provided, assign house to user
+    if (houseId) {
+      await tx.house.update({
+        where: { id: houseId },
+        data: { userId: user.id },
+      });
+    }
+
+    return user;
+  });
 }
 
 export async function updateUser(

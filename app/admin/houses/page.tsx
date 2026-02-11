@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
-import Table, { Column } from "@/components/ui/Table";
+import Table, { Column, Pagination } from "@/components/ui/Table";
 import Badge from "@/components/ui/Badge";
 import Modal, { ConfirmModal } from "@/components/ui/Modal";
 import Alert from "@/components/ui/Alert";
@@ -13,6 +13,7 @@ import { Skeleton } from "@/components/ui/Loading";
 import { House, User } from "@/types";
 import { formatCurrency } from "@/lib/utils";
 import ImportHousesForm from "@/components/forms/ImportHousesForm";
+import { usePagination } from "@/lib/hooks/usePagination";
 
 export default function HousesPage() {
   const router = useRouter();
@@ -84,6 +85,20 @@ export default function HousesPage() {
 
     return filtered;
   }, [houses, searchQuery, blockFilter, statusFilter]);
+
+  // Pagination
+  const {
+    paginatedData,
+    currentPage,
+    totalPages,
+    pageSize,
+    totalItems,
+    handlePageChange,
+    handlePageSizeChange,
+  } = usePagination(filteredHouses, {
+    initialPageSize: 25,
+    resetDeps: [searchQuery, blockFilter, statusFilter],
+  });
 
   const handleDeleteClick = (house: House) => {
     setHouseToDelete(house);
@@ -352,11 +367,23 @@ export default function HousesPage() {
 
       {/* Houses Table */}
       <Table
-        data={filteredHouses}
+        data={paginatedData}
         columns={columns}
         keyExtractor={(house) => house.id}
         emptyMessage="No houses found"
       />
+
+      {/* Pagination */}
+      {paginatedData.length > 0 && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+          pageSize={pageSize}
+          onPageSizeChange={handlePageSizeChange}
+          totalItems={totalItems}
+        />
+      )}
 
       {/* Delete Confirmation Modal */}
       <ConfirmModal

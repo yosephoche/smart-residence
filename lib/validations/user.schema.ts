@@ -11,6 +11,7 @@ export const userFormSchema = z.object({
     .min(6, "Password must be at least 6 characters")
     .optional()
     .or(z.literal("")),
+  houseId: z.string().optional(), // Optional house assignment during user creation
 });
 
 export type UserFormData = z.infer<typeof userFormSchema>;

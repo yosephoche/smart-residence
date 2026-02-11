@@ -1,10 +1,13 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { userFormSchema, UserFormData } from "@/lib/validations/user.schema";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
+import SearchableSelect from "@/components/ui/SearchableSelect";
+import type { SearchableSelectOption } from "@/components/ui/SearchableSelect";
 import { User } from "@/types";
 
 interface UserFormProps {
@@ -21,10 +24,14 @@ export default function UserForm({
   isSubmitting = false,
 }: UserFormProps) {
   const isEditMode = !!user;
+  const [availableHouses, setAvailableHouses] = useState<any[]>([]);
+  const [isLoadingHouses, setIsLoadingHouses] = useState(false);
 
   const {
     register,
     handleSubmit,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm<UserFormData>({
     resolver: zodResolver(userFormSchema),
@@ -36,8 +43,24 @@ export default function UserForm({
         }
       : {
           role: "USER",
+          houseId: "",
         },
   });
+
+  const role = watch("role");
+  const houseId = watch("houseId");
+
+  // Fetch available houses on mount (only in create mode)
+  useEffect(() => {
+    if (!isEditMode) {
+      setIsLoadingHouses(true);
+      fetch("/api/houses/available")
+        .then((r) => r.json())
+        .then((data) => setAvailableHouses(data))
+        .catch((err) => console.error("Failed to fetch houses:", err))
+        .finally(() => setIsLoadingHouses(false));
+    }
+  }, [isEditMode]);
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
@@ -77,6 +100,38 @@ export default function UserForm({
           <p className="text-xs text-danger-600">{errors.role.message}</p>
         )}
       </div>
+
+      {!isEditMode && role === "USER" && (
+        <div className="flex flex-col gap-1.5">
+          <label className="text-sm font-medium text-gray-700 tracking-tight">
+            Assign House (Optional)
+          </label>
+          <SearchableSelect
+            options={[
+              { value: "", label: "No house (assign later)" },
+              ...availableHouses.map((house) => ({
+                value: house.id,
+                label: `${house.houseNumber} - Block ${house.block} (${house.houseType?.typeName})`,
+                searchText: `${house.houseNumber} ${house.block} ${house.houseType?.typeName}`,
+              })),
+            ]}
+            value={houseId || ""}
+            onChange={(value) => setValue("houseId", value)}
+            placeholder="Search house number..."
+            emptyMessage="No vacant houses found"
+            disabled={isLoadingHouses}
+          />
+          {isLoadingHouses && (
+            <p className="text-xs text-gray-500">Loading available houses...</p>
+          )}
+          <p className="text-xs text-gray-500">
+            Select a house to assign this user immediately, or leave empty to assign later
+          </p>
+          {errors.houseId && (
+            <p className="text-xs text-danger-600">{errors.houseId.message}</p>
+          )}
+        </div>
+      )}
 
       {!isEditMode && (
         <Input

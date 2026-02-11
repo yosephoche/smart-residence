@@ -19,7 +19,13 @@ export default function CreateUserPage() {
     const res = await fetch("/api/users", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: data.name, email: data.email, role: data.role, password: data.password }),
+      body: JSON.stringify({
+        name: data.name,
+        email: data.email,
+        role: data.role,
+        password: data.password,
+        houseId: data.houseId
+      }),
     });
 
     if (!res.ok) {

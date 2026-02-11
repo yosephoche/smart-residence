@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect, useRef } from "react";
 import Link from "next/link";
-import Table, { Column } from "@/components/ui/Table";
+import Table, { Column, Pagination } from "@/components/ui/Table";
 import PaymentStatusBadge from "@/components/payments/PaymentStatusBadge";
 import { Skeleton } from "@/components/ui/Loading";
 import { formatCurrency, formatDate } from "@/lib/utils";
@@ -13,6 +13,7 @@ import Alert from "@/components/ui/Alert";
 import Badge from "@/components/ui/Badge";
 import AdminCreatePaymentForm from "@/components/forms/AdminCreatePaymentForm";
 import { exportCSV, exportXLSX, mapPaymentsForExport, mapHousesWithStatusForExport } from "@/lib/utils/export";
+import { usePagination } from "@/lib/hooks/usePagination";
 
 interface Payment {
   id: string;
@@ -164,6 +165,34 @@ export default function AdminPaymentsPage() {
     if (housesViewMode === "UNPAID") list = list.filter((h) => h.paymentStatus === null);
     return list;
   }, [allHousesWithStatus, housesViewMode, filterUserId]);
+
+  // Pagination for payments table
+  const {
+    paginatedData: paginatedPayments,
+    currentPage: paymentsPage,
+    totalPages: paymentsTotalPages,
+    pageSize: paymentsPageSize,
+    totalItems: paymentsTotalItems,
+    handlePageChange: handlePaymentsPageChange,
+    handlePageSizeChange: handlePaymentsPageSizeChange,
+  } = usePagination(filteredPayments, {
+    initialPageSize: 25,
+    resetDeps: [statusFilter, filterUserId, filterYear, filterMonth],
+  });
+
+  // Pagination for houses table
+  const {
+    paginatedData: paginatedHouses,
+    currentPage: housesPage,
+    totalPages: housesTotalPages,
+    pageSize: housesPageSize,
+    totalItems: housesTotalItems,
+    handlePageChange: handleHousesPageChange,
+    handlePageSizeChange: handleHousesPageSizeChange,
+  } = usePagination(displayedHouses, {
+    initialPageSize: 25,
+    resetDeps: [housesViewMode, filterUserId, filterYear, filterMonth],
+  });
 
   // Counts for pill badges — global (before resident filter)
   const paidCount   = useMemo(() => allHousesWithStatus.filter((h) => h.paymentStatus !== null).length, [allHousesWithStatus]);
@@ -635,19 +664,43 @@ export default function AdminPaymentsPage() {
 
       {/* Conditional table: houses view or payment list */}
       {housesViewMode !== null ? (
-        <Table
-          data={displayedHouses}
-          columns={housesColumns}
-          keyExtractor={(h) => h.id}
-          emptyMessage={housesViewMode === "PAID" ? "No paid houses for this month" : "All houses have paid for this month"}
-        />
+        <>
+          <Table
+            data={paginatedHouses}
+            columns={housesColumns}
+            keyExtractor={(h) => h.id}
+            emptyMessage={housesViewMode === "PAID" ? "No paid houses for this month" : "All houses have paid for this month"}
+          />
+          {paginatedHouses.length > 0 && (
+            <Pagination
+              currentPage={housesPage}
+              totalPages={housesTotalPages}
+              onPageChange={handleHousesPageChange}
+              pageSize={housesPageSize}
+              onPageSizeChange={handleHousesPageSizeChange}
+              totalItems={housesTotalItems}
+            />
+          )}
+        </>
       ) : (
-        <Table
-          data={filteredPayments}
-          columns={paymentColumns}
-          keyExtractor={(payment) => payment.id}
-          emptyMessage={statusFilter === "ALL" ? "No payments yet" : `No ${statusFilter.toLowerCase()} payments`}
-        />
+        <>
+          <Table
+            data={paginatedPayments}
+            columns={paymentColumns}
+            keyExtractor={(payment) => payment.id}
+            emptyMessage={statusFilter === "ALL" ? "No payments yet" : `No ${statusFilter.toLowerCase()} payments`}
+          />
+          {paginatedPayments.length > 0 && (
+            <Pagination
+              currentPage={paymentsPage}
+              totalPages={paymentsTotalPages}
+              onPageChange={handlePaymentsPageChange}
+              pageSize={paymentsPageSize}
+              onPageSizeChange={handlePaymentsPageSizeChange}
+              totalItems={paymentsTotalItems}
+            />
+          )}
+        </>
       )}
 
       {/* Create Payment Modal */}

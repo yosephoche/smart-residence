@@ -10,6 +10,17 @@ export async function getAllHouses(userId?: string) {
   });
 }
 
+export async function getAvailableHouses() {
+  return prisma.house.findMany({
+    where: { userId: null }, // Only vacant houses
+    include: { houseType: true },
+    orderBy: [
+      { block: "asc" },
+      { houseNumber: "asc" }
+    ],
+  });
+}
+
 export async function getHouseById(id: string) {
   return prisma.house.findUnique({
     where: { id },
