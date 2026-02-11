@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { houseFormSchema, HouseFormData } from "@/lib/validations/house.schema";
@@ -31,6 +32,7 @@ export default function HouseForm({
     register,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors },
   } = useForm<HouseFormData>({
     resolver: zodResolver(houseFormSchema),
@@ -40,12 +42,22 @@ export default function HouseForm({
           block: house.block,
           houseTypeId: house.houseTypeId,
           userId: house.userId || "",
+          isRented: house.isRented || false,
+          renterName: house.renterName || "",
         }
       : undefined,
   });
 
   const selectedHouseTypeId = watch("houseTypeId");
   const selectedHouseType = houseTypes.find((t) => t.id === selectedHouseTypeId);
+  const isRented = watch("isRented");
+
+  // Clear renterName when unchecked
+  useEffect(() => {
+    if (!isRented) {
+      setValue("renterName", "");
+    }
+  }, [isRented, setValue]);
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
@@ -128,6 +140,34 @@ export default function HouseForm({
           Leave unassigned if no resident has moved in yet
         </p>
       </div>
+
+      <div className="flex flex-col gap-1.5">
+        <label className="flex items-center gap-2 text-sm font-medium text-gray-700 tracking-tight cursor-pointer">
+          <input
+            type="checkbox"
+            {...register("isRented")}
+            className="w-4 h-4 text-primary-600 bg-white border-2 border-gray-300 rounded focus:ring-2 focus:ring-primary-500"
+          />
+          <span>This house is rented</span>
+        </label>
+        <p className="text-xs text-gray-500">
+          Check this if the house is currently being rented to someone
+        </p>
+      </div>
+
+      {isRented && (
+        <div className="border-2 border-primary-200 bg-primary-50 rounded-lg p-4">
+          <Input
+            label="Renter Name"
+            placeholder="e.g., John Doe"
+            error={errors.renterName?.message}
+            helperText="Enter the full name of the person renting this house"
+            {...register("renterName")}
+            fullWidth
+            required
+          />
+        </div>
+      )}
 
       <div className="flex gap-3 pt-4">
         <Button

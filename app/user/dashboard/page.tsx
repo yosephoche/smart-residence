@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import { Card, CardHeader, CardContent } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
@@ -33,26 +33,35 @@ export default function UserDashboardPage() {
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [monthlyExpenses, setMonthlyExpenses] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const fetchingRef = useRef(false);
+
+  // Memoize user.id to stabilize dependency
+  const userId = useMemo(() => user?.id, [user?.id]);
 
   useEffect(() => {
-    if (!user) return;
+    if (!userId || fetchingRef.current) return;
+
     const now = new Date();
     const currentYear = now.getFullYear();
     const currentMonth = now.getMonth() + 1;
 
+    fetchingRef.current = true;
     Promise.all([
-      fetch(`/api/houses?userId=${user.id}`).then((r) => r.json()),
+      fetch(`/api/houses?userId=${userId}`).then((r) => r.json()),
       fetch("/api/payments").then((r) => r.json()),
       fetch("/api/payments/stats").then((r) => r.json()),
       fetch(`/api/expenses/monthly?year=${currentYear}&month=${currentMonth}`).then((r) => r.json()),
-    ]).then(([housesData, paymentsData, statsData, expData]) => {
-      setHouses(housesData);
-      setPayments(paymentsData);
-      setTotalRevenue(statsData.totalRevenue);
-      setMonthlyExpenses(expData.total);
-      setIsLoading(false);
-    });
-  }, [user]);
+    ])
+      .then(([housesData, paymentsData, statsData, expData]) => {
+        setHouses(housesData);
+        setPayments(paymentsData);
+        setTotalRevenue(statsData.totalRevenue);
+        setMonthlyExpenses(expData.total);
+        setIsLoading(false);
+      })
+      .catch((err) => console.error("Failed to fetch dashboard data:", err))
+      .finally(() => { fetchingRef.current = false; });
+  }, [userId]);
 
   const house = houses[0];
   const monthlyRate = house?.houseType?.price ? Number(house.houseType.price) : 0;

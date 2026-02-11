@@ -7,5 +7,12 @@ export default function SessionWrapper({
 }: {
   children: React.ReactNode;
 }) {
-  return <SessionProvider>{children}</SessionProvider>;
+  return (
+    <SessionProvider
+      refetchInterval={300} // 5 minutes (default is ~30 seconds)
+      refetchOnWindowFocus={false} // Don't refetch when tab regains focus
+    >
+      {children}
+    </SessionProvider>
+  );
 }

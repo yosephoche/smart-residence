@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/Card";
 import Alert from "@/components/ui/Alert";
@@ -30,6 +30,8 @@ export default function PaymentUploadPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [occupiedMonths, setOccupiedMonths] = useState<Array<{ year: number; month: number }>>([]);
   const [uploadWindowConfig, setUploadWindowConfig] = useState<UploadWindowConfig | null>(null);
+  const fetchingHouseRef = useRef(false);
+  const fetchingOccupiedMonthsRef = useRef(false);
 
   const isOutsideUploadWindow = useMemo(() => {
     if (!uploadWindowConfig || !uploadWindowConfig.enabled) return false;
@@ -45,22 +47,36 @@ export default function PaymentUploadPage() {
       .catch((err) => console.error("Failed to fetch upload window config:", err));
   }, []);
 
+  // Memoize user.id to stabilize dependency
+  const userId = useMemo(() => user?.id, [user?.id]);
+
   useEffect(() => {
-    if (!user) return;
-    fetch(`/api/houses?userId=${user.id}`)
+    if (!userId || fetchingHouseRef.current) return;
+
+    fetchingHouseRef.current = true;
+    fetch(`/api/houses?userId=${userId}`)
       .then((r) => r.json())
       .then((data) => {
         if (data.length > 0) setHouse(data[0]);
         setIsLoading(false);
-      });
-  }, [user]);
+      })
+      .catch((err) => console.error("Failed to fetch house:", err))
+      .finally(() => { fetchingHouseRef.current = false; });
+  }, [userId]);
+
+  // Memoize house.id to stabilize dependency
+  const houseId = useMemo(() => house?.id, [house?.id]);
 
   useEffect(() => {
-    if (!house) return;
-    fetch(`/api/payments/occupied-months?houseId=${house.id}`)
+    if (!houseId || fetchingOccupiedMonthsRef.current) return;
+
+    fetchingOccupiedMonthsRef.current = true;
+    fetch(`/api/payments/occupied-months?houseId=${houseId}`)
       .then((r) => r.json())
-      .then((data) => setOccupiedMonths(data));
-  }, [house]);
+      .then((data) => setOccupiedMonths(data))
+      .catch((err) => console.error("Failed to fetch occupied months:", err))
+      .finally(() => { fetchingOccupiedMonthsRef.current = false; });
+  }, [houseId]);
 
   const handleSubmit = async (data: PaymentUploadFormData) => {
     if (!user || !house) {

@@ -20,7 +20,7 @@ export const PUT = auth(async (req, { params }) => {
   }
 
   const { id } = await params;
-  const { houseNumber, block, houseTypeId, userId } = await req.json();
+  const { houseNumber, block, houseTypeId, userId, isRented, renterName } = await req.json();
 
   try {
     const house = await updateHouse(id, {
@@ -28,6 +28,8 @@ export const PUT = auth(async (req, { params }) => {
       block,
       houseTypeId,
       userId: userId || null,
+      isRented,
+      renterName: renterName || null,
     });
     return NextResponse.json(serializePrismaJson(house));
   } catch (err: any) {

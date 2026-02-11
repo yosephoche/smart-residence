@@ -15,7 +15,7 @@ export const POST = auth(async (req) => {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const { houseNumber, block, houseTypeId, userId } = await req.json();
+  const { houseNumber, block, houseTypeId, userId, isRented, renterName } = await req.json();
 
   if (!houseNumber || !block || !houseTypeId) {
     return NextResponse.json(
@@ -25,7 +25,14 @@ export const POST = auth(async (req) => {
   }
 
   try {
-    const house = await createHouse(houseNumber, block, houseTypeId, userId || undefined);
+    const house = await createHouse(
+      houseNumber,
+      block,
+      houseTypeId,
+      userId || undefined,
+      isRented,
+      renterName
+    );
     return NextResponse.json(serializePrismaJson(house), { status: 201 });
   } catch (err: any) {
     return NextResponse.json(

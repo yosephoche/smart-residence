@@ -54,25 +54,9 @@ export const {
         token.id = user.id;
         token.role = user.role;
         token.isFirstLogin = user.isFirstLogin;
-      } else if (token.id) {
-        // Subsequent requests: refresh isFirstLogin from DB
-        // so that password change takes effect without re-login
-        const dbUser = await prisma.user.findUnique({
-          where: { id: token.id },
-        });
-        if (dbUser) {
-          token.isFirstLogin = dbUser.isFirstLogin;
-        } else {
-          // User removed from DB - return clean token to force re-auth
-          console.warn("[Auth] User not found in DB for token.id:", token.id);
-          return {
-            ...token,
-            id: undefined,
-            role: undefined,
-            isFirstLogin: undefined,
-          };
-        }
       }
+      // DB query removed - password change flow already forces re-login (auth-client.tsx:56-64)
+      // which creates a fresh JWT token with updated isFirstLogin
       return token;
     },
   },

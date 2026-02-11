@@ -158,6 +158,27 @@ export default function HousesPage() {
       },
     },
     {
+      key: "renterName",
+      header: "Renter Info",
+      render: (_, house) => {
+        if (!house.isRented) {
+          return <Badge variant="default">Not Rented</Badge>;
+        }
+        return (
+          <div>
+            <Badge variant="warning" dot className="mb-1">
+              Rented
+            </Badge>
+            {house.renterName && (
+              <p className="text-sm font-medium text-gray-900 mt-1">
+                {house.renterName}
+              </p>
+            )}
+          </div>
+        );
+      },
+    },
+    {
       key: "userId",
       header: "Status",
       render: (userId) =>

@@ -21,10 +21,19 @@ export async function createHouse(
   houseNumber: string,
   block: string,
   houseTypeId: string,
-  userId?: string
+  userId?: string,
+  isRented?: boolean,
+  renterName?: string
 ) {
   return prisma.house.create({
-    data: { houseNumber, block, houseTypeId, userId: userId || null },
+    data: {
+      houseNumber,
+      block,
+      houseTypeId,
+      userId: userId || null,
+      isRented: isRented ?? false,
+      renterName: renterName || null,
+    },
     include: { houseType: true },
   });
 }
@@ -36,6 +45,8 @@ export async function updateHouse(
     block?: string;
     houseTypeId?: string;
     userId?: string | null;
+    isRented?: boolean;
+    renterName?: string | null;
   }
 ) {
   return prisma.house.update({
@@ -58,6 +69,8 @@ export async function bulkImportHouses(
     block: string;
     houseTypeId: string;
     userId?: string;
+    isRented?: boolean;
+    renterName?: string;
   }>
 ): Promise<{
   created: House[];
@@ -134,6 +147,8 @@ export async function bulkImportHouses(
             block: row.block,
             houseTypeId: row.houseTypeId,
             userId: row.userId || null,
+            isRented: row.isRented ?? false,
+            renterName: row.renterName || null,
           },
           include: { houseType: true },
         });

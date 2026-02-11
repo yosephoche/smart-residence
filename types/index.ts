@@ -29,6 +29,8 @@ export interface House {
   block: string;
   houseTypeId: string;
   userId?: string;
+  isRented?: boolean;
+  renterName?: string;
   houseType?: HouseType;
   user?: User;
 }
@@ -84,6 +86,8 @@ export interface HouseFormData {
   block: string;
   houseTypeId: string;
   userId?: string;
+  isRented?: boolean;
+  renterName?: string;
 }
 
 export interface HouseTypeFormData {

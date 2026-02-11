@@ -59,6 +59,8 @@ model House {
   block       String
   houseTypeId String
   userId     String?
+  isRented    Boolean    @default(false)
+  renterName  String?
   houseType   HouseType  @relation(fields: [houseTypeId], references: [id])
   user        User?      @relation(fields: [userId], references: [id])
   payments    Payment[]

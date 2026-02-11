@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useAuth } from "@/lib/auth-client";
 import PaymentCard from "@/components/payments/PaymentCard";
 import { Skeleton } from "@/components/ui/Loading";
@@ -17,23 +17,32 @@ export default function PaymentHistoryPage() {
   const [house, setHouse] = useState<House | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<"ALL" | "PENDING" | "APPROVED" | "REJECTED">("ALL");
+  const fetchingRef = useRef(false);
+
+  // Memoize user.id to stabilize dependency
+  const userId = useMemo(() => user?.id, [user?.id]);
 
   useEffect(() => {
-    if (!user) return;
+    if (!userId || fetchingRef.current) return;
+
+    fetchingRef.current = true;
     Promise.all([
       fetch("/api/payments").then((r) => r.json()),
-      fetch(`/api/houses?userId=${user.id}`).then((r) => r.json()),
-    ]).then(([paymentsData, housesData]) => {
-      setPayments(
-        paymentsData.map((p: any) => ({
-          ...p,
-          totalAmount: Number(p.totalAmount),
-        }))
-      );
-      if (housesData.length > 0) setHouse(housesData[0]);
-      setIsLoading(false);
-    });
-  }, [user]);
+      fetch(`/api/houses?userId=${userId}`).then((r) => r.json()),
+    ])
+      .then(([paymentsData, housesData]) => {
+        setPayments(
+          paymentsData.map((p: any) => ({
+            ...p,
+            totalAmount: Number(p.totalAmount),
+          }))
+        );
+        if (housesData.length > 0) setHouse(housesData[0]);
+        setIsLoading(false);
+      })
+      .catch((err) => console.error("Failed to fetch payment history:", err))
+      .finally(() => { fetchingRef.current = false; });
+  }, [userId]);
 
   const filteredPayments = useMemo(() => {
     if (statusFilter === "ALL") return payments;

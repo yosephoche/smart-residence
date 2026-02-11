@@ -1,21 +1,30 @@
 "use client";
 
 import { useSession, signIn, signOut } from "next-auth/react";
+import { useMemo } from "react";
 
 export function useAuth() {
   const { data: session, status } = useSession();
 
   const isLoading = status === "loading";
 
-  const user = session?.user
-    ? {
-        id: session.user.id,
-        name: session.user.name ?? "",
-        email: session.user.email ?? "",
-        role: session.user.role,
-        isFirstLogin: session.user.isFirstLogin,
-      }
-    : null;
+  const user = useMemo(() => {
+    if (!session?.user) return null;
+
+    return {
+      id: session.user.id,
+      name: session.user.name ?? "",
+      email: session.user.email ?? "",
+      role: session.user.role,
+      isFirstLogin: session.user.isFirstLogin,
+    };
+  }, [
+    session?.user?.id,
+    session?.user?.name,
+    session?.user?.email,
+    session?.user?.role,
+    session?.user?.isFirstLogin,
+  ]);
 
   const login = async (
     email: string,
