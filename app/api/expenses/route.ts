@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getExpenses, createExpense } from "@/services/expense.service";
 import { ExpenseCategory } from "@prisma/client";
+import { serializePrismaJson } from "@/lib/utils/prisma-serializer";
 
 // GET /api/expenses - List expenses with optional filters
 export const GET = auth(async (req) => {
@@ -21,7 +22,7 @@ export const GET = auth(async (req) => {
     category: category ?? undefined,
   });
 
-  return NextResponse.json(expenses);
+  return NextResponse.json(serializePrismaJson(expenses));
 });
 
 // POST /api/expenses - Create new expense (admin only)
@@ -67,7 +68,7 @@ export const POST = auth(async (req) => {
       createdBy: session.user.id,
     });
 
-    return NextResponse.json(expense, { status: 201 });
+    return NextResponse.json(serializePrismaJson(expense), { status: 201 });
   } catch (error) {
     console.error("Error creating expense:", error);
     return NextResponse.json(

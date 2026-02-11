@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getAllHouses, createHouse } from "@/services/house.service";
+import { serializePrismaJson } from "@/lib/utils/prisma-serializer";
 
 export const GET = auth(async (req) => {
   const url = new URL(req.url);
   const userId = url.searchParams.get("userId") ?? undefined;
   const houses = await getAllHouses(userId);
-  return NextResponse.json(houses);
+  return NextResponse.json(serializePrismaJson(houses));
 });
 
 export const POST = auth(async (req) => {
@@ -25,7 +26,7 @@ export const POST = auth(async (req) => {
 
   try {
     const house = await createHouse(houseNumber, block, houseTypeId, userId || undefined);
-    return NextResponse.json(house, { status: 201 });
+    return NextResponse.json(serializePrismaJson(house), { status: 201 });
   } catch (err: any) {
     return NextResponse.json(
       { error: err.message || "Failed to create house" },

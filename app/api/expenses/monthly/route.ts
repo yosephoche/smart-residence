@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getMonthlyExpenses } from "@/services/expense.service";
+import { serializePrismaJson } from "@/lib/utils/prisma-serializer";
 
 // GET /api/expenses/monthly?year=2026&month=2
 export const GET = auth(async (req) => {
@@ -21,5 +22,5 @@ export const GET = auth(async (req) => {
   }
 
   const total = await getMonthlyExpenses(year, month);
-  return NextResponse.json({ total, year, month });
+  return NextResponse.json(serializePrismaJson({ total, year, month }));
 });

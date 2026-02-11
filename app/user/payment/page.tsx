@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/Card";
 import Alert from "@/components/ui/Alert";
@@ -8,12 +8,17 @@ import { Skeleton } from "@/components/ui/Loading";
 import { useAuth } from "@/lib/auth-client";
 import PaymentUploadForm from "@/components/forms/PaymentUploadForm";
 import { PaymentUploadFormData } from "@/lib/validations/payment.schema";
-import { UPLOAD_WINDOW_LAST_DAY } from "@/lib/constants";
 
 interface House {
   id: string;
   houseNumber: string;
   houseType?: { typeName: string; price: number };
+}
+
+interface UploadWindowConfig {
+  enabled: boolean;
+  startDay: number;
+  endDay: number;
 }
 
 export default function PaymentUploadPage() {
@@ -24,8 +29,21 @@ export default function PaymentUploadPage() {
   const [house, setHouse] = useState<House | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [occupiedMonths, setOccupiedMonths] = useState<Array<{ year: number; month: number }>>([]);
+  const [uploadWindowConfig, setUploadWindowConfig] = useState<UploadWindowConfig | null>(null);
 
-  const isOutsideUploadWindow = new Date().getDate() > UPLOAD_WINDOW_LAST_DAY;
+  const isOutsideUploadWindow = useMemo(() => {
+    if (!uploadWindowConfig || !uploadWindowConfig.enabled) return false;
+    const currentDay = new Date().getDate();
+    return currentDay < uploadWindowConfig.startDay || currentDay > uploadWindowConfig.endDay;
+  }, [uploadWindowConfig]);
+
+  useEffect(() => {
+    // Fetch upload window configuration
+    fetch("/api/system-config/upload-window")
+      .then((r) => r.json())
+      .then((data) => setUploadWindowConfig(data))
+      .catch((err) => console.error("Failed to fetch upload window config:", err));
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -125,11 +143,11 @@ export default function PaymentUploadPage() {
 
       {error && <Alert variant="error" message={error} onClose={() => setError("")} />}
 
-      {isOutsideUploadWindow && (
+      {isOutsideUploadWindow && uploadWindowConfig && (
         <Alert
           variant="warning"
           title="Luar Periode Upload"
-          message="Pengajuan pembayaran hanya diizinkan pada tanggal 1 hingga 10 setiap bulan. Silahkan coba lagi di bulan berikutnya."
+          message={`Pengajuan pembayaran hanya diizinkan pada tanggal ${uploadWindowConfig.startDay} hingga ${uploadWindowConfig.endDay} setiap bulan. Silahkan coba lagi di bulan berikutnya.`}
         />
       )}
 

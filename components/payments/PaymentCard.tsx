@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { Payment } from "@/types";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { formatPaymentMonth } from "@/lib/calculations";
@@ -88,10 +89,11 @@ export default function PaymentCard({ payment, houseNumber }: PaymentCardProps) 
             onClick={() => setIsImageModalOpen(true)}
             className="relative w-full h-40 bg-gray-100 rounded-lg overflow-hidden border-2 border-gray-200 hover:border-primary-400 transition-colors group"
           >
-            <img
+            <Image
               src={payment.proofImagePath}
               alt="Payment proof thumbnail"
-              className="w-full h-full object-cover"
+              fill
+              className="object-cover"
               onError={(e) => {
                 (e.target as HTMLImageElement).style.display = "none";
                 (e.target as HTMLImageElement).nextElementSibling?.classList.remove("hidden");
@@ -127,10 +129,11 @@ export default function PaymentCard({ payment, houseNumber }: PaymentCardProps) 
         size="lg"
       >
         <div className="relative aspect-video bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden">
-          <img
+          <Image
             src={payment.proofImagePath}
             alt="Payment proof"
-            className="w-full h-full object-contain"
+            fill
+            className="object-contain"
             onError={(e) => {
               (e.target as HTMLImageElement).style.display = "none";
               (e.target as HTMLImageElement).nextElementSibling?.classList.remove("hidden");

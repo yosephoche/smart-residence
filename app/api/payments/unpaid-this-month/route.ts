@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getUnpaidHousesThisMonth } from "@/services/payment.service";
+import { serializePrismaJson } from "@/lib/utils/prisma-serializer";
 
 export const GET = auth(async (req) => {
   if (req.auth?.user?.role !== "ADMIN") {
@@ -8,5 +9,5 @@ export const GET = auth(async (req) => {
   }
 
   const unpaidHouses = await getUnpaidHousesThisMonth();
-  return NextResponse.json(unpaidHouses);
+  return NextResponse.json(serializePrismaJson(unpaidHouses));
 });

@@ -2,7 +2,9 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getPayments, createPayment } from "@/services/payment.service";
 import { validateUploadedFile, saveUploadedFile } from "@/lib/utils/file-upload";
-import { UPLOAD_WINDOW_LAST_DAY } from "@/lib/constants";
+import { getCachedUploadWindowConfig } from "@/lib/cache/upload-window";
+import { isWithinUploadWindow } from "@/services/systemConfig.service";
+import { serializePrismaJson } from "@/lib/utils/prisma-serializer";
 
 export const GET = auth(async (req) => {
   const session = req.auth;
@@ -17,7 +19,7 @@ export const GET = auth(async (req) => {
   const userId = session.user.role === "USER" ? session.user.id : (url.searchParams.get("userId") ?? undefined);
 
   const payments = await getPayments({ status, userId });
-  return NextResponse.json(payments);
+  return NextResponse.json(serializePrismaJson(payments));
 });
 
 export const POST = auth(async (req) => {
@@ -26,10 +28,12 @@ export const POST = auth(async (req) => {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  // Upload window: only days 1–10 of the month
-  if (new Date().getDate() > UPLOAD_WINDOW_LAST_DAY) {
+  // Check upload window restriction
+  const uploadConfig = await getCachedUploadWindowConfig();
+  const windowCheck = isWithinUploadWindow(uploadConfig);
+  if (!windowCheck.allowed) {
     return NextResponse.json(
-      { error: "Pengajuan pembayaran hanya diizinkan pada tanggal 1 hingga 10 setiap bulan." },
+      { error: windowCheck.message },
       { status: 403 }
     );
   }
@@ -80,7 +84,7 @@ export const POST = auth(async (req) => {
       amountMonths,
       proofImagePath
     );
-    return NextResponse.json(payment, { status: 201 });
+    return NextResponse.json(serializePrismaJson(payment), { status: 201 });
   } catch (err: any) {
     return NextResponse.json(
       { error: err.message || "Failed to create payment" },

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { createPayment } from "@/services/payment.service";
 import { validateUploadedFile, saveUploadedFile } from "@/lib/utils/file-upload";
+import { serializePrismaJson } from "@/lib/utils/prisma-serializer";
 
 export const POST = auth(async (req) => {
   if (req.auth?.user?.role !== "ADMIN") {
@@ -50,7 +51,7 @@ export const POST = auth(async (req) => {
 
   try {
     const payment = await createPayment(userId, houseId, amountMonths, proofImagePath);
-    return NextResponse.json(payment, { status: 201 });
+    return NextResponse.json(serializePrismaJson(payment), { status: 201 });
   } catch (err: any) {
     return NextResponse.json(
       { error: err.message || "Failed to create payment" },

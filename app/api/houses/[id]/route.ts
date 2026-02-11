@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getHouseById, updateHouse, deleteHouse } from "@/services/house.service";
+import { serializePrismaJson } from "@/lib/utils/prisma-serializer";
 
 export const GET = auth(async (_req, { params }) => {
   const { id } = await params;
@@ -10,7 +11,7 @@ export const GET = auth(async (_req, { params }) => {
     return NextResponse.json({ error: "House not found" }, { status: 404 });
   }
 
-  return NextResponse.json(house);
+  return NextResponse.json(serializePrismaJson(house));
 });
 
 export const PUT = auth(async (req, { params }) => {
@@ -28,7 +29,7 @@ export const PUT = auth(async (req, { params }) => {
       houseTypeId,
       userId: userId || null,
     });
-    return NextResponse.json(house);
+    return NextResponse.json(serializePrismaJson(house));
   } catch (err: any) {
     return NextResponse.json(
       { error: err.message || "Failed to update house" },

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getExpenseById, updateExpense, deleteExpense } from "@/services/expense.service";
+import { serializePrismaJson } from "@/lib/utils/prisma-serializer";
 
 // GET /api/expenses/[id]
 export const GET = auth(async (req, { params }) => {
@@ -15,7 +16,7 @@ export const GET = auth(async (req, { params }) => {
     return NextResponse.json({ error: "Expense not found" }, { status: 404 });
   }
 
-  return NextResponse.json(expense);
+  return NextResponse.json(serializePrismaJson(expense));
 });
 
 // PUT /api/expenses/[id] - Update expense (admin only)
@@ -50,7 +51,7 @@ export const PUT = auth(async (req, { params }) => {
     if (notes !== undefined) updateData.notes = notes || null;
 
     const expense = await updateExpense(id, updateData);
-    return NextResponse.json(expense);
+    return NextResponse.json(serializePrismaJson(expense));
   } catch (error) {
     console.error("Error updating expense:", error);
     return NextResponse.json({ error: "Failed to update expense" }, { status: 500 });

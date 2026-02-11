@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { rejectPayment } from "@/services/payment.service";
+import { serializePrismaJson } from "@/lib/utils/prisma-serializer";
 
 export const POST = auth(async (req, { params }) => {
   if (req.auth?.user?.role !== "ADMIN") {
@@ -19,7 +20,7 @@ export const POST = auth(async (req, { params }) => {
 
   try {
     const payment = await rejectPayment(id, rejectionNote);
-    return NextResponse.json(payment);
+    return NextResponse.json(serializePrismaJson(payment));
   } catch (err: any) {
     return NextResponse.json(
       { error: err.message || "Failed to reject payment" },

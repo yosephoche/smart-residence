@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getExpenseStats } from "@/services/expense.service";
+import { serializePrismaJson } from "@/lib/utils/prisma-serializer";
 
 // GET /api/expenses/stats?startDate=2026-01-01&endDate=2026-12-31
 export const GET = auth(async (req) => {
@@ -18,5 +19,5 @@ export const GET = auth(async (req) => {
     endDate: endDate ? new Date(endDate) : undefined,
   });
 
-  return NextResponse.json(stats);
+  return NextResponse.json(serializePrismaJson(stats));
 });

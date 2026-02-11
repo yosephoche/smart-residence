@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
+import Image from "next/image";
 import { Card, CardHeader, CardContent } from "@/components/ui/Card";
 import Alert from "@/components/ui/Alert";
 import Loading from "@/components/ui/Loading";
@@ -227,10 +228,11 @@ export default function PaymentDetailPage() {
             <CardHeader>Payment Proof</CardHeader>
             <CardContent>
               <div className="relative aspect-video bg-gray-100 rounded-lg border-2 border-gray-200 flex items-center justify-center overflow-hidden">
-                <img
+                <Image
                   src={payment.proofImagePath}
                   alt="Payment proof"
-                  className="w-full h-full object-contain"
+                  fill
+                  className="object-contain"
                   onError={(e) => {
                     (e.target as HTMLImageElement).style.display = "none";
                     (e.target as HTMLImageElement).nextElementSibling?.classList.remove("hidden");

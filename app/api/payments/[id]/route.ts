@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getPaymentById } from "@/services/payment.service";
+import { serializePrismaJson } from "@/lib/utils/prisma-serializer";
 
 export const GET = auth(async (req, { params }) => {
   const session = req.auth;
@@ -20,5 +21,5 @@ export const GET = auth(async (req, { params }) => {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  return NextResponse.json(payment);
+  return NextResponse.json(serializePrismaJson(payment));
 });

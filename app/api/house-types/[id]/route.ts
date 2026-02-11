@@ -5,6 +5,7 @@ import {
   updateHouseType,
   deleteHouseType,
 } from "@/services/houseType.service";
+import { serializePrismaJson } from "@/lib/utils/prisma-serializer";
 
 export const GET = auth(async (_req, { params }) => {
   const { id } = await params;
@@ -14,7 +15,7 @@ export const GET = auth(async (_req, { params }) => {
     return NextResponse.json({ error: "House type not found" }, { status: 404 });
   }
 
-  return NextResponse.json(type);
+  return NextResponse.json(serializePrismaJson(type));
 });
 
 export const PUT = auth(async (req, { params }) => {
@@ -27,7 +28,7 @@ export const PUT = auth(async (req, { params }) => {
 
   try {
     const type = await updateHouseType(id, updates);
-    return NextResponse.json(type);
+    return NextResponse.json(serializePrismaJson(type));
   } catch (err: any) {
     return NextResponse.json(
       { error: err.message || "Failed to update house type" },
