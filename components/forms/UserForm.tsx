@@ -133,18 +133,6 @@ export default function UserForm({
         </div>
       )}
 
-      {!isEditMode && (
-        <Input
-          label="Password"
-          type="password"
-          placeholder="Enter password (default: IPL2026)"
-          error={errors.password?.message}
-          helperText="Leave empty to use default password: IPL2026"
-          {...register("password")}
-          fullWidth
-        />
-      )}
-
       {isEditMode && (
         <div className="p-4 bg-gray-50 rounded-lg border-2 border-gray-200">
           <p className="text-xs text-gray-600">

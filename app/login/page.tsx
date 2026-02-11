@@ -144,10 +144,10 @@ export default function LoginPage() {
             </p>
             <div className="space-y-1 text-xs text-gray-600">
               <p>
-                <span className="font-semibold">Admin:</span> admin@smartresidence.com / IPL2026
+                <span className="font-semibold">Admin:</span> admin@smartresidence.com / sakura2026
               </p>
               <p>
-                <span className="font-semibold">User:</span> john@gmail.com / IPL2026
+                <span className="font-semibold">User:</span> john@gmail.com / sakura2026
               </p>
             </div>
           </div>

@@ -23,7 +23,6 @@ export default function CreateUserPage() {
         name: data.name,
         email: data.email,
         role: data.role,
-        password: data.password,
         houseId: data.houseId
       }),
     });
@@ -77,7 +76,7 @@ export default function CreateUserPage() {
           Default Password Policy
         </h3>
         <ul className="text-sm text-primary-800 space-y-1 ml-7">
-          <li>• Default password is <code className="bg-primary-100 px-1.5 py-0.5 rounded font-mono">IPL2026</code></li>
+          <li>• Default password can be configured in <a href="/admin/settings" className="underline hover:text-primary-900">System Settings</a></li>
           <li>• Users will be forced to change password on first login</li>
           <li>• New password must be at least 6 characters</li>
           <li>• Must contain uppercase, lowercase, or numbers</li>

@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { getCachedDefaultPasswordConfig } from "@/lib/cache/default-password";
 
 export async function getAllUsers() {
   const users = await prisma.user.findMany({
@@ -37,10 +38,17 @@ export async function createUser(
   name: string,
   email: string,
   role: "ADMIN" | "USER",
-  password: string = "IPL2026",
+  password?: string, // Optional - fetch from config if not provided
   houseId?: string // Optional house assignment
 ) {
-  const hashedPassword = await bcrypt.hash(password, 10);
+  // Fetch default from config if no password provided
+  let finalPassword = password;
+  if (!finalPassword) {
+    const config = await getCachedDefaultPasswordConfig();
+    finalPassword = config.defaultPassword;
+  }
+
+  const hashedPassword = await bcrypt.hash(finalPassword, 10);
 
   // If houseId provided, verify it's vacant
   if (houseId) {

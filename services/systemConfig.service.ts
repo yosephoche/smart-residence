@@ -96,3 +96,34 @@ export function isWithinUploadWindow(
 
   return { allowed: true };
 }
+
+// Default password configuration
+const DEFAULT_PASSWORD = "sakura2026";
+
+export interface DefaultPasswordConfig {
+  defaultPassword: string;
+}
+
+/**
+ * Get the default password configuration from the database
+ * Falls back to default if no config exists
+ */
+export async function getDefaultPasswordConfig(): Promise<DefaultPasswordConfig> {
+  try {
+    const config = await prisma.systemConfig.findUnique({
+      where: { key: "default_password" },
+    });
+
+    if (!config) {
+      return { defaultPassword: DEFAULT_PASSWORD };
+    }
+
+    const value = config.value as unknown as DefaultPasswordConfig;
+    return {
+      defaultPassword: value.defaultPassword ?? DEFAULT_PASSWORD,
+    };
+  } catch (error) {
+    console.error("Error fetching default password config:", error);
+    return { defaultPassword: DEFAULT_PASSWORD };
+  }
+}

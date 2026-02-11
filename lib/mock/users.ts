@@ -6,7 +6,7 @@ export const mockUsers: User[] = [
     id: "1",
     name: "Admin User",
     email: "admin@smartresidence.com",
-    password: "IPL2026", // Plain text for mock only
+    password: "sakura2026", // Plain text for mock only
     role: "ADMIN",
     isFirstLogin: true,
     createdAt: new Date("2026-01-01").toISOString(),
@@ -16,7 +16,7 @@ export const mockUsers: User[] = [
     id: "2",
     name: "John Doe",
     email: "john@gmail.com",
-    password: "IPL2026",
+    password: "sakura2026",
     role: "USER",
     isFirstLogin: true,
     createdAt: new Date("2026-01-05").toISOString(),
@@ -77,7 +77,7 @@ export function createUser(
   name: string,
   email: string,
   role: "ADMIN" | "USER",
-  password: string = "IPL2026"
+  password: string = "sakura2026"
 ): User {
   const newUser: User = {
     id: (mockUsers.length + 1).toString(),

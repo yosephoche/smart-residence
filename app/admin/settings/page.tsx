@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { UploadWindowConfigForm } from "@/components/forms/UploadWindowConfigForm";
-import { Settings, AlertCircle, CheckCircle } from "lucide-react";
+import { DefaultPasswordConfigForm } from "@/components/forms/DefaultPasswordConfigForm";
+import { Settings, AlertCircle, CheckCircle, Key } from "lucide-react";
 
 interface UploadWindowConfig {
   enabled: boolean;
@@ -10,9 +11,15 @@ interface UploadWindowConfig {
   endDay: number;
 }
 
+interface DefaultPasswordConfig {
+  defaultPassword: string;
+}
+
 export default function SettingsPage() {
   const [uploadWindowConfig, setUploadWindowConfig] =
     useState<UploadWindowConfig | null>(null);
+  const [defaultPasswordConfig, setDefaultPasswordConfig] =
+    useState<DefaultPasswordConfig | null>(null);
   const [loading, setLoading] = useState(true);
   const [alert, setAlert] = useState<{
     type: "success" | "error";
@@ -20,17 +27,29 @@ export default function SettingsPage() {
   } | null>(null);
 
   useEffect(() => {
-    fetchUploadWindowConfig();
+    fetchConfigs();
   }, []);
 
-  const fetchUploadWindowConfig = async () => {
+  const fetchConfigs = async () => {
     try {
-      const response = await fetch("/api/system-config/upload-window");
-      if (!response.ok) throw new Error("Failed to fetch configuration");
-      const data = await response.json();
-      setUploadWindowConfig(data);
+      const [uploadResponse, passwordResponse] = await Promise.all([
+        fetch("/api/system-config/upload-window"),
+        fetch("/api/system-config/default-password"),
+      ]);
+
+      if (!uploadResponse.ok || !passwordResponse.ok) {
+        throw new Error("Failed to fetch configurations");
+      }
+
+      const [uploadData, passwordData] = await Promise.all([
+        uploadResponse.json(),
+        passwordResponse.json(),
+      ]);
+
+      setUploadWindowConfig(uploadData);
+      setDefaultPasswordConfig(passwordData);
     } catch (error) {
-      console.error("Error fetching upload window config:", error);
+      console.error("Error fetching configs:", error);
       setAlert({
         type: "error",
         message: "Gagal memuat konfigurasi. Silakan refresh halaman.",
@@ -40,11 +59,22 @@ export default function SettingsPage() {
     }
   };
 
-  const handleSaveSuccess = (config: UploadWindowConfig) => {
+  const handleUploadWindowSaveSuccess = (config: UploadWindowConfig) => {
     setUploadWindowConfig(config);
     setAlert({
       type: "success",
-      message: "Konfigurasi berhasil disimpan.",
+      message: "Konfigurasi periode upload berhasil disimpan.",
+    });
+
+    // Auto-dismiss success message after 5 seconds
+    setTimeout(() => setAlert(null), 5000);
+  };
+
+  const handlePasswordSaveSuccess = (config: DefaultPasswordConfig) => {
+    setDefaultPasswordConfig(config);
+    setAlert({
+      type: "success",
+      message: "Password default berhasil diubah.",
     });
 
     // Auto-dismiss success message after 5 seconds
@@ -118,7 +148,7 @@ export default function SettingsPage() {
           ) : uploadWindowConfig ? (
             <UploadWindowConfigForm
               initialConfig={uploadWindowConfig}
-              onSaveSuccess={handleSaveSuccess}
+              onSaveSuccess={handleUploadWindowSaveSuccess}
               onSaveError={handleSaveError}
             />
           ) : (
@@ -145,6 +175,58 @@ export default function SettingsPage() {
             </li>
             <li>
               Jika pembatasan dinonaktifkan, user dapat upload kapan saja
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      {/* Default Password Configuration */}
+      <div className="bg-white rounded-lg shadow border border-gray-200 mt-6">
+        <div className="p-6 border-b border-gray-200">
+          <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+            <Key className="w-5 h-5" />
+            Password Default User Baru
+          </h2>
+          <p className="text-sm text-gray-600 mt-1">
+            Atur password default yang akan digunakan saat membuat user baru
+          </p>
+        </div>
+
+        <div className="p-6">
+          {loading ? (
+            <div className="animate-pulse space-y-4">
+              <div className="h-12 bg-gray-200 rounded"></div>
+              <div className="h-12 bg-gray-200 rounded w-1/2"></div>
+            </div>
+          ) : defaultPasswordConfig ? (
+            <DefaultPasswordConfigForm
+              initialConfig={defaultPasswordConfig}
+              onSaveSuccess={handlePasswordSaveSuccess}
+              onSaveError={handleSaveError}
+            />
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              Gagal memuat konfigurasi
+            </div>
+          )}
+        </div>
+
+        {/* Important Notes */}
+        <div className="p-6 bg-yellow-50 border-t border-yellow-200">
+          <h3 className="font-medium text-yellow-900 mb-2 flex items-center gap-2">
+            <AlertCircle className="w-4 h-4" />
+            Informasi Penting
+          </h3>
+          <ul className="text-sm text-yellow-800 space-y-1 ml-6 list-disc">
+            <li>
+              Password ini akan digunakan untuk semua user baru yang dibuat
+            </li>
+            <li>User akan dipaksa untuk mengganti password saat login pertama kali</li>
+            <li>
+              Password minimum 6 karakter untuk keamanan
+            </li>
+            <li>
+              Perubahan password tidak mempengaruhi user yang sudah ada
             </li>
           </ul>
         </div>

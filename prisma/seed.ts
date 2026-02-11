@@ -11,7 +11,7 @@ async function main() {
   await prisma.houseType.deleteMany();
   await prisma.user.deleteMany();
 
-  const hashedIPL2026 = await bcrypt.hash("IPL2026", 10);
+  const hashedIPL2026 = await bcrypt.hash("sakura2026", 10);
   const hashedPassword123 = await bcrypt.hash("password123", 10);
 
   // Seed Users
