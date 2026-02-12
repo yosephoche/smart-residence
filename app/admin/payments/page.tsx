@@ -2,18 +2,20 @@
 
 import { useState, useMemo, useEffect, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import Table, { Column, Pagination } from "@/components/ui/Table";
 import PaymentStatusBadge from "@/components/payments/PaymentStatusBadge";
 import { Skeleton } from "@/components/ui/Loading";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { formatPaymentMonthShort } from "@/lib/calculations";
 import Button from "@/components/ui/Button";
-import Modal from "@/components/ui/Modal";
+import Modal, { ConfirmModal } from "@/components/ui/Modal";
 import Alert from "@/components/ui/Alert";
 import Badge from "@/components/ui/Badge";
 import AdminCreatePaymentForm from "@/components/forms/AdminCreatePaymentForm";
 import { exportCSV, exportXLSX, mapPaymentsForExport, mapHousesWithStatusForExport } from "@/lib/utils/export";
 import { usePagination } from "@/lib/hooks/usePagination";
+import { ImageModal } from "@/components/ui/ImageModal";
 
 interface Payment {
   id: string;
@@ -21,6 +23,7 @@ interface Payment {
   houseId: string;
   amountMonths: number;
   totalAmount: number;
+  proofImagePath: string;
   status: string;
   createdAt: string;
   user?: { id: string; name: string; email: string };
@@ -69,6 +72,13 @@ export default function AdminPaymentsPage() {
   const [showExportDropdown, setShowExportDropdown] = useState(false);
   const exportDropdownRef = useRef<HTMLDivElement>(null);
 
+  // Bulk approval and image preview
+  const [selectedPaymentIds, setSelectedPaymentIds] = useState<string[]>([]);
+  const [imageModalOpen, setImageModalOpen] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string>("");
+  const [bulkApproveModalOpen, setBulkApproveModalOpen] = useState(false);
+  const [isBulkProcessing, setIsBulkProcessing] = useState(false);
+
   // Initial fetch: payments + users in parallel
   useEffect(() => {
     Promise.all([
@@ -105,6 +115,11 @@ export default function AdminPaymentsPage() {
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
+
+  // Reset selections when filters change
+  useEffect(() => {
+    setSelectedPaymentIds([]);
+  }, [statusFilter, filterUserId, filterYear, filterMonth]);
 
   const refetchPayments = () => {
     const fetches: Promise<any>[] = [
@@ -267,8 +282,86 @@ export default function AdminPaymentsPage() {
     }
   };
 
+  const handleImageClick = (imagePath: string) => {
+    setSelectedImage(imagePath);
+    setImageModalOpen(true);
+  };
+
+  const handleBulkApprove = async () => {
+    setIsBulkProcessing(true);
+    try {
+      const res = await fetch("/api/payments/bulk-approve", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ paymentIds: selectedPaymentIds }),
+      });
+
+      if (!res.ok) throw new Error("Bulk approve failed");
+
+      const result = await res.json();
+
+      if (result.succeeded.length > 0) {
+        setSuccessMessage(`Successfully approved ${result.succeeded.length} payment(s)`);
+        setSelectedPaymentIds([]);
+        refetchPayments();
+      }
+
+      if (result.failed.length > 0) {
+        alert(`Failed to approve ${result.failed.length} payment(s). Check details.`);
+      }
+    } catch (error) {
+      alert("Failed to approve payments. Please try again.");
+    } finally {
+      setIsBulkProcessing(false);
+      setBulkApproveModalOpen(false);
+    }
+  };
+
+  const handleSelectAll = () => {
+    const pendingIds = paginatedPayments
+      .filter((p) => p.status === "PENDING")
+      .map((p) => p.id);
+
+    if (selectedPaymentIds.length === pendingIds.length) {
+      setSelectedPaymentIds([]);
+    } else {
+      setSelectedPaymentIds(pendingIds);
+    }
+  };
+
+  const handleToggleSelect = (paymentId: string) => {
+    setSelectedPaymentIds((prev) =>
+      prev.includes(paymentId)
+        ? prev.filter((id) => id !== paymentId)
+        : [...prev, paymentId]
+    );
+  };
+
   // --- Payment table columns ---
   const paymentColumns: Column<Payment>[] = [
+    {
+      key: "select" as any,
+      header: (
+        <input
+          type="checkbox"
+          checked={
+            selectedPaymentIds.length > 0 &&
+            selectedPaymentIds.length === paginatedPayments.filter((p) => p.status === "PENDING").length
+          }
+          onChange={handleSelectAll}
+          className="w-4 h-4 text-primary-600 rounded border-gray-300 focus:ring-primary-500"
+        />
+      ) as any,
+      render: (_, payment) => (
+        <input
+          type="checkbox"
+          checked={selectedPaymentIds.includes(payment.id)}
+          onChange={() => handleToggleSelect(payment.id)}
+          disabled={payment.status !== "PENDING"}
+          className="w-4 h-4 text-primary-600 rounded border-gray-300 focus:ring-primary-500 disabled:opacity-30 disabled:cursor-not-allowed"
+        />
+      ),
+    },
     {
       key: "userId",
       header: "Resident",
@@ -354,6 +447,31 @@ export default function AdminPaymentsPage() {
       header: "Status",
       sortable: true,
       render: (status) => <PaymentStatusBadge status={status as any} />,
+    },
+    {
+      key: "proofImagePath",
+      header: "Proof",
+      render: (_, payment) => (
+        <button
+          onClick={() => handleImageClick(payment.proofImagePath)}
+          className="relative w-16 h-16 rounded-lg overflow-hidden border-2 border-gray-200 hover:border-primary-400 transition-all group"
+        >
+          <Image
+            src={payment.proofImagePath}
+            alt="Payment proof thumbnail"
+            fill
+            className="object-cover group-hover:scale-105 transition-transform"
+            onError={(e) => {
+              (e.target as HTMLImageElement).style.display = "none";
+            }}
+          />
+          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+            <svg className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+            </svg>
+          </div>
+        </button>
+      ),
     },
     {
       key: "id",
@@ -662,6 +780,33 @@ export default function AdminPaymentsPage() {
         </div>
       </div>
 
+      {/* Bulk action bar */}
+      {selectedPaymentIds.length > 0 && (
+        <div className="bg-primary-50 border-2 border-primary-200 rounded-xl p-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center">
+              <svg className="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div>
+              <p className="font-semibold text-gray-900">
+                {selectedPaymentIds.length} payment{selectedPaymentIds.length > 1 ? "s" : ""} selected
+              </p>
+              <p className="text-sm text-gray-600">Ready for bulk approval</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" onClick={() => setSelectedPaymentIds([])}>
+              Clear Selection
+            </Button>
+            <Button variant="primary" onClick={() => setBulkApproveModalOpen(true)}>
+              Approve Selected
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Conditional table: houses view or payment list */}
       {housesViewMode !== null ? (
         <>
@@ -717,6 +862,27 @@ export default function AdminPaymentsPage() {
           isSubmitting={isCreating}
         />
       </Modal>
+
+      {/* Image Preview Modal */}
+      <ImageModal
+        isOpen={imageModalOpen}
+        onClose={() => setImageModalOpen(false)}
+        imageSrc={selectedImage}
+        altText="Payment proof"
+      />
+
+      {/* Bulk Approve Confirmation Modal */}
+      <ConfirmModal
+        isOpen={bulkApproveModalOpen}
+        onClose={() => setBulkApproveModalOpen(false)}
+        title="Approve Multiple Payments"
+        message={`Are you sure you want to approve ${selectedPaymentIds.length} payment(s)? This action cannot be undone.`}
+        confirmText="Approve All"
+        cancelText="Cancel"
+        onConfirm={handleBulkApprove}
+        isLoading={isBulkProcessing}
+        variant="primary"
+      />
     </div>
   );
 }

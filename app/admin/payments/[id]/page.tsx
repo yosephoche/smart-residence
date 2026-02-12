@@ -10,6 +10,7 @@ import PaymentStatusBadge from "@/components/payments/PaymentStatusBadge";
 import ApprovalActions from "@/components/payments/ApprovalActions";
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/utils";
 import { formatPaymentMonth } from "@/lib/calculations";
+import { ImageModal } from "@/components/ui/ImageModal";
 
 interface Payment {
   id: string;
@@ -42,6 +43,7 @@ export default function PaymentDetailPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [notFound, setNotFound] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+  const [imageModalOpen, setImageModalOpen] = useState(false);
 
   useEffect(() => {
     fetch(`/api/payments/${paymentId}`)
@@ -227,12 +229,15 @@ export default function PaymentDetailPage() {
           <Card>
             <CardHeader>Payment Proof</CardHeader>
             <CardContent>
-              <div className="relative aspect-video bg-gray-100 rounded-lg border-2 border-gray-200 flex items-center justify-center overflow-hidden">
+              <button
+                onClick={() => setImageModalOpen(true)}
+                className="relative aspect-video bg-gray-100 rounded-lg border-2 border-gray-200 flex items-center justify-center overflow-hidden w-full group hover:border-primary-400 transition-all cursor-pointer"
+              >
                 <Image
                   src={payment.proofImagePath}
                   alt="Payment proof"
                   fill
-                  className="object-contain"
+                  className="object-contain group-hover:scale-105 transition-transform"
                   onError={(e) => {
                     (e.target as HTMLImageElement).style.display = "none";
                     (e.target as HTMLImageElement).nextElementSibling?.classList.remove("hidden");
@@ -245,7 +250,16 @@ export default function PaymentDetailPage() {
                   <p className="text-gray-600 font-medium mb-2">Payment Proof Image</p>
                   <p className="text-sm text-gray-500">{payment.proofImagePath}</p>
                 </div>
-              </div>
+                {/* Hover overlay */}
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center gap-2">
+                    <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                    </svg>
+                    <span className="text-white text-sm font-medium">Click to view full size</span>
+                  </div>
+                </div>
+              </button>
             </CardContent>
           </Card>
 
@@ -267,6 +281,16 @@ export default function PaymentDetailPage() {
             </Card>
           )}
         </>
+      )}
+
+      {/* Image Modal */}
+      {payment && (
+        <ImageModal
+          isOpen={imageModalOpen}
+          onClose={() => setImageModalOpen(false)}
+          imageSrc={payment.proofImagePath}
+          altText="Payment proof"
+        />
       )}
     </div>
   );

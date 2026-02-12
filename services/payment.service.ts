@@ -154,6 +154,60 @@ export async function approvePayment(paymentId: string, approvedBy: string) {
   });
 }
 
+export async function bulkApprovePayments(
+  paymentIds: string[],
+  approvedBy: string
+) {
+  // Validate approver exists
+  const admin = await prisma.user.findUnique({ where: { id: approvedBy } });
+  if (!admin) {
+    throw new Error("Approver not found. Please log in again.");
+  }
+
+  const succeeded: any[] = [];
+  const failed: { id: string; reason: string }[] = [];
+
+  // Use transaction for atomicity
+  await prisma.$transaction(async (tx) => {
+    for (const paymentId of paymentIds) {
+      try {
+        // Fetch payment to validate status
+        const payment = await tx.payment.findUnique({ where: { id: paymentId } });
+
+        if (!payment) {
+          failed.push({ id: paymentId, reason: "Payment not found" });
+          continue;
+        }
+
+        if (payment.status !== "PENDING") {
+          failed.push({ id: paymentId, reason: `Payment already ${payment.status.toLowerCase()}` });
+          continue;
+        }
+
+        // Approve payment
+        const updated = await tx.payment.update({
+          where: { id: paymentId },
+          data: {
+            status: "APPROVED",
+            approvedBy,
+            approvedAt: new Date(),
+          },
+          include: {
+            user: { select: { name: true, email: true } },
+            house: { select: { houseNumber: true, block: true } },
+          },
+        });
+
+        succeeded.push(updated);
+      } catch (error) {
+        failed.push({ id: paymentId, reason: "Update failed" });
+      }
+    }
+  });
+
+  return { succeeded, failed };
+}
+
 export async function rejectPayment(paymentId: string, rejectionNote: string) {
   return prisma.payment.update({
     where: { id: paymentId },
