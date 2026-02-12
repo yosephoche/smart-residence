@@ -167,43 +167,49 @@ export async function bulkApprovePayments(
   const succeeded: any[] = [];
   const failed: { id: string; reason: string }[] = [];
 
-  // Use transaction for atomicity
-  await prisma.$transaction(async (tx) => {
-    for (const paymentId of paymentIds) {
-      try {
-        // Fetch payment to validate status
-        const payment = await tx.payment.findUnique({ where: { id: paymentId } });
+  // Use transaction for atomicity with extended timeout for bulk operations
+  await prisma.$transaction(
+    async (tx) => {
+      for (const paymentId of paymentIds) {
+        try {
+          // Fetch payment to validate status
+          const payment = await tx.payment.findUnique({ where: { id: paymentId } });
 
-        if (!payment) {
-          failed.push({ id: paymentId, reason: "Payment not found" });
-          continue;
+          if (!payment) {
+            failed.push({ id: paymentId, reason: "Payment not found" });
+            continue;
+          }
+
+          if (payment.status !== "PENDING") {
+            failed.push({ id: paymentId, reason: `Payment already ${payment.status.toLowerCase()}` });
+            continue;
+          }
+
+          // Approve payment
+          const updated = await tx.payment.update({
+            where: { id: paymentId },
+            data: {
+              status: "APPROVED",
+              approvedBy,
+              approvedAt: new Date(),
+            },
+            include: {
+              user: { select: { name: true, email: true } },
+              house: { select: { houseNumber: true, block: true } },
+            },
+          });
+
+          succeeded.push(updated);
+        } catch (error) {
+          failed.push({ id: paymentId, reason: "Update failed" });
         }
-
-        if (payment.status !== "PENDING") {
-          failed.push({ id: paymentId, reason: `Payment already ${payment.status.toLowerCase()}` });
-          continue;
-        }
-
-        // Approve payment
-        const updated = await tx.payment.update({
-          where: { id: paymentId },
-          data: {
-            status: "APPROVED",
-            approvedBy,
-            approvedAt: new Date(),
-          },
-          include: {
-            user: { select: { name: true, email: true } },
-            house: { select: { houseNumber: true, block: true } },
-          },
-        });
-
-        succeeded.push(updated);
-      } catch (error) {
-        failed.push({ id: paymentId, reason: "Update failed" });
       }
+    },
+    {
+      timeout: 30000, // 30 seconds - allows bulk processing of 100+ payments
+      maxWait: 5000,  // Wait up to 5 seconds to acquire a transaction slot
     }
-  });
+  );
 
   return { succeeded, failed };
 }
