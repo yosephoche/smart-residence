@@ -23,7 +23,8 @@ export default function CreateUserPage() {
         name: data.name,
         email: data.email,
         role: data.role,
-        houseId: data.houseId
+        houseId: data.houseId,
+        staffJobType: data.staffJobType,
       }),
     });
 

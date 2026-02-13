@@ -11,6 +11,7 @@ generator client {
 enum Role {
   ADMIN
   USER
+  STAFF
 }
 
 enum PaymentStatus {
@@ -39,12 +40,32 @@ enum IncomeCategory {
   OTHER
 }
 
+enum JobType {
+  SECURITY
+  CLEANING
+  GARDENING
+  MAINTENANCE
+  OTHER
+}
+
+enum AttendanceType {
+  CLOCK_IN
+  CLOCK_OUT
+}
+
+enum ShiftReportType {
+  SHIFT_START
+  SHIFT_MIDDLE
+  SHIFT_END
+}
+
 model User {
   id             String          @id @default(cuid())
   name           String
   email          String          @unique
   password       String
   role           Role            @default(USER)
+  staffJobType   JobType?
   isFirstLogin   Boolean         @default(true)
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
@@ -54,6 +75,8 @@ model User {
   expenses       Expense[]
   incomes        Income[]
   systemConfigUpdates SystemConfig[]
+  attendances    Attendance[]
+  shiftReports   ShiftReport[]
 }
 
 model HouseType {
@@ -143,4 +166,45 @@ model SystemConfig {
   updater   User     @relation(fields: [updatedBy], references: [id])
 
   @@index([key])
+}
+
+model Attendance {
+  id              String    @id @default(cuid())
+  staffId         String
+  clockInAt       DateTime
+  clockOutAt      DateTime?
+  shiftStartTime  String
+
+  // Clock IN data
+  clockInLat      Float
+  clockInLon      Float
+  clockInPhoto    String
+
+  // Clock OUT data (nullable)
+  clockOutLat     Float?
+  clockOutLon     Float?
+  clockOutPhoto   String?
+
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  staff           User       @relation(fields: [staffId], references: [id])
+  shiftReports    ShiftReport[]
+
+  @@index([staffId, clockInAt])
+}
+
+model ShiftReport {
+  id            String           @id @default(cuid())
+  staffId       String
+  attendanceId  String?
+  reportType    ShiftReportType
+  content       String
+  photoUrl      String?
+  reportedAt    DateTime         @default(now())
+
+  staff         User             @relation(fields: [staffId], references: [id])
+  attendance    Attendance?      @relation(fields: [attendanceId], references: [id], onDelete: SetNull)
+
+  @@index([staffId, reportedAt])
 }

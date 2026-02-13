@@ -49,6 +49,7 @@ export default function UserForm({
 
   const role = watch("role");
   const houseId = watch("houseId");
+  const staffJobType = watch("staffJobType");
 
   // Fetch available houses on mount (only in create mode)
   useEffect(() => {
@@ -95,11 +96,34 @@ export default function UserForm({
         >
           <option value="USER">User (Resident)</option>
           <option value="ADMIN">Admin</option>
+          <option value="STAFF">Staff</option>
         </select>
         {errors.role && (
           <p className="text-xs text-danger-600">{errors.role.message}</p>
         )}
       </div>
+
+      {!isEditMode && role === "STAFF" && (
+        <div className="flex flex-col gap-1.5">
+          <label className="text-sm font-medium text-gray-700 tracking-tight">
+            Job Type <span className="text-danger-500 ml-1">*</span>
+          </label>
+          <select
+            {...register("staffJobType")}
+            className="w-full px-4 py-2.5 text-sm text-gray-900 bg-white border-2 border-gray-300 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:border-primary-500 focus:ring-primary-100"
+          >
+            <option value="">Select job type...</option>
+            <option value="SECURITY">Security</option>
+            <option value="CLEANING">Cleaning</option>
+            <option value="GARDENING">Gardening</option>
+            <option value="MAINTENANCE">Maintenance</option>
+            <option value="OTHER">Other</option>
+          </select>
+          {errors.staffJobType && (
+            <p className="text-xs text-danger-600">{errors.staffJobType.message}</p>
+          )}
+        </div>
+      )}
 
       {!isEditMode && role === "USER" && (
         <div className="flex flex-col gap-1.5">

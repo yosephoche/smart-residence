@@ -41,6 +41,7 @@ export const {
           name: user.name,
           email: user.email,
           role: user.role,
+          staffJobType: user.staffJobType ?? undefined,
           isFirstLogin: user.isFirstLogin,
         };
       },
@@ -53,6 +54,7 @@ export const {
         // Initial sign-in: populate token from user
         token.id = user.id;
         token.role = user.role;
+        token.staffJobType = user.staffJobType ?? undefined;
         token.isFirstLogin = user.isFirstLogin;
       }
       // DB query removed - password change flow already forces re-login (auth-client.tsx:56-64)

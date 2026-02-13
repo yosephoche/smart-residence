@@ -59,7 +59,8 @@ export async function validateUploadedFile(
 
 export async function saveUploadedFile(
   buffer: Buffer,
-  originalName: string
+  originalName: string,
+  folder: string = "smartresidence/payments"
 ): Promise<string> {
   // Ensure upload directory exists
   // const resolvedDir = path.resolve(UPLOAD_DIR);
@@ -94,7 +95,7 @@ export async function saveUploadedFile(
 
   // Upload ke Cloudinary; folder "payments" untuk pengelolaan mudah
   const result = await cloudinary.uploader.upload(dataUri, {
-    folder: "smartresidence/payments",
+    folder: folder,
     // Gunakan sharp (jika masih dipakai) atau biarkan Cloudinary transformasi otomatis
   });
 

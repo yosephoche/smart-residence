@@ -21,6 +21,7 @@ export const authConfig: NextAuthConfig = {
 
       session.user.id = token.id;
       session.user.role = token.role;
+      session.user.staffJobType = token.staffJobType;
       session.user.isFirstLogin = token.isFirstLogin;
       return session;
     },
@@ -35,7 +36,10 @@ export const authConfig: NextAuthConfig = {
         if (u.isFirstLogin) {
           return Response.redirect(new URL("/change-password", nextUrl));
         }
-        const dest = u.role === "ADMIN" ? "/admin/dashboard" : "/user/dashboard";
+        const dest =
+          u.role === "ADMIN" ? "/admin/dashboard" :
+          u.role === "STAFF" ? "/staff/dashboard" :
+          "/user/dashboard";
         return Response.redirect(new URL(dest, nextUrl));
       }
 
@@ -57,17 +61,27 @@ export const authConfig: NextAuthConfig = {
 
       // If already changed password, don't allow access to change-password
       if (!user.isFirstLogin && nextUrl.pathname === "/change-password") {
-        const dest = user.role === "ADMIN" ? "/admin/dashboard" : "/user/dashboard";
+        const dest =
+          user.role === "ADMIN" ? "/admin/dashboard" :
+          user.role === "STAFF" ? "/staff/dashboard" :
+          "/user/dashboard";
         return Response.redirect(new URL(dest, nextUrl));
       }
 
       // Role-based routing
       if (nextUrl.pathname.startsWith("/admin") && user.role !== "ADMIN") {
-        return Response.redirect(new URL("/user/dashboard", nextUrl));
+        const dest = user.role === "STAFF" ? "/staff/dashboard" : "/user/dashboard";
+        return Response.redirect(new URL(dest, nextUrl));
       }
 
       if (nextUrl.pathname.startsWith("/user") && user.role !== "USER") {
-        return Response.redirect(new URL("/admin/dashboard", nextUrl));
+        const dest = user.role === "STAFF" ? "/staff/dashboard" : "/admin/dashboard";
+        return Response.redirect(new URL(dest, nextUrl));
+      }
+
+      if (nextUrl.pathname.startsWith("/staff") && user.role !== "STAFF") {
+        const dest = user.role === "ADMIN" ? "/admin/dashboard" : "/user/dashboard";
+        return Response.redirect(new URL(dest, nextUrl));
       }
 
       return true;

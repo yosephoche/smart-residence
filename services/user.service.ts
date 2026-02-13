@@ -10,6 +10,7 @@ export async function getAllUsers() {
       name: true,
       email: true,
       role: true,
+      staffJobType: true,
       isFirstLogin: true,
       createdAt: true,
       updatedAt: true,
@@ -26,6 +27,7 @@ export async function getUserById(id: string) {
       name: true,
       email: true,
       role: true,
+      staffJobType: true,
       isFirstLogin: true,
       createdAt: true,
       updatedAt: true,
@@ -37,10 +39,19 @@ export async function getUserById(id: string) {
 export async function createUser(
   name: string,
   email: string,
-  role: "ADMIN" | "USER",
+  role: "ADMIN" | "USER" | "STAFF",
   password?: string, // Optional - fetch from config if not provided
-  houseId?: string // Optional house assignment
+  houseId?: string, // Optional house assignment
+  staffJobType?: "SECURITY" | "CLEANING" | "GARDENING" | "MAINTENANCE" | "OTHER" // Required for STAFF role
 ) {
+  // Validate role and staffJobType combination
+  if (role === "STAFF" && !staffJobType) {
+    throw new Error("STAFF role requires a job type");
+  }
+  if (role !== "STAFF" && staffJobType) {
+    throw new Error("Only STAFF role can have a job type");
+  }
+
   // Fetch default from config if no password provided
   let finalPassword = password;
   if (!finalPassword) {
@@ -74,6 +85,7 @@ export async function createUser(
         email,
         password: hashedPassword,
         role,
+        staffJobType,
         isFirstLogin: true,
       },
       select: {
@@ -81,6 +93,7 @@ export async function createUser(
         name: true,
         email: true,
         role: true,
+        staffJobType: true,
         isFirstLogin: true,
         createdAt: true,
         updatedAt: true,
@@ -101,7 +114,12 @@ export async function createUser(
 
 export async function updateUser(
   id: string,
-  updates: Partial<{ name: string; email: string; role: "ADMIN" | "USER" }>
+  updates: Partial<{
+    name: string;
+    email: string;
+    role: "ADMIN" | "USER" | "STAFF";
+    staffJobType: "SECURITY" | "CLEANING" | "GARDENING" | "MAINTENANCE" | "OTHER" | null;
+  }>
 ) {
   const user = await prisma.user.update({
     where: { id },
@@ -111,6 +129,7 @@ export async function updateUser(
       name: true,
       email: true,
       role: true,
+      staffJobType: true,
       isFirstLogin: true,
       createdAt: true,
       updatedAt: true,

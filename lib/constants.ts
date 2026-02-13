@@ -7,6 +7,7 @@ export const APP_DESCRIPTION = "IPL Management System";
 export const ROLES = {
   ADMIN: "ADMIN",
   USER: "USER",
+  STAFF: "STAFF",
 } as const;
 
 export type Role = (typeof ROLES)[keyof typeof ROLES];
@@ -42,3 +43,9 @@ export const CURRENCY_LOCALE = "id-ID";
 export const CURRENCY_COMPACT_THRESHOLD = 10_000_000; // 10 million
 export const CURRENCY_COMPACT_PRECISION = 2;          // 2 decimal places
 export const CURRENCY_SHOW_TOOLTIPS = true;           // Show full value on hover
+
+// Staff Attendance Geofence
+// TODO: Make these configurable via SystemConfig
+export const GEOFENCE_RADIUS_METERS = 100; // 100 meter radius
+export const RESIDENCE_CENTER_LAT = -6.2088; // Placeholder: Jakarta coordinates
+export const RESIDENCE_CENTER_LON = 106.8456; // Update with actual residence location

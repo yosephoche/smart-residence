@@ -1,0 +1,427 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Camera, MapPin, Clock, CheckCircle } from "lucide-react";
+import CameraCapture from "@/components/ui/CameraCapture";
+import Button from "@/components/ui/Button";
+
+interface ActiveShift {
+  id: string;
+  clockInAt: string;
+  shiftStartTime: string;
+}
+
+export default function AttendancePage() {
+  const router = useRouter();
+  const [activeShift, setActiveShift] = useState<ActiveShift | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Clock In state
+  const [shiftStartTime, setShiftStartTime] = useState("");
+  const [clockInPhoto, setClockInPhoto] = useState<File | null>(null);
+  const [clockInLocation, setClockInLocation] = useState<{ lat: number; lon: number } | null>(null);
+  const [showClockInCamera, setShowClockInCamera] = useState(false);
+
+  // Clock Out state
+  const [clockOutPhoto, setClockOutPhoto] = useState<File | null>(null);
+  const [clockOutLocation, setClockOutLocation] = useState<{ lat: number; lon: number } | null>(null);
+  const [showClockOutCamera, setShowClockOutCamera] = useState(false);
+
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchActiveShift();
+  }, []);
+
+  const fetchActiveShift = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch("/api/attendance/active");
+      const data = await res.json();
+      setActiveShift(data.activeShift);
+    } catch (err) {
+      console.error("Failed to fetch active shift:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const captureLocation = (setter: (loc: { lat: number; lon: number }) => void) => {
+    setError(null);
+    if (!navigator.geolocation) {
+      setError("Geolocation is not supported by your browser");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setter({
+          lat: position.coords.latitude,
+          lon: position.coords.longitude,
+        });
+      },
+      (err) => {
+        console.error("Geolocation error:", err);
+        if (err.code === err.PERMISSION_DENIED) {
+          setError("Location permission denied. Please allow location access in your browser settings.");
+        } else if (err.code === err.POSITION_UNAVAILABLE) {
+          setError("Location information unavailable. Please try again.");
+        } else {
+          setError("Failed to get your location. Please try again.");
+        }
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0,
+      }
+    );
+  };
+
+  const handleClockIn = async () => {
+    if (!shiftStartTime || !clockInPhoto || !clockInLocation) {
+      setError("Please complete all fields: shift start time, photo, and location");
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      setError(null);
+
+      const formData = new FormData();
+      formData.append("shiftStartTime", shiftStartTime);
+      formData.append("lat", clockInLocation.lat.toString());
+      formData.append("lon", clockInLocation.lon.toString());
+      formData.append("photo", clockInPhoto);
+
+      const res = await fetch("/api/attendance/clock-in", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to clock in");
+      }
+
+      // Success - refresh active shift
+      await fetchActiveShift();
+
+      // Reset form
+      setShiftStartTime("");
+      setClockInPhoto(null);
+      setClockInLocation(null);
+    } catch (err: any) {
+      console.error("Clock in error:", err);
+      setError(err.message || "Failed to clock in. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleClockOut = async () => {
+    if (!clockOutPhoto || !clockOutLocation) {
+      setError("Please complete all fields: photo and location");
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      setError(null);
+
+      const formData = new FormData();
+      formData.append("lat", clockOutLocation.lat.toString());
+      formData.append("lon", clockOutLocation.lon.toString());
+      formData.append("photo", clockOutPhoto);
+
+      const res = await fetch("/api/attendance/clock-out", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to clock out");
+      }
+
+      // Success - refresh active shift
+      await fetchActiveShift();
+
+      // Reset form
+      setClockOutPhoto(null);
+      setClockOutLocation(null);
+    } catch (err: any) {
+      console.error("Clock out error:", err);
+      setError(err.message || "Failed to clock out. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleString("en-US", {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading attendance...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-2xl mx-auto space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">Attendance</h1>
+        <p className="text-sm text-gray-600 mt-1">Clock in and out of your shift</p>
+      </div>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <p className="text-sm text-red-800">{error}</p>
+        </div>
+      )}
+
+      {/* Clock In Form (when not clocked in) */}
+      {!activeShift && (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 space-y-4">
+          <h2 className="text-lg font-semibold text-gray-900">Clock In</h2>
+
+          {/* Shift Start Time */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Shift Start Time <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="time"
+              value={shiftStartTime}
+              onChange={(e) => setShiftStartTime(e.target.value)}
+              className="w-full px-4 py-2.5 text-sm border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Enter your scheduled shift start time
+            </p>
+          </div>
+
+          {/* Photo Capture */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Selfie <span className="text-red-500">*</span>
+            </label>
+            {clockInPhoto ? (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm text-green-700">
+                  <CheckCircle className="w-5 h-5" />
+                  Photo captured
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowClockInCamera(true)}
+                >
+                  Retake Photo
+                </Button>
+              </div>
+            ) : (
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => setShowClockInCamera(true)}
+                className="w-full"
+              >
+                <Camera className="w-5 h-5 mr-2" />
+                Take Selfie
+              </Button>
+            )}
+          </div>
+
+          {/* Location Capture */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Location <span className="text-red-500">*</span>
+            </label>
+            {clockInLocation ? (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm text-green-700">
+                  <CheckCircle className="w-5 h-5" />
+                  Location captured
+                </div>
+                <p className="text-xs text-gray-500">
+                  Lat: {clockInLocation.lat.toFixed(6)}, Lon: {clockInLocation.lon.toFixed(6)}
+                </p>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => captureLocation(setClockInLocation)}
+                >
+                  Recapture Location
+                </Button>
+              </div>
+            ) : (
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => captureLocation(setClockInLocation)}
+                className="w-full"
+              >
+                <MapPin className="w-5 h-5 mr-2" />
+                Capture Location
+              </Button>
+            )}
+          </div>
+
+          <Button
+            onClick={handleClockIn}
+            variant="primary"
+            size="lg"
+            isLoading={submitting}
+            disabled={!shiftStartTime || !clockInPhoto || !clockInLocation}
+            fullWidth
+          >
+            <Clock className="w-5 h-5 mr-2" />
+            Clock In
+          </Button>
+        </div>
+      )}
+
+      {/* Clock Out Form (when clocked in) */}
+      {activeShift && (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 space-y-4">
+          <div className="flex items-center gap-3 pb-4 border-b border-gray-200">
+            <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">Currently On Shift</h2>
+              <p className="text-sm text-gray-600">
+                Clocked in at {formatDate(activeShift.clockInAt)}
+              </p>
+            </div>
+          </div>
+
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <p className="text-sm text-blue-800">
+              Complete the following steps to clock out
+            </p>
+          </div>
+
+          {/* Photo Capture */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Selfie <span className="text-red-500">*</span>
+            </label>
+            {clockOutPhoto ? (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm text-green-700">
+                  <CheckCircle className="w-5 h-5" />
+                  Photo captured
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowClockOutCamera(true)}
+                >
+                  Retake Photo
+                </Button>
+              </div>
+            ) : (
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => setShowClockOutCamera(true)}
+                className="w-full"
+              >
+                <Camera className="w-5 h-5 mr-2" />
+                Take Selfie
+              </Button>
+            )}
+          </div>
+
+          {/* Location Capture */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Location <span className="text-red-500">*</span>
+            </label>
+            {clockOutLocation ? (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm text-green-700">
+                  <CheckCircle className="w-5 h-5" />
+                  Location captured
+                </div>
+                <p className="text-xs text-gray-500">
+                  Lat: {clockOutLocation.lat.toFixed(6)}, Lon: {clockOutLocation.lon.toFixed(6)}
+                </p>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => captureLocation(setClockOutLocation)}
+                >
+                  Recapture Location
+                </Button>
+              </div>
+            ) : (
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => captureLocation(setClockOutLocation)}
+                className="w-full"
+              >
+                <MapPin className="w-5 h-5 mr-2" />
+                Capture Location
+              </Button>
+            )}
+          </div>
+
+          <Button
+            onClick={handleClockOut}
+            variant="primary"
+            size="lg"
+            isLoading={submitting}
+            disabled={!clockOutPhoto || !clockOutLocation}
+            fullWidth
+          >
+            <Clock className="w-5 h-5 mr-2" />
+            Clock Out
+          </Button>
+        </div>
+      )}
+
+      {/* Camera Modals */}
+      {showClockInCamera && (
+        <CameraCapture
+          onCapture={(file) => {
+            setClockInPhoto(file);
+            setShowClockInCamera(false);
+          }}
+          onClose={() => setShowClockInCamera(false)}
+        />
+      )}
+
+      {showClockOutCamera && (
+        <CameraCapture
+          onCapture={(file) => {
+            setClockOutPhoto(file);
+            setShowClockOutCamera(false);
+          }}
+          onClose={() => setShowClockOutCamera(false)}
+        />
+      )}
+    </div>
+  );
+}
