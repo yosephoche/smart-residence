@@ -418,7 +418,7 @@ export default function UserDashboardPage() {
       </div>
 
       {/* Floating Action Button - Mobile/Tablet Only */}
-      {house && (
+      {house?.houseType && (
         <>
           <FloatingActionButton
             onClick={handleOpenUploadModal}
@@ -430,7 +430,7 @@ export default function UserDashboardPage() {
           <PaymentUploadModal
             isOpen={isUploadModalOpen}
             onClose={() => setIsUploadModalOpen(false)}
-            house={house}
+            house={house as { id: string; houseNumber: string; houseType: { price: number } }}
             onSuccess={handleUploadSuccess}
           />
         </>
