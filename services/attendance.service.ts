@@ -1,9 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import {
-  GEOFENCE_RADIUS_METERS,
-  RESIDENCE_CENTER_LAT,
-  RESIDENCE_CENTER_LON,
-} from "@/lib/constants";
+import { getCachedGeofenceConfig } from "@/lib/cache/geofence";
 
 /**
  * Calculate distance between two points using Haversine formula
@@ -34,17 +30,19 @@ function calculateDistance(
  * Validate geolocation is within geofence radius
  * Throws error if outside radius
  */
-export function validateGeolocation(lat: number, lon: number): void {
+export async function validateGeolocation(lat: number, lon: number): Promise<void> {
+  const config = await getCachedGeofenceConfig();
+
   const distance = calculateDistance(
-    RESIDENCE_CENTER_LAT,
-    RESIDENCE_CENTER_LON,
+    config.centerLat,
+    config.centerLon,
     lat,
     lon
   );
 
-  if (distance > GEOFENCE_RADIUS_METERS) {
+  if (distance > config.radiusMeters) {
     throw new Error(
-      `Location is ${Math.round(distance)}m from residence center. Must be within ${GEOFENCE_RADIUS_METERS}m radius.`
+      `Lokasi Anda ${Math.round(distance)}m dari pusat kantor. Harus dalam radius ${config.radiusMeters}m.`
     );
   }
 }
@@ -61,7 +59,7 @@ export async function clockIn(
   photoUrl: string
 ) {
   // Validate geolocation
-  validateGeolocation(lat, lon);
+  await validateGeolocation(lat, lon);
 
   // Check for existing active shift
   const activeShift = await prisma.attendance.findFirst({
@@ -111,7 +109,7 @@ export async function clockOut(
   photoUrl: string
 ) {
   // Validate geolocation
-  validateGeolocation(lat, lon);
+  await validateGeolocation(lat, lon);
 
   // Find active shift
   const activeShift = await prisma.attendance.findFirst({

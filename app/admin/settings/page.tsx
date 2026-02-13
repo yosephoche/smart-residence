@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { UploadWindowConfigForm } from "@/components/forms/UploadWindowConfigForm";
 import { DefaultPasswordConfigForm } from "@/components/forms/DefaultPasswordConfigForm";
-import { Settings, AlertCircle, CheckCircle, Key } from "lucide-react";
+import { GeofenceConfigForm } from "@/components/forms/GeofenceConfigForm";
+import { Settings, AlertCircle, CheckCircle, Key, MapPin } from "lucide-react";
 
 interface UploadWindowConfig {
   enabled: boolean;
@@ -15,11 +16,20 @@ interface DefaultPasswordConfig {
   defaultPassword: string;
 }
 
+interface GeofenceConfig {
+  radiusMeters: number;
+  centerLat: number;
+  centerLon: number;
+}
+
 export default function SettingsPage() {
   const [uploadWindowConfig, setUploadWindowConfig] =
     useState<UploadWindowConfig | null>(null);
   const [defaultPasswordConfig, setDefaultPasswordConfig] =
     useState<DefaultPasswordConfig | null>(null);
+  const [geofenceConfig, setGeofenceConfig] = useState<GeofenceConfig | null>(
+    null
+  );
   const [loading, setLoading] = useState(true);
   const [alert, setAlert] = useState<{
     type: "success" | "error";
@@ -32,22 +42,26 @@ export default function SettingsPage() {
 
   const fetchConfigs = async () => {
     try {
-      const [uploadResponse, passwordResponse] = await Promise.all([
-        fetch("/api/system-config/upload-window"),
-        fetch("/api/system-config/default-password"),
-      ]);
+      const [uploadResponse, passwordResponse, geofenceResponse] =
+        await Promise.all([
+          fetch("/api/system-config/upload-window"),
+          fetch("/api/system-config/default-password"),
+          fetch("/api/system-config/geofence"),
+        ]);
 
-      if (!uploadResponse.ok || !passwordResponse.ok) {
+      if (!uploadResponse.ok || !passwordResponse.ok || !geofenceResponse.ok) {
         throw new Error("Failed to fetch configurations");
       }
 
-      const [uploadData, passwordData] = await Promise.all([
+      const [uploadData, passwordData, geofenceData] = await Promise.all([
         uploadResponse.json(),
         passwordResponse.json(),
+        geofenceResponse.json(),
       ]);
 
       setUploadWindowConfig(uploadData);
       setDefaultPasswordConfig(passwordData);
+      setGeofenceConfig(geofenceData);
     } catch (error) {
       console.error("Error fetching configs:", error);
       setAlert({
@@ -75,6 +89,17 @@ export default function SettingsPage() {
     setAlert({
       type: "success",
       message: "Password default berhasil diubah.",
+    });
+
+    // Auto-dismiss success message after 5 seconds
+    setTimeout(() => setAlert(null), 5000);
+  };
+
+  const handleGeofenceSaveSuccess = (config: GeofenceConfig) => {
+    setGeofenceConfig(config);
+    setAlert({
+      type: "success",
+      message: "Konfigurasi geofence berhasil disimpan.",
     });
 
     // Auto-dismiss success message after 5 seconds
@@ -227,6 +252,62 @@ export default function SettingsPage() {
             </li>
             <li>
               Perubahan password tidak mempengaruhi user yang sudah ada
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      {/* Geofence Configuration */}
+      <div className="bg-white rounded-lg shadow border border-gray-200 mt-6">
+        <div className="p-6 border-b border-gray-200">
+          <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+            <MapPin className="w-5 h-5" />
+            Geofence Absensi Staff
+          </h2>
+          <p className="text-sm text-gray-600 mt-1">
+            Atur lokasi pusat dan radius untuk validasi lokasi absensi staff
+          </p>
+        </div>
+
+        <div className="p-6">
+          {loading ? (
+            <div className="animate-pulse space-y-4">
+              <div className="h-12 bg-gray-200 rounded"></div>
+              <div className="h-12 bg-gray-200 rounded"></div>
+              <div className="h-12 bg-gray-200 rounded"></div>
+            </div>
+          ) : geofenceConfig ? (
+            <GeofenceConfigForm
+              initialConfig={geofenceConfig}
+              onSaveSuccess={handleGeofenceSaveSuccess}
+              onSaveError={handleSaveError}
+            />
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              Gagal memuat konfigurasi
+            </div>
+          )}
+        </div>
+
+        <div className="p-6 bg-amber-50 border-t border-amber-200">
+          <h3 className="font-medium text-amber-900 mb-2 flex items-center gap-2">
+            <AlertCircle className="w-4 h-4" />
+            Cara Mendapatkan Koordinat
+          </h3>
+          <ul className="text-sm text-amber-800 space-y-1 ml-6 list-disc">
+            <li>Buka Google Maps, cari lokasi kantor/residence Anda</li>
+            <li>
+              Klik kanan pada titik tengah lokasi, pilih &quot;What&apos;s
+              here?&quot;
+            </li>
+            <li>
+              Koordinat akan muncul di bagian bawah (format: -6.2088, 106.8456)
+            </li>
+            <li>
+              Angka pertama adalah Latitude, angka kedua adalah Longitude
+            </li>
+            <li>
+              Radius yang direkomendasikan: 50-200 meter tergantung ukuran area
             </li>
           </ul>
         </div>

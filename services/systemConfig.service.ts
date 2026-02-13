@@ -127,3 +127,42 @@ export async function getDefaultPasswordConfig(): Promise<DefaultPasswordConfig>
     return { defaultPassword: DEFAULT_PASSWORD };
   }
 }
+
+// Default geofence configuration values
+const DEFAULT_GEOFENCE_CONFIG = {
+  radiusMeters: 100,
+  centerLat: -5.091819113786232, // Actual residence coordinates
+  centerLon: 119.52879655433493,
+};
+
+export interface GeofenceConfig {
+  radiusMeters: number;
+  centerLat: number;
+  centerLon: number;
+}
+
+/**
+ * Get the geofence configuration from the database
+ * Falls back to default if no config exists
+ */
+export async function getGeofenceConfig(): Promise<GeofenceConfig> {
+  try {
+    const config = await prisma.systemConfig.findUnique({
+      where: { key: "geofence" },
+    });
+
+    if (!config) {
+      return DEFAULT_GEOFENCE_CONFIG;
+    }
+
+    const value = config.value as unknown as GeofenceConfig;
+    return {
+      radiusMeters: value.radiusMeters ?? DEFAULT_GEOFENCE_CONFIG.radiusMeters,
+      centerLat: value.centerLat ?? DEFAULT_GEOFENCE_CONFIG.centerLat,
+      centerLon: value.centerLon ?? DEFAULT_GEOFENCE_CONFIG.centerLon,
+    };
+  } catch (error) {
+    console.error("Error fetching geofence config:", error);
+    return DEFAULT_GEOFENCE_CONFIG;
+  }
+}
