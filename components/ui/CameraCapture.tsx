@@ -19,8 +19,18 @@ export default function CameraCapture({ onCapture, onClose }: CameraCaptureProps
 
   useEffect(() => {
     startCamera();
+
+    // Timeout safety - if camera doesn't load in 10 seconds, show error
+    const timeout = setTimeout(() => {
+      if (loading) {
+        setLoading(false);
+        setError("Camera is taking too long to load. Please try again.");
+      }
+    }, 10000);
+
     return () => {
       stopCamera();
+      clearTimeout(timeout);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -40,10 +50,12 @@ export default function CameraCapture({ onCapture, onClose }: CameraCaptureProps
       });
 
       setStream(mediaStream);
+
+      // Video element is always in DOM, so we can safely set srcObject
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
+        // Don't set loading to false yet - wait for video to be ready via onLoadedMetadata
       }
-      setLoading(false);
     } catch (err: any) {
       console.error("Camera access error:", err);
       setLoading(false);
@@ -55,6 +67,20 @@ export default function CameraCapture({ onCapture, onClose }: CameraCaptureProps
       } else {
         setError("Failed to access camera. Please check your browser permissions.");
       }
+    }
+  };
+
+  const handleLoadedMetadata = async () => {
+    if (!videoRef.current) return;
+
+    try {
+      // Explicitly play the video (autoPlay attribute alone is not reliable, especially on mobile Safari)
+      await videoRef.current.play();
+      setLoading(false);
+    } catch (err) {
+      console.error("Video play error:", err);
+      setError("Failed to start camera preview. Please try again.");
+      setLoading(false);
     }
   };
 
@@ -129,7 +155,8 @@ export default function CameraCapture({ onCapture, onClose }: CameraCaptureProps
 
       {/* Camera/Preview Area */}
       <div className="flex-1 flex items-center justify-center relative overflow-hidden">
-        {error ? (
+        {/* Error Message */}
+        {error && (
           <div className="text-center p-6 max-w-md">
             <p className="text-white text-lg mb-4">{error}</p>
             <button
@@ -139,23 +166,34 @@ export default function CameraCapture({ onCapture, onClose }: CameraCaptureProps
               Try Again
             </button>
           </div>
-        ) : loading ? (
+        )}
+
+        {/* Loading Message */}
+        {loading && !error && (
           <div className="text-white text-lg">Loading camera...</div>
-        ) : capturedImage ? (
+        )}
+
+        {/* Captured Image */}
+        {capturedImage && (
           <img
             src={capturedImage}
             alt="Captured selfie"
             className="max-w-full max-h-full object-contain"
           />
-        ) : (
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            muted
-            className="max-w-full max-h-full object-contain transform scale-x-[-1]" // Mirror for selfie
-          />
         )}
+
+        {/* Video Element - Always rendered but hidden when not in use */}
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
+          muted
+          onLoadedMetadata={handleLoadedMetadata}
+          className={`max-w-full max-h-full object-contain transform scale-x-[-1] ${
+            error || loading || capturedImage ? 'hidden' : ''
+          }`}
+          style={{ minHeight: '300px' }}
+        />
 
         {/* Hidden canvas for capturing */}
         <canvas ref={canvasRef} className="hidden" />
