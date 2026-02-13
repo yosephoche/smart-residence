@@ -37,3 +37,8 @@ export const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
 // Currency
 export const CURRENCY_SYMBOL = "Rp";
 export const CURRENCY_LOCALE = "id-ID";
+
+// Number Formatting
+export const CURRENCY_COMPACT_THRESHOLD = 10_000_000; // 10 million
+export const CURRENCY_COMPACT_PRECISION = 2;          // 2 decimal places
+export const CURRENCY_SHOW_TOOLTIPS = true;           // Show full value on hover

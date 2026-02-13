@@ -1,86 +1,145 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-client";
+import {
+  Home,
+  Users,
+  Building2,
+  Tag,
+  CreditCard,
+  ArrowRightLeft,
+  TrendingUp,
+  TrendingDown,
+  Settings,
+  ChevronDown,
+  ChevronRight,
+  LogOut
+} from "lucide-react";
 
-interface NavItem {
+interface NavItemBase {
   name: string;
-  href: string;
   icon: React.ReactNode;
 }
 
-const navItems: NavItem[] = [
+interface NavLink extends NavItemBase {
+  type: "item";
+  href: string;
+}
+
+interface NavGroup extends NavItemBase {
+  type: "group";
+  children: {
+    name: string;
+    href: string;
+    icon: React.ReactNode;
+  }[];
+}
+
+type NavConfig = (NavLink | NavGroup)[];
+
+const navConfig: NavConfig = [
   {
+    type: "item",
     name: "Dashboard",
     href: "/admin/dashboard",
-    icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-      </svg>
-    ),
+    icon: <Home className="w-5 h-5" />,
   },
   {
+    type: "item",
     name: "Users",
     href: "/admin/users",
-    icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-      </svg>
-    ),
+    icon: <Users className="w-5 h-5" />,
   },
   {
+    type: "item",
     name: "Houses",
     href: "/admin/houses",
-    icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-      </svg>
-    ),
+    icon: <Building2 className="w-5 h-5" />,
   },
   {
+    type: "item",
     name: "House Types",
     href: "/admin/house-types",
-    icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-      </svg>
-    ),
+    icon: <Tag className="w-5 h-5" />,
   },
   {
+    type: "item",
     name: "Payments",
     href: "/admin/payments",
-    icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-      </svg>
-    ),
+    icon: <CreditCard className="w-5 h-5" />,
   },
   {
-    name: "Expenses",
-    href: "/admin/expenses",
-    icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2zM10 8.5a.5.5 0 11-1 0 .5.5 0 011 0zm5 5a.5.5 0 11-1 0 .5.5 0 011 0z" />
-      </svg>
-    ),
+    type: "group",
+    name: "Transaksi",
+    icon: <ArrowRightLeft className="w-5 h-5" />,
+    children: [
+      {
+        name: "Pemasukan",
+        href: "/admin/income",
+        icon: <TrendingUp className="w-4 h-4" />,
+      },
+      {
+        name: "Pengeluaran",
+        href: "/admin/expenses",
+        icon: <TrendingDown className="w-4 h-4" />,
+      },
+    ],
   },
   {
+    type: "item",
     name: "Settings",
     href: "/admin/settings",
-    icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-      </svg>
-    ),
+    icon: <Settings className="w-5 h-5" />,
   },
 ];
+
+const STORAGE_KEY = "admin-sidebar-expanded-groups";
 
 export default function AdminSidebar() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+
+  // Load expanded groups from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        setExpandedGroups(new Set(JSON.parse(saved)));
+      }
+    } catch (error) {
+      console.error("Failed to load sidebar state:", error);
+    }
+  }, []);
+
+  // Save expanded groups to localStorage
+  const toggleGroup = (groupName: string) => {
+    setExpandedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(groupName)) {
+        next.delete(groupName);
+      } else {
+        next.add(groupName);
+      }
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(Array.from(next)));
+      } catch (error) {
+        console.error("Failed to save sidebar state:", error);
+      }
+      return next;
+    });
+  };
+
+  // Check if any child in group is active
+  const isGroupActive = (group: NavGroup) => {
+    return group.children.some(
+      (child) => pathname === child.href || pathname.startsWith(child.href + "/")
+    );
+  };
 
   return (
     <aside className="w-64 bg-white border-r-2 border-gray-200 flex flex-col h-screen sticky top-0">
@@ -88,9 +147,7 @@ export default function AdminSidebar() {
       <div className="p-6 border-b-2 border-gray-200">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center">
-            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-            </svg>
+            <Home className="w-6 h-6 text-white" />
           </div>
           <div>
             <h1 className="font-bold text-gray-900 text-lg tracking-tight">SmartResidence</h1>
@@ -101,23 +158,76 @@ export default function AdminSidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-        {navItems.map((item) => {
-          const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+        {navConfig.map((item) => {
+          if (item.type === "item") {
+            const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200",
+                  isActive
+                    ? "bg-primary-600 text-white shadow-md"
+                    : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                )}
+              >
+                {item.icon}
+                {item.name}
+              </Link>
+            );
+          }
+
+          // Group rendering
+          const isExpanded = expandedGroups.has(item.name);
+          const isActive = isGroupActive(item);
 
           return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200",
-                isActive
-                  ? "bg-primary-600 text-white shadow-md"
-                  : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+            <div key={item.name} className="space-y-1">
+              <button
+                onClick={() => toggleGroup(item.name)}
+                className={cn(
+                  "w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200",
+                  isActive
+                    ? "bg-primary-100 text-primary-700"
+                    : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                )}
+              >
+                {item.icon}
+                <span className="flex-1 text-left">{item.name}</span>
+                {isExpanded ? (
+                  <ChevronDown className="w-4 h-4" />
+                ) : (
+                  <ChevronRight className="w-4 h-4" />
+                )}
+              </button>
+
+              {isExpanded && (
+                <div className="ml-2 space-y-1">
+                  {item.children.map((child) => {
+                    const isChildActive =
+                      pathname === child.href || pathname.startsWith(child.href + "/");
+
+                    return (
+                      <Link
+                        key={child.href}
+                        href={child.href}
+                        className={cn(
+                          "flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
+                          isChildActive
+                            ? "bg-primary-600 text-white shadow-md"
+                            : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                        )}
+                      >
+                        {child.icon}
+                        {child.name}
+                      </Link>
+                    );
+                  })}
+                </div>
               )}
-            >
-              {item.icon}
-              {item.name}
-            </Link>
+            </div>
           );
         })}
       </nav>
@@ -139,9 +249,7 @@ export default function AdminSidebar() {
           onClick={logout}
           className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-          </svg>
+          <LogOut className="w-4 h-4" />
           Logout
         </button>
       </div>

@@ -1,4 +1,7 @@
-import { cn } from "@/lib/utils";
+"use client";
+
+import { useState, useMemo } from "react";
+import { cn, formatCurrencyCompact, getDynamicTextSize } from "@/lib/utils";
 
 export interface StatCardProps {
   title: string;
@@ -10,6 +13,9 @@ export interface StatCardProps {
     isPositive: boolean;
   };
   variant?: "primary" | "success" | "warning" | "danger" | "info";
+  compactNumbers?: boolean;
+  compactThreshold?: number;
+  showTooltip?: boolean;
 }
 
 export default function StatCard({
@@ -19,7 +25,34 @@ export default function StatCard({
   icon,
   trend,
   variant = "primary",
+  compactNumbers = false,
+  compactThreshold = 10_000_000,
+  showTooltip = true,
 }: StatCardProps) {
+  const [isHovered, setIsHovered] = useState(false);
+
+  // Process value for compact display if needed
+  const processedValue = useMemo(() => {
+    if (typeof value === "number" && compactNumbers) {
+      return formatCurrencyCompact(value, {
+        threshold: compactThreshold,
+        precision: 2,
+        forceCompact: false,
+      });
+    }
+    return {
+      display: String(value),
+      full: String(value),
+      isAbbreviated: false,
+    };
+  }, [value, compactNumbers, compactThreshold]);
+
+  // Determine which value to display
+  const displayValue = processedValue.display;
+
+  // Get dynamic font size based on display value length
+  const textSizeClass = getDynamicTextSize(displayValue, 10);
+
   const variants = {
     primary: "bg-primary-50 text-primary-600 border-primary-200",
     success: "bg-success-50 text-success-600 border-success-200",
@@ -29,13 +62,34 @@ export default function StatCard({
   };
 
   return (
-    <div className="bg-white rounded-xl border-2 border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow">
+    <div className="bg-white rounded-xl border-2 border-gray-200 p-6 md:p-8 shadow-sm hover:shadow-md transition-shadow">
       <div className="flex items-center justify-between">
-        <div className="flex-1">
+        <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-gray-600 mb-1">{title}</p>
-          <p className="text-3xl font-bold text-gray-900 tracking-tight mb-1">
-            {value}
-          </p>
+          <div className="relative group">
+            <p
+              className={cn(
+                "font-bold text-gray-900 tracking-tight mb-1 leading-tight",
+                textSizeClass
+              )}
+              onMouseEnter={() => setIsHovered(true)}
+              onMouseLeave={() => setIsHovered(false)}
+            >
+              {displayValue}
+            </p>
+            {/* Tooltip for full value when abbreviated */}
+            {processedValue.isAbbreviated && showTooltip && isHovered && (
+              <div className="absolute z-50 bottom-full left-0 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg shadow-lg whitespace-nowrap">
+                <div className="relative">
+                  {processedValue.full}
+                  {/* Arrow pointing down */}
+                  <div className="absolute top-full left-4 -mt-1">
+                    <div className="border-4 border-transparent border-t-gray-900"></div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
           {subtitle && (
             <p className="text-xs text-gray-500">{subtitle}</p>
           )}
@@ -74,7 +128,7 @@ export default function StatCard({
             </div>
           )}
         </div>
-        <div className={cn("w-14 h-14 rounded-xl border-2 flex items-center justify-center", variants[variant])}>
+        <div className={cn("w-12 h-12 sm:w-14 sm:h-14 rounded-xl border-2 flex items-center justify-center flex-shrink-0", variants[variant])}>
           {icon}
         </div>
       </div>

@@ -1,4 +1,9 @@
-import { CURRENCY_SYMBOL, CURRENCY_LOCALE } from "./constants";
+import {
+  CURRENCY_SYMBOL,
+  CURRENCY_LOCALE,
+  CURRENCY_COMPACT_THRESHOLD,
+  CURRENCY_COMPACT_PRECISION,
+} from "./constants";
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -74,4 +79,94 @@ export function truncate(text: string, length: number = 50): string {
 // Sleep utility for debugging/testing
 export function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// Format currency with smart abbreviation (compact display)
+export interface FormatCurrencyCompactResult {
+  display: string;
+  full: string;
+  isAbbreviated: boolean;
+  suffix?: string;
+}
+
+export function formatCurrencyCompact(
+  amount: number,
+  options: {
+    threshold?: number;
+    precision?: number;
+    forceCompact?: boolean;
+  } = {}
+): FormatCurrencyCompactResult {
+  const {
+    threshold = CURRENCY_COMPACT_THRESHOLD,
+    precision = CURRENCY_COMPACT_PRECISION,
+    forceCompact = false,
+  } = options;
+
+  // Generate full format for tooltip
+  const full = formatCurrency(amount);
+
+  // Check if we should abbreviate
+  const shouldAbbreviate = forceCompact || Math.abs(amount) >= threshold;
+
+  if (!shouldAbbreviate) {
+    return {
+      display: full,
+      full,
+      isAbbreviated: false,
+    };
+  }
+
+  // Determine divisor and suffix based on magnitude
+  let divisor = 1;
+  let suffix = "";
+
+  const absAmount = Math.abs(amount);
+
+  if (absAmount >= 1_000_000_000_000) {
+    // Triliun (Trillion)
+    divisor = 1_000_000_000_000;
+    suffix = "Triliun";
+  } else if (absAmount >= 1_000_000_000) {
+    // Miliar (Billion)
+    divisor = 1_000_000_000;
+    suffix = "Miliar";
+  } else if (absAmount >= 1_000_000) {
+    // Juta (Million)
+    divisor = 1_000_000;
+    suffix = "Juta";
+  }
+
+  // Calculate abbreviated value
+  const abbreviated = amount / divisor;
+
+  // Format with Indonesian locale
+  const formattedNumber = new Intl.NumberFormat(CURRENCY_LOCALE, {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: precision,
+  }).format(abbreviated);
+
+  const display = `${CURRENCY_SYMBOL} ${formattedNumber} ${suffix}`;
+
+  return {
+    display,
+    full,
+    isAbbreviated: true,
+    suffix,
+  };
+}
+
+// Get dynamic text size class based on text length
+export function getDynamicTextSize(text: string, maxLength: number = 10): string {
+  const length = text.length;
+
+  if (length <= maxLength) {
+    return "text-3xl"; // 48px
+  } else if (length <= maxLength + 3) {
+    return "text-2xl"; // 36px
+  } else if (length <= maxLength + 6) {
+    return "text-xl"; // 24px
+  } else {
+    return "text-lg"; // 20px
+  }
 }

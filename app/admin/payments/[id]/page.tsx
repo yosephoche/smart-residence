@@ -89,6 +89,9 @@ export default function PaymentDetailPage() {
       setPayment((prev) => prev ? { ...prev, status: updated.status, rejectionNote: updated.rejectionNote } : prev);
       setSuccessMessage("Payment has been rejected");
       setTimeout(() => router.push("/admin/payments"), 2000);
+    } else {
+      const error = await res.json();
+      alert(`Error: ${error.error || "Failed to reject payment"}`);
     }
     setIsProcessing(false);
   };
@@ -279,6 +282,14 @@ export default function PaymentDetailPage() {
                 />
               </CardContent>
             </Card>
+          )}
+
+          {payment.status === "APPROVED" && (
+            <Alert
+              variant="info"
+              title="Payment Approved"
+              message="ⓘ Approved payments cannot be rejected as income has already been recorded in the system."
+            />
           )}
         </>
       )}

@@ -29,6 +29,16 @@ enum ExpenseCategory {
   OTHER
 }
 
+enum IncomeCategory {
+  MONTHLY_FEES
+  LATE_FEES
+  GUEST_PARKING
+  FACILITY_RENTAL
+  MAINTENANCE_CHARGE
+  REGISTRATION_FEE
+  OTHER
+}
+
 model User {
   id             String          @id @default(cuid())
   name           String
@@ -42,6 +52,7 @@ model User {
   payments       Payment[]
   approvedPayments Payment[]     @relation("ApprovedBy")
   expenses       Expense[]
+  incomes        Income[]
   systemConfigUpdates SystemConfig[]
 }
 
@@ -82,6 +93,7 @@ model Payment {
   house          House         @relation(fields: [houseId], references: [id])
   approver       User?         @relation("ApprovedBy", fields: [approvedBy], references: [id])
   paymentMonths  PaymentMonth[]
+  income         Income?
 }
 
 model PaymentMonth {
@@ -104,6 +116,21 @@ model Expense {
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
   creator     User            @relation(fields: [createdBy], references: [id])
+}
+
+model Income {
+  id          String         @id @default(cuid())
+  date        DateTime
+  category    IncomeCategory
+  amount      Decimal
+  description String
+  notes       String?
+  createdBy   String
+  paymentId   String?        @unique
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  creator     User           @relation(fields: [createdBy], references: [id])
+  payment     Payment?       @relation(fields: [paymentId], references: [id])
 }
 
 model SystemConfig {

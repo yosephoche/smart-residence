@@ -144,13 +144,45 @@ export async function approvePayment(paymentId: string, approvedBy: string) {
     throw new Error("Approver not found. Please log in again.");
   }
 
-  return prisma.payment.update({
-    where: { id: paymentId },
-    data: {
-      status: "APPROVED",
-      approvedBy,
-      approvedAt: new Date(),
-    },
+  // Use transaction to ensure atomicity
+  return await prisma.$transaction(async (tx) => {
+    // 1. Approve the payment
+    const payment = await tx.payment.update({
+      where: { id: paymentId },
+      data: {
+        status: "APPROVED",
+        approvedBy,
+        approvedAt: new Date(),
+      },
+      include: {
+        user: { select: { name: true } },
+        house: { select: { houseNumber: true, block: true } },
+      },
+    });
+
+    // 2. Check if income already exists (idempotency)
+    const existingIncome = await tx.income.findUnique({
+      where: { paymentId: payment.id },
+    });
+
+    if (!existingIncome) {
+      // 3. Create income record
+      const description = `IPL Payment - ${payment.user.name} - ${payment.house.block} ${payment.house.houseNumber} - ${payment.amountMonths} bulan`;
+
+      await tx.income.create({
+        data: {
+          date: payment.approvedAt!,
+          category: "MONTHLY_FEES",
+          amount: payment.totalAmount,
+          description,
+          notes: `Auto-generated from payment #${payment.id}`,
+          createdBy: approvedBy,
+          paymentId: payment.id,
+        },
+      });
+    }
+
+    return payment;
   });
 }
 
@@ -173,7 +205,13 @@ export async function bulkApprovePayments(
       for (const paymentId of paymentIds) {
         try {
           // Fetch payment to validate status
-          const payment = await tx.payment.findUnique({ where: { id: paymentId } });
+          const payment = await tx.payment.findUnique({
+            where: { id: paymentId },
+            include: {
+              user: { select: { name: true, email: true } },
+              house: { select: { houseNumber: true, block: true } },
+            },
+          });
 
           if (!payment) {
             failed.push({ id: paymentId, reason: "Payment not found" });
@@ -193,13 +231,26 @@ export async function bulkApprovePayments(
               approvedBy,
               approvedAt: new Date(),
             },
-            include: {
-              user: { select: { name: true, email: true } },
-              house: { select: { houseNumber: true, block: true } },
-            },
           });
 
-          succeeded.push(updated);
+          // Create income (check for duplicates)
+          const existingIncome = await tx.income.findUnique({ where: { paymentId } });
+          if (!existingIncome) {
+            const description = `IPL Payment - ${payment.user.name} - ${payment.house.block} ${payment.house.houseNumber} - ${payment.amountMonths} bulan`;
+            await tx.income.create({
+              data: {
+                date: updated.approvedAt!,
+                category: "MONTHLY_FEES",
+                amount: payment.totalAmount,
+                description,
+                notes: `Auto-generated from payment #${paymentId}`,
+                createdBy: approvedBy,
+                paymentId,
+              },
+            });
+          }
+
+          succeeded.push({ ...updated, user: payment.user, house: payment.house });
         } catch (error) {
           failed.push({ id: paymentId, reason: "Update failed" });
         }
@@ -215,6 +266,20 @@ export async function bulkApprovePayments(
 }
 
 export async function rejectPayment(paymentId: string, rejectionNote: string) {
+  // Fetch payment first to check status
+  const payment = await prisma.payment.findUnique({
+    where: { id: paymentId },
+    select: { status: true },
+  });
+
+  if (!payment) {
+    throw new Error("Payment not found");
+  }
+
+  if (payment.status === "APPROVED") {
+    throw new Error("Cannot reject approved payment. Payment is already approved and income has been recorded.");
+  }
+
   return prisma.payment.update({
     where: { id: paymentId },
     data: {

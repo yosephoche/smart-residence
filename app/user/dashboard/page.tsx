@@ -2,13 +2,17 @@
 
 import { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
+import { Upload } from "lucide-react";
 import { Card, CardHeader, CardContent } from "@/components/ui/Card";
+import StatCard from "@/components/ui/StatCard";
 import Button from "@/components/ui/Button";
 import Badge from "@/components/ui/Badge";
 import { Skeleton } from "@/components/ui/Loading";
 import { useAuth } from "@/lib/auth-client";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { formatPaymentMonth } from "@/lib/calculations";
+import FloatingActionButton from "@/components/ui/FloatingActionButton";
+import PaymentUploadModal from "@/components/modals/PaymentUploadModal";
 
 interface House {
   id: string;
@@ -30,9 +34,15 @@ export default function UserDashboardPage() {
   const { user } = useAuth();
   const [houses, setHouses] = useState<House[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
-  const [totalRevenue, setTotalRevenue] = useState(0);
+  const [totalIncome, setTotalIncome] = useState(0);
+  const [monthlyIncome, setMonthlyIncome] = useState(0);
+  const [totalExpenses, setTotalExpenses] = useState(0);
   const [monthlyExpenses, setMonthlyExpenses] = useState(0);
+  const [totalPaidMonths, setTotalPaidMonths] = useState(0);
+  const [totalPaid, setTotalPaid] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const fetchingRef = useRef(false);
 
   // Memoize user.id to stabilize dependency
@@ -51,27 +61,47 @@ export default function UserDashboardPage() {
       fetch("/api/payments").then((r) => r.json()),
       fetch("/api/payments/stats").then((r) => r.json()),
       fetch(`/api/expenses/monthly?year=${currentYear}&month=${currentMonth}`).then((r) => r.json()),
+      fetch("/api/expenses/stats").then((r) => r.json()),
+      fetch(`/api/income/monthly?year=${currentYear}&month=${currentMonth}`).then((r) => r.json()),
+      fetch("/api/income/stats").then((r) => r.json()),
     ])
-      .then(([housesData, paymentsData, statsData, expData]) => {
+      .then(([housesData, paymentsData, statsData, monthlyExpData, expStatsData, monthlyIncData, incStatsData]) => {
         setHouses(housesData);
         setPayments(paymentsData);
-        setTotalRevenue(statsData.totalRevenue);
-        setMonthlyExpenses(expData.total);
+        setMonthlyExpenses(monthlyExpData.total);
+        setTotalExpenses(expStatsData.totalAmount);
+        setMonthlyIncome(monthlyIncData.total);
+        setTotalIncome(incStatsData.totalAmount);
+
+        // Calculate user-specific payment stats
+        const approvedPayments = paymentsData.filter((p: Payment) => p.status === "APPROVED");
+        const paidMonths = approvedPayments.reduce(
+          (sum: number, p: Payment) => sum + (p.paymentMonths ? p.paymentMonths.length : p.amountMonths),
+          0
+        );
+        const totalPaidAmount = approvedPayments.reduce((sum: number, p: Payment) => sum + Number(p.totalAmount), 0);
+
+        setTotalPaidMonths(paidMonths);
+        setTotalPaid(totalPaidAmount);
         setIsLoading(false);
       })
       .catch((err) => console.error("Failed to fetch dashboard data:", err))
       .finally(() => { fetchingRef.current = false; });
-  }, [userId]);
+  }, [userId, refreshTrigger]);
 
   const house = houses[0];
   const monthlyRate = house?.houseType?.price ? Number(house.houseType.price) : 0;
 
-  const approvedPayments = payments.filter((p) => p.status === "APPROVED");
-  const totalPaidMonths = approvedPayments.reduce(
-    (sum, p) => sum + (p.paymentMonths ? p.paymentMonths.length : p.amountMonths),
-    0
-  );
-  const totalPaid = approvedPayments.reduce((sum, p) => sum + Number(p.totalAmount), 0);
+  // Modal handlers
+  const handleOpenUploadModal = () => {
+    setIsUploadModalOpen(true);
+  };
+
+  const handleUploadSuccess = () => {
+    // Trigger data refresh by incrementing refreshTrigger
+    setRefreshTrigger((prev) => prev + 1);
+  };
+
   const now = new Date();
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth() + 1;
@@ -93,15 +123,29 @@ export default function UserDashboardPage() {
   if (isLoading) {
     return (
       <div className="space-y-8">
+        {/* Header skeleton */}
         <div>
           <Skeleton className="h-9 w-64 mb-2" />
           <Skeleton className="h-5 w-48" />
         </div>
+        {/* House info skeleton */}
         <Skeleton className="h-40" />
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {[...Array(6)].map((_, i) => (
-            <Skeleton key={i} className="h-28" />
+        {/* User metrics skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <Skeleton key={i} className="h-32" />
           ))}
+        </div>
+        {/* Financial metrics skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <Skeleton key={i} className="h-32" />
+          ))}
+        </div>
+        {/* Quick actions + recent payments skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Skeleton className="h-64" />
+          <Skeleton className="h-64" />
         </div>
       </div>
     );
@@ -160,69 +204,135 @@ export default function UserDashboardPage() {
       {house && (
         <>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white rounded-xl border-2 border-gray-200 p-5 shadow-sm">
-            <p className="text-sm font-medium text-gray-600 mb-1">Paid Months</p>
-            <p className="text-3xl font-bold text-gray-900">{totalPaidMonths}</p>
-            <p className="text-xs text-gray-500 mt-1">of 12 months</p>
-          </div>
-          <div className={`rounded-xl border-2 p-5 shadow-sm ${
-            currentMonthStatus === "APPROVED"
-              ? "bg-success-50 border-success-200"
-              : currentMonthStatus === "PENDING"
-                ? "bg-warning-50 border-warning-200"
-                : "bg-danger-50 border-danger-200"
-          }`}>
-            <p className={`text-sm font-medium mb-1 ${
-              currentMonthStatus === "APPROVED"
-                ? "text-success-700"
-                : currentMonthStatus === "PENDING"
-                  ? "text-warning-700"
-                  : "text-danger-700"
-            }`}>This Month</p>
-            <p className={`text-3xl font-bold ${
-              currentMonthStatus === "APPROVED"
-                ? "text-success-900"
-                : currentMonthStatus === "PENDING"
-                  ? "text-warning-900"
-                  : "text-danger-900"
-            }`}>
-              {currentMonthStatus === "APPROVED" ? "Paid" : currentMonthStatus === "PENDING" ? "Pending" : "Unpaid"}
-            </p>
-            <p className={`text-xs mt-1 ${
-              currentMonthStatus === "APPROVED"
-                ? "text-success-700"
-                : currentMonthStatus === "PENDING"
-                  ? "text-warning-700"
-                  : "text-danger-700"
-            }`}>{currentMonthLabel}{currentMonthStatus === "PENDING" && " · Awaiting approval"}</p>
+          <StatCard
+            title="Paid Months"
+            value={totalPaidMonths}
+            subtitle="of 12 months"
+            variant="info"
+            icon={
+              <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+              </svg>
+            }
+          />
+
+          <div className="relative">
+            <StatCard
+              title="This Month"
+              value={currentMonthStatus === "APPROVED" ? "Paid" : currentMonthStatus === "PENDING" ? "Pending" : "Unpaid"}
+              subtitle={currentMonthLabel + (currentMonthStatus === "PENDING" ? " · Awaiting approval" : "")}
+              variant={currentMonthStatus === "APPROVED" ? "success" : currentMonthStatus === "PENDING" ? "warning" : "danger"}
+              icon={
+                currentMonthStatus === "APPROVED" ? (
+                  <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                ) : currentMonthStatus === "PENDING" ? (
+                  <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                ) : (
+                  <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                )
+              }
+            />
             {currentMonthStatus === "UNPAID" && (
-              <Link href="/user/payment" className="inline-block mt-2">
-                <Button variant="danger" size="sm">Pay Now</Button>
-              </Link>
+              <div className="mt-3">
+                <Link href="/user/payment" className="inline-block">
+                  <Button variant="danger" size="sm">Pay Now</Button>
+                </Link>
+              </div>
             )}
           </div>
-          <div className="bg-success-50 rounded-xl border-2 border-success-200 p-5 shadow-sm">
-            <p className="text-sm font-medium text-success-700 mb-1">Total Paid</p>
-            <p className="text-xl font-bold text-success-900">{formatCurrency(totalPaid)}</p>
-            <p className="text-xs text-success-700 mt-1">this year</p>
-          </div>
-          <div className="bg-warning-50 rounded-xl border-2 border-warning-200 p-5 shadow-sm">
-            <p className="text-sm font-medium text-warning-700 mb-1">Pending</p>
-            <p className="text-3xl font-bold text-warning-900">{pendingPayments.length}</p>
-            <p className="text-xs text-warning-700 mt-1">awaiting approval</p>
-          </div>
+
+          <StatCard
+            title="Total Paid"
+            value={totalPaid}
+            subtitle="this year"
+            variant="success"
+            compactNumbers={true}
+            compactThreshold={10_000_000}
+            icon={
+              <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+            }
+          />
+
+          <StatCard
+            title="Pending"
+            value={pendingPayments.length}
+            subtitle="awaiting approval"
+            variant="warning"
+            icon={
+              <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            }
+          />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-primary-50 rounded-xl border-2 border-primary-200 p-5 shadow-sm">
-            <p className="text-sm font-medium text-primary-700 mb-1">Total Revenue</p>
-            <p className="text-xl font-bold text-primary-900">{formatCurrency(totalRevenue)}</p>
-            <p className="text-xs text-primary-700 mt-1">All residents</p>
-          </div>
-          <div className="bg-danger-50 rounded-xl border-2 border-danger-200 p-5 shadow-sm">
-            <p className="text-sm font-medium text-danger-700 mb-1">Monthly Expenses</p>
-            <p className="text-xl font-bold text-danger-900">{formatCurrency(monthlyExpenses)}</p>
-            <p className="text-xs text-danger-700 mt-1">Current month</p>
+        {/* Financial Overview */}
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Financial Overview</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <StatCard
+              title="Total Pemasukan"
+              value={totalIncome}
+              subtitle="All-time income"
+              variant="success"
+              compactNumbers={true}
+              compactThreshold={10_000_000}
+              icon={
+                <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
+              }
+            />
+
+            <StatCard
+              title="Total Pengeluaran"
+              value={totalExpenses}
+              subtitle="All-time expenses"
+              variant="danger"
+              compactNumbers={true}
+              compactThreshold={10_000_000}
+              icon={
+                <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
+                </svg>
+              }
+            />
+
+            <StatCard
+              title="Pemasukan Bulan Ini"
+              value={monthlyIncome}
+              subtitle="Current month income"
+              variant="success"
+              compactNumbers={true}
+              compactThreshold={10_000_000}
+              icon={
+                <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              }
+            />
+
+            <StatCard
+              title="Pengeluaran Bulan Ini"
+              value={monthlyExpenses}
+              subtitle="Current month expenses"
+              variant="danger"
+              compactNumbers={true}
+              compactThreshold={10_000_000}
+              icon={
+                <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              }
+            />
           </div>
         </div>
         </>
@@ -306,6 +416,25 @@ export default function UserDashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Floating Action Button - Mobile/Tablet Only */}
+      {house && (
+        <>
+          <FloatingActionButton
+            onClick={handleOpenUploadModal}
+            icon={<Upload className="w-6 h-6" />}
+            label="Upload Pembayaran"
+          />
+
+          {/* Payment Upload Modal */}
+          <PaymentUploadModal
+            isOpen={isUploadModalOpen}
+            onClose={() => setIsUploadModalOpen(false)}
+            house={house}
+            onSuccess={handleUploadSuccess}
+          />
+        </>
+      )}
     </div>
   );
 }

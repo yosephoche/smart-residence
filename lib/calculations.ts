@@ -134,6 +134,37 @@ export function getExpenseCategoryOptions() {
 }
 
 /**
+ * Get income category label in Indonesian
+ */
+export function getIncomeCategoryLabel(category: string): string {
+  const labels: Record<string, string> = {
+    MONTHLY_FEES: "Iuran Bulanan",
+    LATE_FEES: "Denda Keterlambatan",
+    GUEST_PARKING: "Parkir Tamu",
+    FACILITY_RENTAL: "Sewa Fasilitas",
+    MAINTENANCE_CHARGE: "Biaya Pemeliharaan Khusus",
+    REGISTRATION_FEE: "Biaya Pendaftaran",
+    OTHER: "Lainnya",
+  };
+  return labels[category] ?? category;
+}
+
+/**
+ * Get all income category options for dropdowns
+ */
+export function getIncomeCategoryOptions() {
+  return [
+    { value: "MONTHLY_FEES", label: "Iuran Bulanan" },
+    { value: "LATE_FEES", label: "Denda Keterlambatan" },
+    { value: "GUEST_PARKING", label: "Parkir Tamu" },
+    { value: "FACILITY_RENTAL", label: "Sewa Fasilitas" },
+    { value: "MAINTENANCE_CHARGE", label: "Biaya Pemeliharaan Khusus" },
+    { value: "REGISTRATION_FEE", label: "Biaya Pendaftaran" },
+    { value: "OTHER", label: "Lainnya" },
+  ];
+}
+
+/**
  * Calculate net revenue (revenue - expenses)
  */
 export function calculateNetRevenue(
