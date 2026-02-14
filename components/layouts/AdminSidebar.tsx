@@ -17,7 +17,12 @@ import {
   Settings,
   ChevronDown,
   ChevronRight,
-  LogOut
+  LogOut,
+  UserCheck,
+  Clock,
+  FileText,
+  CalendarDays,
+  ClipboardList
 } from "lucide-react";
 
 interface NavItemBase {
@@ -86,6 +91,33 @@ const navConfig: NavConfig = [
         name: "Pengeluaran",
         href: "/admin/expenses",
         icon: <TrendingDown className="w-4 h-4" />,
+      },
+    ],
+  },
+  {
+    type: "group",
+    name: "Staff Management",
+    icon: <UserCheck className="w-5 h-5" />,
+    children: [
+      {
+        name: "Attendance",
+        href: "/admin/staff/attendance",
+        icon: <Clock className="w-4 h-4" />,
+      },
+      {
+        name: "Shift Reports",
+        href: "/admin/staff/reports",
+        icon: <FileText className="w-4 h-4" />,
+      },
+      {
+        name: "Shift Templates",
+        href: "/admin/staff/shifts",
+        icon: <ClipboardList className="w-4 h-4" />,
+      },
+      {
+        name: "Schedule",
+        href: "/admin/staff/schedule",
+        icon: <CalendarDays className="w-4 h-4" />,
       },
     ],
   },

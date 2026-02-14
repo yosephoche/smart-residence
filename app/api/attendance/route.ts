@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { getAllAttendance } from "@/services/attendance.service";
+import { getAllAttendanceEnhanced } from "@/services/attendance.service";
 import { serializePrismaJson } from "@/lib/utils/prisma-serializer";
+import { JobType } from "@prisma/client";
 
 export async function GET(req: NextRequest) {
   try {
@@ -22,6 +23,8 @@ export async function GET(req: NextRequest) {
 
     const { searchParams } = new URL(req.url);
     const staffId = searchParams.get("staffId") || undefined;
+    const jobType = searchParams.get("jobType") as JobType | undefined;
+    const lateOnly = searchParams.get("lateOnly") === "true";
     const startDate = searchParams.get("startDate")
       ? new Date(searchParams.get("startDate")!)
       : undefined;
@@ -29,10 +32,12 @@ export async function GET(req: NextRequest) {
       ? new Date(searchParams.get("endDate")!)
       : undefined;
 
-    const attendances = await getAllAttendance({
+    const attendances = await getAllAttendanceEnhanced({
       staffId,
+      jobType,
       startDate,
       endDate,
+      lateOnly,
     });
 
     return NextResponse.json({

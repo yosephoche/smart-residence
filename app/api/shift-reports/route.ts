@@ -120,6 +120,7 @@ export async function GET(req: NextRequest) {
       });
     } else if (session.user.role === "ADMIN") {
       const staffId = searchParams.get("staffId") || undefined;
+      const jobType = searchParams.get("jobType") as any || undefined;
       const reportType = (searchParams.get("reportType") as ShiftReportType) || undefined;
       const startDate = searchParams.get("startDate")
         ? new Date(searchParams.get("startDate")!)
@@ -130,6 +131,7 @@ export async function GET(req: NextRequest) {
 
       const reports = await getAllShiftReports({
         staffId,
+        jobType,
         reportType,
         startDate,
         endDate,

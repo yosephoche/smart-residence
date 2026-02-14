@@ -2,8 +2,15 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { getCachedDefaultPasswordConfig } from "@/lib/cache/default-password";
 
-export async function getAllUsers() {
+export async function getAllUsers(filters?: { role?: "ADMIN" | "USER" | "STAFF" }) {
+  const where: any = {};
+
+  if (filters?.role) {
+    where.role = filters.role;
+  }
+
   const users = await prisma.user.findMany({
+    where,
     orderBy: { createdAt: "desc" },
     select: {
       id: true,

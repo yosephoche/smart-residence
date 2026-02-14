@@ -4,11 +4,18 @@ import bcrypt from "bcryptjs";
 const prisma = new PrismaClient();
 
 async function main() {
-  // Clear existing data
+  // Clear existing data (order matters due to foreign keys)
   await prisma.paymentMonth.deleteMany();
+  await prisma.income.deleteMany();
   await prisma.payment.deleteMany();
+  await prisma.expense.deleteMany();
+  await prisma.staffSchedule.deleteMany();
+  await prisma.shiftTemplate.deleteMany();
+  await prisma.shiftReport.deleteMany();
+  await prisma.attendance.deleteMany();
   await prisma.house.deleteMany();
   await prisma.houseType.deleteMany();
+  await prisma.systemConfig.deleteMany();
   await prisma.user.deleteMany();
 
   const hashedIPL2026 = await bcrypt.hash("sakura2026", 10);
@@ -56,6 +63,111 @@ async function main() {
       role: "USER",
       isFirstLogin: false,
       createdAt: new Date("2026-01-15"),
+    },
+  });
+
+  // Seed Staff Users
+  const securityStaff1 = await prisma.user.create({
+    data: {
+      name: "Ahmad Satria",
+      email: "ahmad.security@smartresidence.com",
+      password: hashedIPL2026,
+      role: "STAFF",
+      staffJobType: "SECURITY",
+      isFirstLogin: false,
+      createdAt: new Date("2026-01-02"),
+    },
+  });
+
+  const securityStaff2 = await prisma.user.create({
+    data: {
+      name: "Budi Santoso",
+      email: "budi.security@smartresidence.com",
+      password: hashedIPL2026,
+      role: "STAFF",
+      staffJobType: "SECURITY",
+      isFirstLogin: false,
+      createdAt: new Date("2026-01-02"),
+    },
+  });
+
+  const cleaningStaff1 = await prisma.user.create({
+    data: {
+      name: "Siti Rahayu",
+      email: "siti.cleaning@smartresidence.com",
+      password: hashedIPL2026,
+      role: "STAFF",
+      staffJobType: "CLEANING",
+      isFirstLogin: false,
+      createdAt: new Date("2026-01-03"),
+    },
+  });
+
+  const gardeningStaff1 = await prisma.user.create({
+    data: {
+      name: "Joko Widodo",
+      email: "joko.gardening@smartresidence.com",
+      password: hashedIPL2026,
+      role: "STAFF",
+      staffJobType: "GARDENING",
+      isFirstLogin: false,
+      createdAt: new Date("2026-01-03"),
+    },
+  });
+
+  // Seed Shift Templates
+  const securityMorningShift = await prisma.shiftTemplate.create({
+    data: {
+      jobType: "SECURITY",
+      shiftName: "Morning",
+      startTime: "06:00",
+      endTime: "14:00",
+      toleranceMinutes: 15,
+      isActive: true,
+    },
+  });
+
+  const securityEveningShift = await prisma.shiftTemplate.create({
+    data: {
+      jobType: "SECURITY",
+      shiftName: "Evening",
+      startTime: "14:00",
+      endTime: "22:00",
+      toleranceMinutes: 15,
+      isActive: true,
+    },
+  });
+
+  const cleaningDayShift = await prisma.shiftTemplate.create({
+    data: {
+      jobType: "CLEANING",
+      shiftName: "Day Shift",
+      startTime: "08:00",
+      endTime: "16:00",
+      toleranceMinutes: 10,
+      isActive: true,
+    },
+  });
+
+  const gardeningDayShift = await prisma.shiftTemplate.create({
+    data: {
+      jobType: "GARDENING",
+      shiftName: "Day Shift",
+      startTime: "08:00",
+      endTime: "16:00",
+      toleranceMinutes: 10,
+      isActive: true,
+    },
+  });
+
+  const maintenanceDayShift = await prisma.shiftTemplate.create({
+    data: {
+      jobType: "MAINTENANCE",
+      shiftName: "Day Shift",
+      startTime: "08:00",
+      endTime: "17:00",
+      toleranceMinutes: 15,
+      isActive: true,
     },
   });
 

@@ -218,3 +218,70 @@ export function mapIncomesForExport(incomes: Income[]): {
 
   return { headers, rows };
 }
+
+interface Attendance {
+  id: string;
+  clockInAt: string | Date;
+  clockOutAt?: string | Date | null;
+  lateMinutes?: number | null;
+  staff: {
+    name: string;
+    staffJobType: string;
+  };
+  schedule?: {
+    shiftTemplate: {
+      shiftName: string;
+      startTime: string;
+      endTime: string;
+    };
+  } | null;
+  shiftStartTime?: string;
+}
+
+export function mapAttendancesForExport(attendances: Attendance[]): {
+  headers: string[];
+  rows: string[][];
+} {
+  const headers = [
+    "Staff Name",
+    "Job Type",
+    "Shift",
+    "Clock In",
+    "Clock Out",
+    "Duration",
+    "Late (min)",
+    "Status",
+  ];
+
+  const rows = attendances.map((a) => {
+    // Calculate duration
+    let duration = "-";
+    if (a.clockOutAt) {
+      const diffMs = new Date(a.clockOutAt).getTime() - new Date(a.clockInAt).getTime();
+      const hours = Math.floor(diffMs / (1000 * 60 * 60));
+      const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+      duration = `${hours}h ${minutes}m`;
+    }
+
+    // Shift info
+    const shift = a.schedule
+      ? `${a.schedule.shiftTemplate.shiftName} (${a.schedule.shiftTemplate.startTime}-${a.schedule.shiftTemplate.endTime})`
+      : a.shiftStartTime || "Manual";
+
+    // Status
+    const status = a.lateMinutes && a.lateMinutes > 0 ? "Late" : "On Time";
+
+    return [
+      a.staff.name,
+      a.staff.staffJobType.replace("_", " "),
+      shift,
+      formatDate(a.clockInAt),
+      a.clockOutAt ? formatDate(a.clockOutAt) : "-",
+      duration,
+      a.lateMinutes?.toString() || "0",
+      status,
+    ];
+  });
+
+  return { headers, rows };
+}

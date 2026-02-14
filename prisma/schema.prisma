@@ -77,6 +77,8 @@ model User {
   systemConfigUpdates SystemConfig[]
   attendances    Attendance[]
   shiftReports   ShiftReport[]
+  staffSchedules       StaffSchedule[]
+  createdSchedules     StaffSchedule[] @relation("ScheduleCreator")
 }
 
 model HouseType {
@@ -174,6 +176,8 @@ model Attendance {
   clockInAt       DateTime
   clockOutAt      DateTime?
   shiftStartTime  String
+  scheduleId      String?
+  lateMinutes     Int?
 
   // Clock IN data
   clockInLat      Float
@@ -189,9 +193,11 @@ model Attendance {
   updatedAt       DateTime   @updatedAt
 
   staff           User       @relation(fields: [staffId], references: [id])
+  schedule        StaffSchedule? @relation(fields: [scheduleId], references: [id], onDelete: SetNull)
   shiftReports    ShiftReport[]
 
   @@index([staffId, clockInAt])
+  @@index([scheduleId])
 }
 
 model ShiftReport {
@@ -207,4 +213,42 @@ model ShiftReport {
   attendance    Attendance?      @relation(fields: [attendanceId], references: [id], onDelete: SetNull)
 
   @@index([staffId, reportedAt])
+}
+
+model ShiftTemplate {
+  id               String          @id @default(cuid())
+  jobType          JobType
+  shiftName        String
+  startTime        String
+  endTime          String
+  toleranceMinutes Int             @default(15)
+  requiredStaffCount Int           @default(1)
+  isActive         Boolean         @default(true)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  schedules        StaffSchedule[]
+
+  @@unique([jobType, shiftName])
+  @@index([jobType, isActive])
+}
+
+model StaffSchedule {
+  id              String        @id @default(cuid())
+  staffId         String
+  shiftTemplateId String
+  date            DateTime
+  notes           String?
+  createdBy       String
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  staff           User          @relation(fields: [staffId], references: [id])
+  shiftTemplate   ShiftTemplate @relation(fields: [shiftTemplateId], references: [id])
+  creator         User          @relation("ScheduleCreator", fields: [createdBy], references: [id])
+  attendances     Attendance[]
+
+  @@unique([staffId, shiftTemplateId, date])
+  @@index([date, shiftTemplateId])
+  @@index([staffId, date])
 }

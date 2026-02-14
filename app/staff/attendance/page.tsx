@@ -12,9 +12,20 @@ interface ActiveShift {
   shiftStartTime: string;
 }
 
+interface TodaySchedule {
+  id: string;
+  date: string;
+  shiftTemplate: {
+    shiftName: string;
+    startTime: string;
+    endTime: string;
+  };
+}
+
 export default function AttendancePage() {
   const router = useRouter();
   const [activeShift, setActiveShift] = useState<ActiveShift | null>(null);
+  const [todaySchedule, setTodaySchedule] = useState<TodaySchedule | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Clock In state
@@ -33,7 +44,16 @@ export default function AttendancePage() {
 
   useEffect(() => {
     fetchActiveShift();
+    fetchTodaySchedule();
   }, []);
+
+  // Auto-fill shift start time from schedule
+  useEffect(() => {
+    if (todaySchedule && !shiftStartTime) {
+      setShiftStartTime(todaySchedule.shiftTemplate.startTime);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [todaySchedule]);
 
   const fetchActiveShift = async () => {
     try {
@@ -45,6 +65,18 @@ export default function AttendancePage() {
       console.error("Failed to fetch active shift:", err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchTodaySchedule = async () => {
+    try {
+      const res = await fetch("/api/staff/schedule/today");
+      const data = await res.json();
+      if (res.ok && data.schedule) {
+        setTodaySchedule(data.schedule);
+      }
+    } catch (err) {
+      console.error("Failed to fetch today's schedule:", err);
     }
   };
 
@@ -95,6 +127,11 @@ export default function AttendancePage() {
       formData.append("lat", clockInLocation.lat.toString());
       formData.append("lon", clockInLocation.lon.toString());
       formData.append("photo", clockInPhoto);
+
+      // If there's a schedule, pass the scheduleId
+      if (todaySchedule) {
+        formData.append("scheduleId", todaySchedule.id);
+      }
 
       const res = await fetch("/api/attendance/clock-in", {
         method: "POST",
@@ -201,6 +238,29 @@ export default function AttendancePage() {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 space-y-4">
           <h2 className="text-lg font-semibold text-gray-900">Clock In</h2>
 
+          {/* Display scheduled shift if exists */}
+          {todaySchedule && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <h3 className="text-sm font-semibold text-blue-900 mb-1">
+                Your Scheduled Shift
+              </h3>
+              <p className="text-sm text-blue-800">
+                {todaySchedule.shiftTemplate.shiftName}
+              </p>
+              <p className="text-sm text-blue-700">
+                {todaySchedule.shiftTemplate.startTime} - {todaySchedule.shiftTemplate.endTime}
+              </p>
+            </div>
+          )}
+
+          {!todaySchedule && (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <p className="text-sm text-yellow-800">
+                You don&apos;t have a scheduled shift for today. Please contact admin if this is incorrect.
+              </p>
+            </div>
+          )}
+
           {/* Shift Start Time */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -213,7 +273,9 @@ export default function AttendancePage() {
               className="w-full px-4 py-2.5 text-sm border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500"
             />
             <p className="text-xs text-gray-500 mt-1">
-              Enter your scheduled shift start time
+              {todaySchedule
+                ? "Pre-filled from your schedule (you can modify if needed)"
+                : "Enter your shift start time"}
             </p>
           </div>
 

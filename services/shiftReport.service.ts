@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { ShiftReportType } from "@prisma/client";
+import { ShiftReportType, JobType } from "@prisma/client";
 
 /**
  * Create a shift report
@@ -102,10 +102,11 @@ export async function getShiftReports(staffId: string, limit = 20) {
 
 /**
  * Get all shift reports (admin function)
- * Supports filtering by staffId, reportType, date range
+ * Supports filtering by staffId, jobType, reportType, date range
  */
 export async function getAllShiftReports(filters?: {
   staffId?: string;
+  jobType?: JobType;
   reportType?: ShiftReportType;
   startDate?: Date;
   endDate?: Date;
@@ -114,6 +115,12 @@ export async function getAllShiftReports(filters?: {
 
   if (filters?.staffId) {
     where.staffId = filters.staffId;
+  }
+
+  if (filters?.jobType) {
+    where.staff = {
+      staffJobType: filters.jobType,
+    };
   }
 
   if (filters?.reportType) {

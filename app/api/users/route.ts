@@ -2,8 +2,16 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getAllUsers, createUser } from "@/services/user.service";
 
-export const GET = auth(async () => {
-  const users = await getAllUsers();
+export const GET = auth(async (req) => {
+  const { searchParams } = new URL(req.url);
+  const role = searchParams.get("role") as "ADMIN" | "USER" | "STAFF" | null;
+
+  const filters: any = {};
+  if (role) {
+    filters.role = role;
+  }
+
+  const users = await getAllUsers(filters);
   return NextResponse.json(users);
 });
 

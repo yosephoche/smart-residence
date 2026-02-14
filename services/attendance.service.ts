@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { getCachedGeofenceConfig } from "@/lib/cache/geofence";
+import { calculateLateMinutes as calcLate } from "./shiftTemplate.service";
+import { JobType } from "@prisma/client";
 
 /**
  * Calculate distance between two points using Haversine formula
@@ -56,7 +58,8 @@ export async function clockIn(
   shiftStartTime: string, // HH:mm format
   lat: number,
   lon: number,
-  photoUrl: string
+  photoUrl: string,
+  scheduleId?: string
 ) {
   // Validate geolocation
   await validateGeolocation(lat, lon);
@@ -73,12 +76,40 @@ export async function clockIn(
     throw new Error("Staff already has an active shift. Clock out first.");
   }
 
+  // If schedule provided, validate and calculate lateness
+  let lateMinutes: number | null = null;
+  let schedule = null;
+
+  if (scheduleId) {
+    schedule = await prisma.staffSchedule.findUnique({
+      where: { id: scheduleId },
+      include: { shiftTemplate: true },
+    });
+
+    if (!schedule) {
+      throw new Error("Schedule not found");
+    }
+
+    if (schedule.staffId !== staffId) {
+      throw new Error("Schedule does not belong to this staff member");
+    }
+
+    // Calculate lateness
+    lateMinutes = calcLate(
+      schedule.shiftTemplate.startTime,
+      schedule.shiftTemplate.toleranceMinutes,
+      new Date()
+    );
+  }
+
   // Create attendance record
   const attendance = await prisma.attendance.create({
     data: {
       staffId,
       clockInAt: new Date(),
       shiftStartTime,
+      scheduleId: scheduleId || null,
+      lateMinutes,
       clockInLat: lat,
       clockInLon: lon,
       clockInPhoto: photoUrl,
@@ -90,6 +121,11 @@ export async function clockIn(
           name: true,
           email: true,
           staffJobType: true,
+        },
+      },
+      schedule: {
+        include: {
+          shiftTemplate: true,
         },
       },
     },
@@ -253,4 +289,126 @@ export async function getAllAttendance(filters?: {
   });
 
   return attendances;
+}
+
+/**
+ * Get all attendance records with enhanced filtering (admin function)
+ * Supports filtering by staffId, jobType, date range, late only
+ */
+export async function getAllAttendanceEnhanced(filters?: {
+  staffId?: string;
+  jobType?: JobType;
+  startDate?: Date;
+  endDate?: Date;
+  lateOnly?: boolean;
+}) {
+  const where: any = {};
+
+  if (filters?.staffId) {
+    where.staffId = filters.staffId;
+  }
+
+  if (filters?.jobType) {
+    where.staff = {
+      staffJobType: filters.jobType,
+    };
+  }
+
+  if (filters?.startDate || filters?.endDate) {
+    where.clockInAt = {};
+    if (filters.startDate) {
+      where.clockInAt.gte = filters.startDate;
+    }
+    if (filters.endDate) {
+      where.clockInAt.lte = filters.endDate;
+    }
+  }
+
+  if (filters?.lateOnly) {
+    where.lateMinutes = {
+      gt: 0,
+    };
+  }
+
+  const attendances = await prisma.attendance.findMany({
+    where,
+    orderBy: { clockInAt: "desc" },
+    include: {
+      staff: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          staffJobType: true,
+        },
+      },
+      schedule: {
+        include: {
+          shiftTemplate: true,
+        },
+      },
+      shiftReports: {
+        select: {
+          id: true,
+          reportType: true,
+          reportedAt: true,
+        },
+      },
+    },
+  });
+
+  return attendances;
+}
+
+/**
+ * Get attendance statistics for a date range
+ */
+export async function getAttendanceStats(
+  startDate: Date,
+  endDate: Date,
+  staffId?: string
+) {
+  const where: any = {
+    clockInAt: {
+      gte: startDate,
+      lte: endDate,
+    },
+  };
+
+  if (staffId) {
+    where.staffId = staffId;
+  }
+
+  const attendances = await prisma.attendance.findMany({
+    where,
+    select: {
+      id: true,
+      clockInAt: true,
+      clockOutAt: true,
+      lateMinutes: true,
+    },
+  });
+
+  const total = attendances.length;
+  const completed = attendances.filter((a) => a.clockOutAt !== null).length;
+  const inProgress = total - completed;
+  const lateAttendances = attendances.filter(
+    (a) => a.lateMinutes && a.lateMinutes > 0
+  );
+  const lateCount = lateAttendances.length;
+  const totalLateMinutes = lateAttendances.reduce(
+    (sum, a) => sum + (a.lateMinutes || 0),
+    0
+  );
+  const averageLateMinutes =
+    lateCount > 0 ? Math.round(totalLateMinutes / lateCount) : 0;
+
+  return {
+    total,
+    completed,
+    inProgress,
+    lateCount,
+    totalLateMinutes,
+    averageLateMinutes,
+  };
 }

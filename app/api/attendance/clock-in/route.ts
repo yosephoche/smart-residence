@@ -26,6 +26,7 @@ export async function POST(req: NextRequest) {
     const lat = parseFloat(formData.get("lat") as string);
     const lon = parseFloat(formData.get("lon") as string);
     const photo = formData.get("photo") as File;
+    const scheduleId = formData.get("scheduleId") as string | null;
 
     // Validate required fields
     if (!shiftStartTime || isNaN(lat) || isNaN(lon) || !photo) {
@@ -63,7 +64,8 @@ export async function POST(req: NextRequest) {
       shiftStartTime,
       lat,
       lon,
-      photoUrl
+      photoUrl,
+      scheduleId || undefined
     );
 
     return NextResponse.json(
