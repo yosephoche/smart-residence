@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Card } from "@/components/ui/Card";
 import Alert from "@/components/ui/Alert";
 import { Skeleton } from "@/components/ui/Loading";
@@ -9,7 +10,10 @@ import HouseTypeForm from "@/components/forms/HouseTypeForm";
 import { HouseTypeFormData } from "@/lib/validations/houseType.schema";
 import { HouseType, House } from "@/types";
 
+export const dynamic = 'force-dynamic';
+
 export default function EditHouseTypePage() {
+  const t = useTranslations('house_types');
   const router = useRouter();
   const params = useParams();
   const typeId = params.id as string;
@@ -68,7 +72,7 @@ export default function EditHouseTypePage() {
 
     if (!res.ok) {
       const err = await res.json();
-      setError(err.error || "Failed to update house type");
+      setError(err.error || t('update_error'));
       setIsSubmitting(false);
       return;
     }
@@ -110,14 +114,14 @@ export default function EditHouseTypePage() {
       <div className="max-w-2xl mx-auto space-y-6">
         <Alert
           variant="error"
-          title="House Type Not Found"
-          message="The house type you're trying to edit doesn't exist."
+          title={t('not_found_title')}
+          message={t('not_found_message')}
         />
         <button
           onClick={() => router.push("/admin/house-types")}
           className="text-primary-600 hover:text-primary-700 font-medium"
         >
-          ← Back to House Types
+          ← {t('back_to_types')}
         </button>
       </div>
     );
@@ -133,13 +137,13 @@ export default function EditHouseTypePage() {
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
-          Back to House Types
+          {t('back_to_types')}
         </button>
         <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
-          Edit House Type
+          {t('edit_type')}
         </h1>
         <p className="text-gray-600 mt-1">
-          Update house type information for {houseType?.typeName}
+          {t('edit_subtitle', { typeName: houseType?.typeName ?? '' })}
         </p>
       </div>
 
@@ -150,8 +154,8 @@ export default function EditHouseTypePage() {
       {housesUsingType > 0 && (
         <Alert
           variant="info"
-          title="Houses Using This Type"
-          message={`${housesUsingType} house(s) are currently using this type. Changes to pricing will affect their monthly IPL rates.`}
+          title={t('houses_using_type')}
+          message={t('houses_using_message', { count: housesUsingType })}
         />
       )}
 

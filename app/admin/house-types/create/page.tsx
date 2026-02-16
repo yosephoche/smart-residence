@@ -2,12 +2,16 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Card } from "@/components/ui/Card";
 import Alert from "@/components/ui/Alert";
 import HouseTypeForm from "@/components/forms/HouseTypeForm";
 import { HouseTypeFormData } from "@/lib/validations/houseType.schema";
 
+export const dynamic = 'force-dynamic';
+
 export default function CreateHouseTypePage() {
+  const t = useTranslations('house_types');
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -24,7 +28,7 @@ export default function CreateHouseTypePage() {
 
     if (!res.ok) {
       const err = await res.json();
-      setError(err.error || "Failed to create house type");
+      setError(err.error || t('create_error'));
       setIsSubmitting(false);
       return;
     }
@@ -40,10 +44,10 @@ export default function CreateHouseTypePage() {
     <div className="max-w-2xl mx-auto space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
-          Add New House Type
+          {t('add_type')}
         </h1>
         <p className="text-gray-600 mt-1">
-          Create a new house type with pricing information
+          {t('create_subtitle')}
         </p>
       </div>
 
@@ -64,13 +68,13 @@ export default function CreateHouseTypePage() {
           <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
             <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
           </svg>
-          House Type Guidelines
+          {t('guidelines_title')}
         </h3>
         <ul className="text-sm text-primary-800 space-y-1 ml-7">
-          <li>• Type names should be descriptive (e.g., Tipe 36, Tipe 45, Tipe 60)</li>
-          <li>• Set monthly IPL rates in Indonesian Rupiah</li>
-          <li>• Add descriptions to help residents understand the house type</li>
-          <li>• Pricing can be edited later if rates change</li>
+          <li>• {t('guideline_1')}</li>
+          <li>• {t('guideline_2')}</li>
+          <li>• {t('guideline_3')}</li>
+          <li>• {t('guideline_4')}</li>
         </ul>
       </div>
     </div>

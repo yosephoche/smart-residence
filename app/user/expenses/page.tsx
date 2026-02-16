@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { useTranslations } from "next-intl";
 import { Card, CardHeader, CardContent } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import Table, { Pagination } from "@/components/ui/Table";
@@ -11,7 +12,14 @@ import { getExpenseCategoryOptions } from "@/lib/calculations";
 import { exportCSV, exportXLSX, mapExpensesForExport } from "@/lib/utils/export";
 import { usePagination } from "@/lib/hooks/usePagination";
 
+export const dynamic = 'force-dynamic';
+
 export default function UserExpensesPage() {
+  const t = useTranslations('expenses');
+  const tCommon = useTranslations('common');
+  const tMonths = useTranslations('months');
+  const tPayments = useTranslations('payments.admin');
+  const tTable = useTranslations('common.table');
   const [expenses, setExpenses] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -110,8 +118,8 @@ export default function UserExpensesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Expenses History</h1>
-          <p className="text-gray-600 mt-1">View residential expenses and track spending</p>
+          <h1 className="text-3xl font-bold text-gray-900">{t('title')}</h1>
+          <p className="text-gray-600 mt-1">{t('subtitle')}</p>
         </div>
       </div>
 
@@ -119,14 +127,14 @@ export default function UserExpensesPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardContent>
-            <p className="text-sm text-gray-600">Total Expenses (Filtered)</p>
+            <p className="text-sm text-gray-600">{t('total_expenses')} ({tCommon('actions.filter')}ed)</p>
             <p className="text-2xl font-bold text-gray-900">{formatCurrency(totalFiltered)}</p>
             <p className="text-xs text-gray-500 mt-1">{filteredExpenses.length} transactions</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent>
-            <p className="text-sm text-gray-600">Total Expenses (All Time)</p>
+            <p className="text-sm text-gray-600">{t('total_expenses')} (All Time)</p>
             <p className="text-2xl font-bold text-gray-900">{formatCurrency(expenses.reduce((sum, e) => sum + Number(e.amount), 0))}</p>
             <p className="text-xs text-gray-500 mt-1">{expenses.length} transactions</p>
           </CardContent>
@@ -151,7 +159,7 @@ export default function UserExpensesPage() {
               onChange={(e) => setCategoryFilter(e.target.value)}
               className="px-3 py-2 border rounded-lg"
             >
-              <option value="ALL">All Categories</option>
+              <option value="ALL">{t('all_categories')}</option>
               {categories.map((cat) => (
                 <option key={cat.value} value={cat.value}>{cat.label}</option>
               ))}
@@ -162,7 +170,7 @@ export default function UserExpensesPage() {
               onChange={(e) => setFilterYear(Number(e.target.value))}
               className="px-3 py-2 border rounded-lg"
             >
-              <option value={0}>All Years</option>
+              <option value={0}>{tPayments('all_years')}</option>
               {availableYears.map((year) => (
                 <option key={year} value={year}>{year}</option>
               ))}
@@ -174,26 +182,26 @@ export default function UserExpensesPage() {
               className="px-3 py-2 border rounded-lg"
               disabled={filterYear === 0}
             >
-              <option value={0}>All Months</option>
+              <option value={0}>{tPayments('all_months')}</option>
               {Array.from({ length: 12 }, (_, i) => (
                 <option key={i + 1} value={i + 1}>
-                  {new Date(2000, i).toLocaleDateString("id-ID", { month: "long" })}
+                  {tMonths(new Date(2000, i).toLocaleDateString("en-US", { month: "long" }).toLowerCase())}
                 </option>
               ))}
             </select>
 
             {hasActiveFilters && (
               <Button variant="ghost" size="sm" onClick={handleClearFilters}>
-                Clear Filters
+                {tPayments('clear_filter')}
               </Button>
             )}
 
             <div className="ml-auto flex gap-2">
               <Button variant="ghost" size="sm" onClick={() => handleExport("csv")}>
-                Export CSV
+                {tPayments('export_csv')}
               </Button>
               <Button variant="ghost" size="sm" onClick={() => handleExport("xlsx")}>
-                Export Excel
+                {tPayments('export_xlsx')}
               </Button>
             </div>
           </div>
@@ -202,11 +210,11 @@ export default function UserExpensesPage() {
 
       {/* Table */}
       <Card>
-        <CardHeader>All Expenses ({filteredExpenses.length})</CardHeader>
+        <CardHeader>{tCommon('status.all')} {t('title')} ({filteredExpenses.length})</CardHeader>
         <CardContent>
           <Table
             columns={[
-              { key: "date", header: "Date", sortable: true, render: (val) => formatDate(val) },
+              { key: "date", header: tTable('created'), sortable: true, render: (val) => formatDate(val) },
               { key: "category", header: "Category", render: (val) => <ExpenseCategoryBadge category={val} /> },
               { key: "description", header: "Description" },
               { key: "amount", header: "Amount", sortable: true, render: (val) => formatCurrency(Number(val)) },
@@ -214,7 +222,7 @@ export default function UserExpensesPage() {
             ]}
             data={paginatedData}
             keyExtractor={(row) => row.id}
-            emptyMessage="No expenses found"
+            emptyMessage={t('no_expenses')}
           />
 
           {/* Pagination */}

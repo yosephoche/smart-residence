@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useTranslations } from "next-intl";
 import { houseFormSchema, HouseFormData } from "@/lib/validations/house.schema";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
@@ -26,6 +27,8 @@ export default function HouseForm({
   onCancel,
   isSubmitting = false,
 }: HouseFormProps) {
+  const t = useTranslations('houses.form');
+  const tCommon = useTranslations('common');
   const isEditMode = !!house;
 
   const {
@@ -63,20 +66,20 @@ export default function HouseForm({
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <Input
-          label="Block"
-          placeholder="e.g., A, Block 1, West"
+          label={t('block')}
+          placeholder={t('block_placeholder')}
           error={errors.block?.message}
-          helperText="Enter the block name or identifier"
+          helperText={t('block_help')}
           {...register("block")}
           fullWidth
           required
         />
 
         <Input
-          label="House Number"
-          placeholder="e.g., 101, A-01, House 5"
+          label={t('house_number')}
+          placeholder={t('house_number_placeholder')}
           error={errors.houseNumber?.message}
-          helperText="Enter the house number or identifier"
+          helperText={t('house_number_help')}
           {...register("houseNumber")}
           fullWidth
           required
@@ -85,16 +88,16 @@ export default function HouseForm({
 
       <div className="flex flex-col gap-1.5">
         <label className="text-sm font-medium text-gray-700 tracking-tight">
-          House Type <span className="text-danger-500 ml-1">*</span>
+          {t('house_type')} <span className="text-danger-500 ml-1">*</span>
         </label>
         <select
           {...register("houseTypeId")}
           className="w-full px-4 py-2.5 text-sm text-gray-900 bg-white border-2 border-gray-300 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:border-primary-500 focus:ring-primary-100"
         >
-          <option value="">Select house type</option>
+          <option value="">{t('select_house_type')}</option>
           {houseTypes.map((type) => (
             <option key={type.id} value={type.id}>
-              {type.typeName} - {formatCurrency(type.price)}/month
+              {type.typeName} - {formatCurrency(type.price)}{t('per_month')}
             </option>
           ))}
         </select>
@@ -105,7 +108,7 @@ export default function HouseForm({
         {selectedHouseType && (
           <div className="mt-2 p-3 bg-primary-50 rounded-lg border-2 border-primary-200">
             <p className="text-xs font-medium text-primary-900 mb-1">
-              Monthly IPL Rate
+              {t('monthly_ipl_rate')}
             </p>
             <p className="text-2xl font-bold text-primary-900">
               {formatCurrency(selectedHouseType.price)}
@@ -121,13 +124,13 @@ export default function HouseForm({
 
       <div className="flex flex-col gap-1.5">
         <label className="text-sm font-medium text-gray-700 tracking-tight">
-          Assign to Resident (Optional)
+          {t('assign_resident')}
         </label>
         <select
           {...register("userId")}
           className="w-full px-4 py-2.5 text-sm text-gray-900 bg-white border-2 border-gray-300 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:border-primary-500 focus:ring-primary-100"
         >
-          <option value="">Unassigned</option>
+          <option value="">{t('unassigned')}</option>
           {users
             .filter((u) => u.role === "USER")
             .map((user) => (
@@ -137,7 +140,7 @@ export default function HouseForm({
             ))}
         </select>
         <p className="text-xs text-gray-500">
-          Leave unassigned if no resident has moved in yet
+          {t('unassigned_help')}
         </p>
       </div>
 
@@ -148,20 +151,20 @@ export default function HouseForm({
             {...register("isRented")}
             className="w-4 h-4 text-primary-600 bg-white border-2 border-gray-300 rounded focus:ring-2 focus:ring-primary-500"
           />
-          <span>This house is rented</span>
+          <span>{t('is_rented')}</span>
         </label>
         <p className="text-xs text-gray-500">
-          Check this if the house is currently being rented to someone
+          {t('is_rented_help')}
         </p>
       </div>
 
       {isRented && (
         <div className="border-2 border-primary-200 bg-primary-50 rounded-lg p-4">
           <Input
-            label="Renter Name"
-            placeholder="e.g., John Doe"
+            label={t('renter_name')}
+            placeholder={t('renter_name_placeholder')}
             error={errors.renterName?.message}
-            helperText="Enter the full name of the person renting this house"
+            helperText={t('renter_name_help')}
             {...register("renterName")}
             fullWidth
             required
@@ -178,7 +181,7 @@ export default function HouseForm({
           disabled={isSubmitting}
           fullWidth
         >
-          Cancel
+          {tCommon('actions.cancel')}
         </Button>
         <Button
           type="submit"
@@ -187,7 +190,7 @@ export default function HouseForm({
           isLoading={isSubmitting}
           fullWidth
         >
-          {isEditMode ? "Update House" : "Create House"}
+          {isEditMode ? t('update_house') : t('create_house')}
         </Button>
       </div>
     </form>

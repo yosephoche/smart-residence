@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-client";
+import { useTranslations } from "next-intl";
 import {
   Home,
   Users,
@@ -24,6 +25,7 @@ import {
   CalendarDays,
   ClipboardList
 } from "lucide-react";
+import LanguageSwitcher from "@/components/i18n/LanguageSwitcher";
 
 interface NavItemBase {
   name: string;
@@ -46,95 +48,96 @@ interface NavGroup extends NavItemBase {
 
 type NavConfig = (NavLink | NavGroup)[];
 
-const navConfig: NavConfig = [
-  {
-    type: "item",
-    name: "Dashboard",
-    href: "/admin/dashboard",
-    icon: <Home className="w-5 h-5" />,
-  },
-  {
-    type: "item",
-    name: "Users",
-    href: "/admin/users",
-    icon: <Users className="w-5 h-5" />,
-  },
-  {
-    type: "item",
-    name: "Houses",
-    href: "/admin/houses",
-    icon: <Building2 className="w-5 h-5" />,
-  },
-  {
-    type: "item",
-    name: "House Types",
-    href: "/admin/house-types",
-    icon: <Tag className="w-5 h-5" />,
-  },
-  {
-    type: "item",
-    name: "Payments",
-    href: "/admin/payments",
-    icon: <CreditCard className="w-5 h-5" />,
-  },
-  {
-    type: "group",
-    name: "Transaksi",
-    icon: <ArrowRightLeft className="w-5 h-5" />,
-    children: [
-      {
-        name: "Pemasukan",
-        href: "/admin/income",
-        icon: <TrendingUp className="w-4 h-4" />,
-      },
-      {
-        name: "Pengeluaran",
-        href: "/admin/expenses",
-        icon: <TrendingDown className="w-4 h-4" />,
-      },
-    ],
-  },
-  {
-    type: "group",
-    name: "Staff Management",
-    icon: <UserCheck className="w-5 h-5" />,
-    children: [
-      {
-        name: "Attendance",
-        href: "/admin/staff/attendance",
-        icon: <Clock className="w-4 h-4" />,
-      },
-      {
-        name: "Shift Reports",
-        href: "/admin/staff/reports",
-        icon: <FileText className="w-4 h-4" />,
-      },
-      {
-        name: "Shift Templates",
-        href: "/admin/staff/shifts",
-        icon: <ClipboardList className="w-4 h-4" />,
-      },
-      {
-        name: "Schedule",
-        href: "/admin/staff/schedule",
-        icon: <CalendarDays className="w-4 h-4" />,
-      },
-    ],
-  },
-  {
-    type: "item",
-    name: "Settings",
-    href: "/admin/settings",
-    icon: <Settings className="w-5 h-5" />,
-  },
-];
-
 const STORAGE_KEY = "admin-sidebar-expanded-groups";
 
 export default function AdminSidebar() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
+  const t = useTranslations();
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+
+  const navConfig: NavConfig = [
+    {
+      type: "item",
+      name: t('navigation.admin.dashboard'),
+      href: "/admin/dashboard",
+      icon: <Home className="w-5 h-5" />,
+    },
+    {
+      type: "item",
+      name: t('navigation.admin.users'),
+      href: "/admin/users",
+      icon: <Users className="w-5 h-5" />,
+    },
+    {
+      type: "item",
+      name: t('navigation.admin.houses'),
+      href: "/admin/houses",
+      icon: <Building2 className="w-5 h-5" />,
+    },
+    {
+      type: "item",
+      name: t('navigation.admin.house_types'),
+      href: "/admin/house-types",
+      icon: <Tag className="w-5 h-5" />,
+    },
+    {
+      type: "item",
+      name: t('navigation.admin.payments'),
+      href: "/admin/payments",
+      icon: <CreditCard className="w-5 h-5" />,
+    },
+    {
+      type: "group",
+      name: t('navigation.admin.transactions'),
+      icon: <ArrowRightLeft className="w-5 h-5" />,
+      children: [
+        {
+          name: t('navigation.admin.income'),
+          href: "/admin/income",
+          icon: <TrendingUp className="w-4 h-4" />,
+        },
+        {
+          name: t('navigation.admin.expenses'),
+          href: "/admin/expenses",
+          icon: <TrendingDown className="w-4 h-4" />,
+        },
+      ],
+    },
+    {
+      type: "group",
+      name: t('navigation.admin.staff_management'),
+      icon: <UserCheck className="w-5 h-5" />,
+      children: [
+        {
+          name: t('navigation.admin.attendance'),
+          href: "/admin/staff/attendance",
+          icon: <Clock className="w-4 h-4" />,
+        },
+        {
+          name: t('navigation.admin.shift_reports'),
+          href: "/admin/staff/reports",
+          icon: <FileText className="w-4 h-4" />,
+        },
+        {
+          name: t('navigation.admin.shift_templates'),
+          href: "/admin/staff/shifts",
+          icon: <ClipboardList className="w-4 h-4" />,
+        },
+        {
+          name: t('navigation.admin.schedule'),
+          href: "/admin/staff/schedule",
+          icon: <CalendarDays className="w-4 h-4" />,
+        },
+      ],
+    },
+    {
+      type: "item",
+      name: t('navigation.admin.settings'),
+      href: "/admin/settings",
+      icon: <Settings className="w-5 h-5" />,
+    },
+  ];
 
   // Load expanded groups from localStorage on mount
   useEffect(() => {
@@ -183,7 +186,7 @@ export default function AdminSidebar() {
           </div>
           <div>
             <h1 className="font-bold text-gray-900 text-lg tracking-tight">SmartResidence</h1>
-            <p className="text-xs text-gray-500">Admin Panel</p>
+            <p className="text-xs text-gray-500">{t('navigation.admin.admin_panel')}</p>
           </div>
         </div>
       </div>
@@ -265,8 +268,8 @@ export default function AdminSidebar() {
       </nav>
 
       {/* User Info & Logout */}
-      <div className="p-4 border-t-2 border-gray-200">
-        <div className="flex items-center gap-3 mb-3 px-2">
+      <div className="p-4 border-t-2 border-gray-200 space-y-3">
+        <div className="flex items-center gap-3 px-2">
           <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
             <span className="text-primary-700 font-semibold text-sm">
               {user?.name.charAt(0).toUpperCase()}
@@ -277,12 +280,18 @@ export default function AdminSidebar() {
             <p className="text-xs text-gray-500 truncate">{user?.email}</p>
           </div>
         </div>
+
+        {/* Language Switcher */}
+        <div className="px-2">
+          <LanguageSwitcher />
+        </div>
+
         <button
           onClick={logout}
           className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
         >
           <LogOut className="w-4 h-4" />
-          Logout
+          {t('common.actions.logout')}
         </button>
       </div>
     </aside>

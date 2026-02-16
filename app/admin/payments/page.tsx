@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 import Table, { Column, Pagination } from "@/components/ui/Table";
 import PaymentStatusBadge from "@/components/payments/PaymentStatusBadge";
 import { Skeleton } from "@/components/ui/Loading";
@@ -16,6 +17,8 @@ import AdminCreatePaymentForm from "@/components/forms/AdminCreatePaymentForm";
 import { exportCSV, exportXLSX, mapPaymentsForExport, mapHousesWithStatusForExport } from "@/lib/utils/export";
 import { usePagination } from "@/lib/hooks/usePagination";
 import { ImageModal } from "@/components/ui/ImageModal";
+
+export const dynamic = 'force-dynamic';
 
 interface Payment {
   id: string;
@@ -48,6 +51,8 @@ interface AnnotatedHouse {
 }
 
 export default function AdminPaymentsPage() {
+  const t = useTranslations('payments.admin');
+  const tCommon = useTranslations('common');
   const [payments, setPayments] = useState<Payment[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -247,17 +252,17 @@ export default function AdminPaymentsPage() {
       });
       if (!res.ok) {
         const err = await res.json();
-        alert(err.error || "Failed to create payment");
+        alert(err.error || t('create_payment_error'));
         setIsCreating(false);
         return;
       }
       setIsCreating(false);
       setCreateModalOpen(false);
-      setSuccessMessage("Payment created successfully and is now pending approval.");
+      setSuccessMessage(t('payment_created_success'));
       refetchPayments();
     } catch {
       setIsCreating(false);
-      alert("An error occurred. Please try again.");
+      alert(t('generic_error'));
     }
   };
 
@@ -301,16 +306,16 @@ export default function AdminPaymentsPage() {
       const result = await res.json();
 
       if (result.succeeded.length > 0) {
-        setSuccessMessage(`Successfully approved ${result.succeeded.length} payment(s)`);
+        setSuccessMessage(t('bulk_approve_success', { count: result.succeeded.length }));
         setSelectedPaymentIds([]);
         refetchPayments();
       }
 
       if (result.failed.length > 0) {
-        alert(`Failed to approve ${result.failed.length} payment(s). Check details.`);
+        alert(t('bulk_approve_partial_error', { count: result.failed.length }));
       }
     } catch (error) {
-      alert("Failed to approve payments. Please try again.");
+      alert(t('bulk_approve_error'));
     } finally {
       setIsBulkProcessing(false);
       setBulkApproveModalOpen(false);
@@ -364,7 +369,7 @@ export default function AdminPaymentsPage() {
     },
     {
       key: "userId",
-      header: "Resident",
+      header: t('resident'),
       render: (_, payment) => {
         const user = payment.user;
         return user ? (
@@ -380,13 +385,13 @@ export default function AdminPaymentsPage() {
             </div>
           </div>
         ) : (
-          <span className="text-gray-400">Unknown</span>
+          <span className="text-gray-400">{tCommon('unknown')}</span>
         );
       },
     },
     {
       key: "houseId",
-      header: "House",
+      header: t('house'),
       render: (_, payment) => {
         const house = payment.house;
         return house ? (
@@ -395,13 +400,13 @@ export default function AdminPaymentsPage() {
             <p className="text-xs text-gray-500">{house.houseType?.typeName}</p>
           </div>
         ) : (
-          <span className="text-gray-400">Unknown</span>
+          <span className="text-gray-400">{tCommon('unknown')}</span>
         );
       },
     },
     {
       key: "amountMonths",
-      header: "Period & Amount",
+      header: t('period_and_amount'),
       render: (_, payment) => {
         const isMonthFiltered = filterMonth !== 0 && filterYear !== 0;
 
@@ -420,7 +425,7 @@ export default function AdminPaymentsPage() {
             const shortNames = months.map((m) => formatPaymentMonthShort(m));
             periodLabel = `${shortNames.join(", ")} ${lastMonth.year}`;
           } else {
-            periodLabel = `${payment.amountMonths} month${payment.amountMonths !== 1 ? "s" : ""}`;
+            periodLabel = `${payment.amountMonths} ${payment.amountMonths !== 1 ? t('months') : t('month')}`;
           }
         }
 
@@ -436,7 +441,7 @@ export default function AdminPaymentsPage() {
     },
     {
       key: "createdAt",
-      header: "Submitted",
+      header: t('submitted'),
       sortable: true,
       render: (value) => (
         <span className="text-sm text-gray-600">{formatDate(value)}</span>
@@ -444,13 +449,13 @@ export default function AdminPaymentsPage() {
     },
     {
       key: "status",
-      header: "Status",
+      header: tCommon('table.status'),
       sortable: true,
       render: (status) => <PaymentStatusBadge status={status as any} />,
     },
     {
       key: "proofImagePath",
-      header: "Proof",
+      header: t('proof'),
       render: (_, payment) => (
         <button
           onClick={() => handleImageClick(payment.proofImagePath)}
@@ -458,7 +463,7 @@ export default function AdminPaymentsPage() {
         >
           <Image
             src={payment.proofImagePath}
-            alt="Payment proof thumbnail"
+            alt={t('payment_proof_thumbnail')}
             fill
             className="object-cover group-hover:scale-105 transition-transform"
             onError={(e) => {
@@ -475,7 +480,7 @@ export default function AdminPaymentsPage() {
     },
     {
       key: "id",
-      header: "Actions",
+      header: tCommon('table.actions'),
       render: (_, payment) => (
         <Link href={`/admin/payments/${payment.id}`}>
           <button className="text-primary-600 hover:text-primary-700 font-medium text-sm flex items-center gap-1">
@@ -483,7 +488,7 @@ export default function AdminPaymentsPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
             </svg>
-            View Details
+            {t('view_details')}
           </button>
         </Link>
       ),
@@ -494,7 +499,7 @@ export default function AdminPaymentsPage() {
   const housesColumns: Column<AnnotatedHouse>[] = [
     {
       key: "user",
-      header: "Resident",
+      header: t('resident'),
       render: (_, house) => {
         const user = house.user;
         return user ? (
@@ -516,32 +521,32 @@ export default function AdminPaymentsPage() {
     },
     {
       key: "houseNumber",
-      header: "House",
+      header: t('house'),
       render: (_, house) => (
         <div>
           <p className="font-semibold text-gray-900">{house.houseNumber}</p>
-          <p className="text-xs text-gray-500">Block {house.block}</p>
+          <p className="text-xs text-gray-500">{house.block}</p>
         </div>
       ),
     },
     {
       key: "houseType",
-      header: "Type & Rate",
+      header: t('type_and_rate'),
       render: (_, house) => (
         <div>
           <p className="font-medium text-gray-900">{house.houseType?.typeName ?? "—"}</p>
           <p className="text-xs text-gray-500">
-            {house.houseType?.price != null ? formatCurrency(Number(house.houseType.price)) : "—"}/bulan
+            {house.houseType?.price != null ? formatCurrency(Number(house.houseType.price)) : "—"}{t('per_month')}
           </p>
         </div>
       ),
     },
     {
       key: "paymentStatus",
-      header: "Status",
+      header: tCommon('table.status'),
       render: (_, house) => {
         if (house.paymentStatus === null) {
-          return <Badge variant="warning" dot>Belum Bayar</Badge>;
+          return <Badge variant="warning" dot>{t('unpaid')}</Badge>;
         }
         return <PaymentStatusBadge status={house.paymentStatus as any} showDot />;
       },
@@ -570,7 +575,7 @@ export default function AdminPaymentsPage() {
       {successMessage && (
         <Alert
           variant="success"
-          title="Success"
+          title={t('success')}
           message={successMessage}
           onClose={() => setSuccessMessage(null)}
           autoClose
@@ -580,37 +585,37 @@ export default function AdminPaymentsPage() {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Payment Management</h1>
-          <p className="text-gray-600 mt-1">Review and approve resident payment submissions</p>
+          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">{t('title')}</h1>
+          <p className="text-gray-600 mt-1">{t('subtitle')}</p>
         </div>
         <Button variant="primary" size="lg" onClick={() => setCreateModalOpen(true)}>
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
-          Create Payment
+          {t('create_payment')}
         </Button>
       </div>
 
       {/* Stats cards */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <div className="bg-white rounded-xl border-2 border-gray-200 p-4 shadow-sm">
-          <p className="text-sm font-medium text-gray-600 mb-1">Total Payments</p>
+          <p className="text-sm font-medium text-gray-600 mb-1">{t('total_payments')}</p>
           <p className="text-3xl font-bold text-gray-900">{stats.total}</p>
         </div>
         <div className="bg-warning-50 rounded-xl border-2 border-warning-200 p-4 shadow-sm">
-          <p className="text-sm font-medium text-warning-700 mb-1">Pending</p>
+          <p className="text-sm font-medium text-warning-700 mb-1">{t('pending')}</p>
           <p className="text-3xl font-bold text-warning-900">{stats.pending}</p>
         </div>
         <div className="bg-success-50 rounded-xl border-2 border-success-200 p-4 shadow-sm">
-          <p className="text-sm font-medium text-success-700 mb-1">Approved</p>
+          <p className="text-sm font-medium text-success-700 mb-1">{t('approved')}</p>
           <p className="text-3xl font-bold text-success-900">{stats.approved}</p>
         </div>
         <div className="bg-danger-50 rounded-xl border-2 border-danger-200 p-4 shadow-sm">
-          <p className="text-sm font-medium text-danger-700 mb-1">Rejected</p>
+          <p className="text-sm font-medium text-danger-700 mb-1">{t('rejected')}</p>
           <p className="text-3xl font-bold text-danger-900">{stats.rejected}</p>
         </div>
         <div className="bg-primary-50 rounded-xl border-2 border-primary-200 p-4 shadow-sm">
-          <p className="text-sm font-medium text-primary-700 mb-1">Total Revenue</p>
+          <p className="text-sm font-medium text-primary-700 mb-1">{t('total_revenue')}</p>
           <p className="text-xl font-bold text-primary-900">{formatCurrency(stats.totalRevenue)}</p>
         </div>
       </div>
@@ -620,10 +625,10 @@ export default function AdminPaymentsPage() {
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex flex-wrap items-center gap-2">
             {[
-              { value: "ALL" as const, label: "All Payments", count: stats.total },
-              { value: "PENDING" as const, label: "Pending Review", count: stats.pending },
-              { value: "APPROVED" as const, label: "Approved", count: stats.approved },
-              { value: "REJECTED" as const, label: "Rejected", count: stats.rejected },
+              { value: "ALL" as const, label: t('all_payments'), count: stats.total },
+              { value: "PENDING" as const, label: t('pending_review'), count: stats.pending },
+              { value: "APPROVED" as const, label: t('approved'), count: stats.approved },
+              { value: "REJECTED" as const, label: t('rejected'), count: stats.rejected },
             ].map((filter) => (
               <button
                 key={filter.value}
@@ -651,7 +656,7 @@ export default function AdminPaymentsPage() {
                     : "text-success-700 bg-success-50 border border-success-300 hover:bg-success-100"
                 }`}
               >
-                Paid
+                {t('paid')}
                 {allHousesWithStatus.length > 0 && (
                   <span className="ml-2 text-xs opacity-75">({paidCount})</span>
                 )}
@@ -664,7 +669,7 @@ export default function AdminPaymentsPage() {
                     : "text-warning-700 bg-warning-50 border border-warning-300 hover:bg-warning-100"
                 }`}
               >
-                Unpaid
+                {t('unpaid')}
                 {allHousesWithStatus.length > 0 && (
                   <span className="ml-2 text-xs opacity-75">({unpaidCount})</span>
                 )}
@@ -682,7 +687,7 @@ export default function AdminPaymentsPage() {
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
               </svg>
-              Export
+              {t('export')}
               <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L10 6.414l-3.293 3.293a1 1 0 01-1.414 0z" />
               </svg>
@@ -693,13 +698,13 @@ export default function AdminPaymentsPage() {
                   onClick={() => handleExport("csv")}
                   className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                 >
-                  Export as CSV
+                  {t('export_csv')}
                 </button>
                 <button
                   onClick={() => handleExport("xlsx")}
                   className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors border-t border-gray-100"
                 >
-                  Export as XLSX
+                  {t('export_xlsx')}
                 </button>
               </div>
             )}
@@ -713,7 +718,7 @@ export default function AdminPaymentsPage() {
             onChange={(e) => setFilterUserId(e.target.value)}
             className="min-w-[160px] px-4 py-2 text-sm bg-white border-2 border-gray-300 rounded-lg focus:border-primary-500 focus:ring-2 focus:ring-primary-100 focus:outline-none"
           >
-            <option value="">Semua Penghuni</option>
+            <option value="">{t('all_residents')}</option>
             {users
               .filter((u) => u.role !== "admin")
               .map((u) => (
@@ -728,7 +733,7 @@ export default function AdminPaymentsPage() {
             onChange={(e) => setFilterMonth(Number(e.target.value))}
             className="min-w-[160px] px-4 py-2 text-sm bg-white border-2 border-gray-300 rounded-lg focus:border-primary-500 focus:ring-2 focus:ring-primary-100 focus:outline-none"
           >
-            {housesViewMode === null && <option value={0}>Semua Bulan</option>}
+            {housesViewMode === null && <option value={0}>{t('all_months')}</option>}
             {INDONESIAN_MONTHS.map((name, i) => (
               <option key={i + 1} value={i + 1}>
                 {name}
@@ -741,7 +746,7 @@ export default function AdminPaymentsPage() {
             onChange={(e) => setFilterYear(Number(e.target.value))}
             className="min-w-[160px] px-4 py-2 text-sm bg-white border-2 border-gray-300 rounded-lg focus:border-primary-500 focus:ring-2 focus:ring-primary-100 focus:outline-none"
           >
-            {housesViewMode === null && <option value={0}>Semua Tahun</option>}
+            {housesViewMode === null && <option value={0}>{t('all_years')}</option>}
             {availableYears.map((y) => (
               <option key={y} value={y}>
                 {y}
@@ -759,7 +764,7 @@ export default function AdminPaymentsPage() {
                   }}
                   className="text-sm text-primary-600 hover:text-primary-700 underline underline-offset-2"
                 >
-                  Hapus filter
+                  {t('clear_filter')}
                 </button>
               )
             : (filterUserId !== "" ||
@@ -774,7 +779,7 @@ export default function AdminPaymentsPage() {
                   }}
                   className="text-sm text-primary-600 hover:text-primary-700 underline underline-offset-2"
                 >
-                  Hapus filter
+                  {t('clear_filter')}
                 </button>
               )}
         </div>
@@ -791,17 +796,17 @@ export default function AdminPaymentsPage() {
             </div>
             <div>
               <p className="font-semibold text-gray-900">
-                {selectedPaymentIds.length} payment{selectedPaymentIds.length > 1 ? "s" : ""} selected
+                {t('selected_count', { count: selectedPaymentIds.length })}
               </p>
-              <p className="text-sm text-gray-600">Ready for bulk approval</p>
+              <p className="text-sm text-gray-600">{t('ready_bulk_approval')}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
             <Button variant="ghost" onClick={() => setSelectedPaymentIds([])}>
-              Clear Selection
+              {t('clear_selection')}
             </Button>
             <Button variant="primary" onClick={() => setBulkApproveModalOpen(true)}>
-              Approve Selected
+              {t('approve_selected')}
             </Button>
           </div>
         </div>
@@ -814,7 +819,7 @@ export default function AdminPaymentsPage() {
             data={paginatedHouses}
             columns={housesColumns}
             keyExtractor={(h) => h.id}
-            emptyMessage={housesViewMode === "PAID" ? "No paid houses for this month" : "All houses have paid for this month"}
+            emptyMessage={housesViewMode === "PAID" ? t('no_paid_houses') : t('all_paid')}
           />
           {paginatedHouses.length > 0 && (
             <Pagination
@@ -833,7 +838,7 @@ export default function AdminPaymentsPage() {
             data={paginatedPayments}
             columns={paymentColumns}
             keyExtractor={(payment) => payment.id}
-            emptyMessage={statusFilter === "ALL" ? "No payments yet" : `No ${statusFilter.toLowerCase()} payments`}
+            emptyMessage={statusFilter === "ALL" ? t('no_payments_yet') : t('no_status_payments', { status: statusFilter.toLowerCase() })}
           />
           {paginatedPayments.length > 0 && (
             <Pagination
@@ -852,7 +857,7 @@ export default function AdminPaymentsPage() {
       <Modal
         isOpen={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
-        title="Create Payment"
+        title={t('create_payment')}
         size="lg"
       >
         <AdminCreatePaymentForm
@@ -868,17 +873,17 @@ export default function AdminPaymentsPage() {
         isOpen={imageModalOpen}
         onClose={() => setImageModalOpen(false)}
         imageSrc={selectedImage}
-        altText="Payment proof"
+        altText={t('payment_proof')}
       />
 
       {/* Bulk Approve Confirmation Modal */}
       <ConfirmModal
         isOpen={bulkApproveModalOpen}
         onClose={() => setBulkApproveModalOpen(false)}
-        title="Approve Multiple Payments"
-        message={`Are you sure you want to approve ${selectedPaymentIds.length} payment(s)? This action cannot be undone.`}
-        confirmText="Approve All"
-        cancelText="Cancel"
+        title={t('approve_multiple_title')}
+        message={t('approve_multiple_message', { count: selectedPaymentIds.length })}
+        confirmText={t('approve_all')}
+        cancelText={tCommon('actions.cancel')}
         onConfirm={handleBulkApprove}
         isLoading={isBulkProcessing}
         variant="primary"

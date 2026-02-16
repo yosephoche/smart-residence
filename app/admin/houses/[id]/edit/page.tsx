@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Card } from "@/components/ui/Card";
 import Alert from "@/components/ui/Alert";
 import { Skeleton } from "@/components/ui/Loading";
@@ -9,7 +10,11 @@ import HouseForm from "@/components/forms/HouseForm";
 import { HouseFormData } from "@/lib/validations/house.schema";
 import { House, HouseType, User } from "@/types";
 
+export const dynamic = 'force-dynamic';
+
 export default function EditHousePage() {
+  const t = useTranslations('houses');
+  const tCommon = useTranslations('common');
   const router = useRouter();
   const params = useParams();
   const houseId = params.id as string;
@@ -75,7 +80,7 @@ export default function EditHousePage() {
 
     if (!res.ok) {
       const err = await res.json();
-      setError(err.error || "Failed to update house");
+      setError(err.error || t('update_error'));
       setIsSubmitting(false);
       return;
     }
@@ -118,14 +123,14 @@ export default function EditHousePage() {
       <div className="max-w-2xl mx-auto space-y-6">
         <Alert
           variant="error"
-          title="House Not Found"
-          message="The house you're trying to edit doesn't exist."
+          title={t('not_found_title')}
+          message={t('not_found_message')}
         />
         <button
           onClick={() => router.push("/admin/houses")}
           className="text-primary-600 hover:text-primary-700 font-medium"
         >
-          ← Back to Houses
+          ← {t('back_to_houses')}
         </button>
       </div>
     );
@@ -141,13 +146,13 @@ export default function EditHousePage() {
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
-          Back to Houses
+          {t('back_to_houses')}
         </button>
         <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
-          Edit House
+          {t('edit_house')}
         </h1>
         <p className="text-gray-600 mt-1">
-          Update house information for {house?.houseNumber}
+          {t('edit_subtitle', { houseNumber: house?.houseNumber ?? '' })}
         </p>
       </div>
 

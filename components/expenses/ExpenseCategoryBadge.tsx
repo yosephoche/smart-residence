@@ -1,5 +1,7 @@
+'use client';
+
 import Badge from "@/components/ui/Badge";
-import { getExpenseCategoryLabel } from "@/lib/calculations";
+import { useTranslations } from "next-intl";
 
 interface Props {
   category: string;
@@ -17,10 +19,22 @@ const categoryVariants: Record<string, "default" | "success" | "warning" | "dang
 };
 
 export default function ExpenseCategoryBadge({ category, size = "sm" }: Props) {
+  const t = useTranslations('expenses.categories');
+
+  const categoryLabels: Record<string, string> = {
+    MAINTENANCE: t('maintenance'),
+    SECURITY: t('security'),
+    UTILITIES: t('utilities'),
+    CLEANING: t('cleaning'),
+    LANDSCAPING: t('landscaping'),
+    ADMINISTRATION: t('administration'),
+    OTHER: t('other'),
+  };
+
   const variant = categoryVariants[category] || "default";
   return (
     <Badge variant={variant} size={size}>
-      {getExpenseCategoryLabel(category)}
+      {categoryLabels[category] || category}
     </Badge>
   );
 }

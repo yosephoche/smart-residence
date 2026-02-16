@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { useTranslations } from "next-intl";
 import Button from "@/components/ui/Button";
 import FileUpload from "@/components/ui/FileUpload";
 import { formatCurrency } from "@/lib/utils";
@@ -33,6 +34,9 @@ export default function AdminCreatePaymentForm({
   onCancel,
   isSubmitting,
 }: AdminCreatePaymentFormProps) {
+  const t = useTranslations('payments.form');
+  const tAdmin = useTranslations('payments.admin');
+  const tCommon = useTranslations('common');
   const [selectedUserId, setSelectedUserId] = useState("");
   const [houses, setHouses] = useState<House[]>([]);
   const [selectedHouseId, setSelectedHouseId] = useState("");
@@ -99,7 +103,7 @@ export default function AdminCreatePaymentForm({
       {/* User select */}
       <div className="flex flex-col gap-1.5">
         <label className="text-sm font-medium text-gray-700 tracking-tight">
-          Resident <span className="text-danger-500">*</span>
+          {t('resident')} <span className="text-danger-500">*</span>
         </label>
         <select
           value={selectedUserId}
@@ -107,7 +111,7 @@ export default function AdminCreatePaymentForm({
           disabled={isSubmitting}
           className="w-full px-4 py-3 text-sm text-gray-900 bg-white border-2 border-gray-300 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:border-primary-500 focus:ring-primary-100 disabled:opacity-50"
         >
-          <option value="">Select a resident...</option>
+          <option value="">{t('select_resident')}</option>
           {nonAdminUsers.map((u) => (
             <option key={u.id} value={u.id}>
               {u.name} ({u.email})
@@ -119,7 +123,7 @@ export default function AdminCreatePaymentForm({
       {/* House select */}
       <div className="flex flex-col gap-1.5">
         <label className="text-sm font-medium text-gray-700 tracking-tight">
-          House <span className="text-danger-500">*</span>
+          {t('house')} <span className="text-danger-500">*</span>
         </label>
         <select
           value={selectedHouseId}
@@ -128,11 +132,11 @@ export default function AdminCreatePaymentForm({
           className="w-full px-4 py-3 text-sm text-gray-900 bg-white border-2 border-gray-300 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:border-primary-500 focus:ring-primary-100 disabled:opacity-50"
         >
           <option value="">
-            {isLoadingHouses ? "Loading..." : !selectedUserId ? "Select a resident first" : houses.length === 0 ? "No houses assigned" : "Select a house..."}
+            {isLoadingHouses ? tCommon('actions.loading') : !selectedUserId ? t('select_resident_first') : houses.length === 0 ? t('no_houses_assigned') : t('select_house')}
           </option>
           {houses.map((h) => (
             <option key={h.id} value={h.id}>
-              {h.houseNumber} – Block {h.block} ({h.houseType?.typeName})
+              {h.houseNumber} – {t('house')} {h.block} ({h.houseType?.typeName})
             </option>
           ))}
         </select>
@@ -141,7 +145,7 @@ export default function AdminCreatePaymentForm({
       {/* Amount months select */}
       <div className="flex flex-col gap-1.5">
         <label className="text-sm font-medium text-gray-700 tracking-tight">
-          Number of Months <span className="text-danger-500">*</span>
+          {t('number_of_months')} <span className="text-danger-500">*</span>
         </label>
         <select
           value={amountMonths}
@@ -162,9 +166,9 @@ export default function AdminCreatePaymentForm({
         <div className="bg-primary-50 border-2 border-primary-200 rounded-xl p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-primary-700">Total Payment</p>
+              <p className="text-sm font-medium text-primary-700">{t('total_amount')}</p>
               <p className="text-xs text-primary-600 mt-0.5">
-                {formatCurrency(monthlyRate)} &times; {amountMonths} bulan
+                {formatCurrency(monthlyRate)} &times; {amountMonths} {t('months_label')}
               </p>
             </div>
             <p className="text-2xl font-bold text-primary-900">
@@ -176,11 +180,11 @@ export default function AdminCreatePaymentForm({
 
       {/* File upload */}
       <FileUpload
-        label="Proof Image"
+        label={t('proof_image')}
         required
         onChange={setProofImage}
         value={proofImage}
-        helperText="Upload transfer receipt (JPG/PNG, max 2MB)"
+        helperText={t('upload_proof_help')}
         disabled={isSubmitting}
       />
 
@@ -194,7 +198,7 @@ export default function AdminCreatePaymentForm({
           disabled={isSubmitting}
           fullWidth
         >
-          Cancel
+          {tCommon('actions.cancel')}
         </Button>
         <Button
           type="submit"
@@ -204,7 +208,7 @@ export default function AdminCreatePaymentForm({
           disabled={!isValid || isSubmitting}
           fullWidth
         >
-          Create Payment
+          {tAdmin('create_payment')}
         </Button>
       </div>
     </form>

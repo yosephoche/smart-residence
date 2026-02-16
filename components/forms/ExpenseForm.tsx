@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import Button from "@/components/ui/Button";
 import { getExpenseCategoryOptions } from "@/lib/calculations";
 
@@ -20,6 +21,8 @@ export interface ExpenseFormData {
 }
 
 export default function ExpenseForm({ onSubmit, onCancel, isSubmitting, initialData }: Props) {
+  const t = useTranslations('expenses');
+  const tCommon = useTranslations('common');
   const [formData, setFormData] = useState<ExpenseFormData>({
     date: initialData?.date?.split("T")[0] || new Date().toISOString().split("T")[0],
     category: initialData?.category || "",
@@ -34,12 +37,12 @@ export default function ExpenseForm({ onSubmit, onCancel, isSubmitting, initialD
   const validate = () => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.date) newErrors.date = "Date is required";
-    if (new Date(formData.date) > new Date()) newErrors.date = "Date cannot be in future";
-    if (!formData.category) newErrors.category = "Category is required";
-    if (!formData.amount || formData.amount <= 0) newErrors.amount = "Amount must be positive";
+    if (!formData.date) newErrors.date = t('date_required');
+    if (new Date(formData.date) > new Date()) newErrors.date = t('date_future_error');
+    if (!formData.category) newErrors.category = t('category_required');
+    if (!formData.amount || formData.amount <= 0) newErrors.amount = t('amount_positive');
     if (!formData.description || formData.description.length < 5) {
-      newErrors.description = "Description must be at least 5 characters";
+      newErrors.description = t('description_min_length');
     }
 
     setErrors(newErrors);
@@ -57,7 +60,7 @@ export default function ExpenseForm({ onSubmit, onCancel, isSubmitting, initialD
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
-          Date <span className="text-danger-600">*</span>
+          {t('date')} <span className="text-danger-600">*</span>
         </label>
         <input
           type="date"
@@ -71,14 +74,14 @@ export default function ExpenseForm({ onSubmit, onCancel, isSubmitting, initialD
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
-          Category <span className="text-danger-600">*</span>
+          {t('category')} <span className="text-danger-600">*</span>
         </label>
         <select
           value={formData.category}
           onChange={(e) => setFormData({ ...formData, category: e.target.value })}
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
         >
-          <option value="">Select Category</option>
+          <option value="">{t('select_category')}</option>
           {categories.map((cat) => (
             <option key={cat.value} value={cat.value}>
               {cat.label}
@@ -90,7 +93,7 @@ export default function ExpenseForm({ onSubmit, onCancel, isSubmitting, initialD
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
-          Amount (Rp) <span className="text-danger-600">*</span>
+          {t('amount_rp')} <span className="text-danger-600">*</span>
         </label>
         <input
           type="number"
@@ -105,7 +108,7 @@ export default function ExpenseForm({ onSubmit, onCancel, isSubmitting, initialD
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
-          Description <span className="text-danger-600">*</span>
+          {t('description')} <span className="text-danger-600">*</span>
         </label>
         <input
           type="text"
@@ -119,7 +122,7 @@ export default function ExpenseForm({ onSubmit, onCancel, isSubmitting, initialD
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
-          Notes (Optional)
+          {t('notes_optional')}
         </label>
         <textarea
           value={formData.notes}
@@ -132,10 +135,10 @@ export default function ExpenseForm({ onSubmit, onCancel, isSubmitting, initialD
 
       <div className="flex gap-3 pt-4">
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Saving..." : initialData ? "Update Expense" : "Add Expense"}
+          {isSubmitting ? t('saving') : initialData ? t('update_expense') : t('add_expense')}
         </Button>
         <Button type="button" variant="ghost" onClick={onCancel} disabled={isSubmitting}>
-          Cancel
+          {tCommon('actions.cancel')}
         </Button>
       </div>
     </form>

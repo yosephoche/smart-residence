@@ -1,10 +1,13 @@
 "use client";
 
 import { useState, useEffect, useMemo, useRef } from "react";
+import { useTranslations } from "next-intl";
 import { useAuth } from "@/lib/auth-client";
 import PaymentCard from "@/components/payments/PaymentCard";
 import { Skeleton } from "@/components/ui/Loading";
 import { Payment } from "@/types";
+
+export const dynamic = 'force-dynamic';
 
 interface House {
   id: string;
@@ -12,6 +15,9 @@ interface House {
 }
 
 export default function PaymentHistoryPage() {
+  const t = useTranslations('payments.user');
+  const tCommon = useTranslations('common');
+  const tForm = useTranslations('payments.form');
   const { user } = useAuth();
   const [payments, setPayments] = useState<Payment[]>([]);
   const [house, setHouse] = useState<House | null>(null);
@@ -82,29 +88,29 @@ export default function PaymentHistoryPage() {
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
-          Payment History
+          {t('history_title')}
         </h1>
         <p className="text-gray-600 mt-1">
-          View all your IPL payment submissions and their status
+          {t('history_subtitle')}
         </p>
       </div>
 
       {/* Statistics */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-white rounded-xl border-2 border-gray-200 p-4 shadow-sm">
-          <p className="text-sm font-medium text-gray-600 mb-1">Total Payments</p>
+          <p className="text-sm font-medium text-gray-600 mb-1">{t('total_payments')}</p>
           <p className="text-3xl font-bold text-gray-900">{stats.total}</p>
         </div>
         <div className="bg-warning-50 rounded-xl border-2 border-warning-200 p-4 shadow-sm">
-          <p className="text-sm font-medium text-warning-700 mb-1">Pending</p>
+          <p className="text-sm font-medium text-warning-700 mb-1">{tCommon('status.pending')}</p>
           <p className="text-3xl font-bold text-warning-900">{stats.pending}</p>
         </div>
         <div className="bg-success-50 rounded-xl border-2 border-success-200 p-4 shadow-sm">
-          <p className="text-sm font-medium text-success-700 mb-1">Approved</p>
+          <p className="text-sm font-medium text-success-700 mb-1">{tCommon('status.approved')}</p>
           <p className="text-3xl font-bold text-success-900">{stats.approved}</p>
         </div>
         <div className="bg-danger-50 rounded-xl border-2 border-danger-200 p-4 shadow-sm">
-          <p className="text-sm font-medium text-danger-700 mb-1">Rejected</p>
+          <p className="text-sm font-medium text-danger-700 mb-1">{tCommon('status.rejected')}</p>
           <p className="text-3xl font-bold text-danger-900">{stats.rejected}</p>
         </div>
       </div>
@@ -113,10 +119,10 @@ export default function PaymentHistoryPage() {
       <div className="bg-white rounded-xl border-2 border-gray-200 p-2 shadow-sm">
         <div className="flex flex-wrap gap-2">
           {[
-            { value: "ALL" as const, label: "All Payments", count: stats.total },
-            { value: "PENDING" as const, label: "Pending", count: stats.pending },
-            { value: "APPROVED" as const, label: "Approved", count: stats.approved },
-            { value: "REJECTED" as const, label: "Rejected", count: stats.rejected },
+            { value: "ALL" as const, label: t('all_payments'), count: stats.total },
+            { value: "PENDING" as const, label: tCommon('status.pending'), count: stats.pending },
+            { value: "APPROVED" as const, label: tCommon('status.approved'), count: stats.approved },
+            { value: "REJECTED" as const, label: tCommon('status.rejected'), count: stats.rejected },
           ].map((filter) => (
             <button
               key={filter.value}
@@ -151,14 +157,12 @@ export default function PaymentHistoryPage() {
             />
           </svg>
           <h3 className="text-lg font-semibold text-gray-900 mb-2">
-            {statusFilter === "ALL"
-              ? "No Payments Yet"
-              : `No ${statusFilter.toLowerCase()} payments`}
+            {t('no_payments', { status: statusFilter === "ALL" ? "" : statusFilter.toLowerCase() })}
           </h3>
           <p className="text-gray-600 mb-6">
             {statusFilter === "ALL"
-              ? "You haven't submitted any payments yet."
-              : `You don't have any ${statusFilter.toLowerCase()} payments.`}
+              ? t('no_payments', { status: "" })
+              : t('no_payments', { status: statusFilter.toLowerCase() })}
           </p>
           {statusFilter === "ALL" && (
             <a
@@ -173,7 +177,7 @@ export default function PaymentHistoryPage() {
                   d="M12 4v16m8-8H4"
                 />
               </svg>
-              Submit Your First Payment
+              {tForm('submit_payment')}
             </a>
           )}
         </div>

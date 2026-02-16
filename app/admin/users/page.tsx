@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Table, { Column, Pagination } from "@/components/ui/Table";
@@ -12,6 +13,8 @@ import Alert from "@/components/ui/Alert";
 import { Skeleton } from "@/components/ui/Loading";
 import { formatDate } from "@/lib/utils";
 import { usePagination } from "@/lib/hooks/usePagination";
+
+export const dynamic = 'force-dynamic';
 
 interface User {
   id: string;
@@ -23,6 +26,8 @@ interface User {
 }
 
 export default function UsersPage() {
+  const t = useTranslations('users');
+  const tCommon = useTranslations('common');
   const router = useRouter();
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -32,6 +37,7 @@ export default function UsersPage() {
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
   const fetchUsers = async () => {
     const res = await fetch("/api/users");
@@ -82,19 +88,38 @@ export default function UsersPage() {
   const handleDeleteConfirm = async () => {
     if (!userToDelete) return;
     setIsDeleting(true);
-    await fetch(`/api/users/${userToDelete.id}`, { method: "DELETE" });
-    setSuccessMessage(`User "${userToDelete.name}" has been deleted successfully`);
-    setTimeout(() => setSuccessMessage(""), 5000);
-    setIsDeleting(false);
-    setDeleteModalOpen(false);
-    setUserToDelete(null);
-    fetchUsers();
+
+    try {
+      const res = await fetch(`/api/users/${userToDelete.id}`, { method: "DELETE" });
+      const data = await res.json();
+
+      if (!res.ok) {
+        // Deletion failed - show actual error
+        setErrorMessage(data.error || "Failed to delete user");
+        setTimeout(() => setErrorMessage(""), 8000); // Longer timeout for error messages
+        setIsDeleting(false);
+        setDeleteModalOpen(false);
+        return; // Don't refresh user list or show success
+      }
+
+      // Deletion succeeded
+      setSuccessMessage(`User "${userToDelete.name}" has been deleted successfully`);
+      setTimeout(() => setSuccessMessage(""), 5000);
+      setDeleteModalOpen(false);
+      setUserToDelete(null);
+      fetchUsers(); // Refresh the list
+    } catch (error) {
+      setErrorMessage("Network error - could not delete user");
+      setTimeout(() => setErrorMessage(""), 8000);
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const columns: Column<User>[] = [
     {
       key: "name",
-      header: "Name",
+      header: tCommon('table.name'),
       sortable: true,
       render: (_, user) => (
         <div className="flex items-center gap-3">
@@ -112,7 +137,7 @@ export default function UsersPage() {
     },
     {
       key: "role",
-      header: "Role",
+      header: tCommon('table.role'),
       sortable: true,
       render: (value) => (
         <Badge variant={value === "ADMIN" ? "info" : "default"}>
@@ -122,17 +147,17 @@ export default function UsersPage() {
     },
     {
       key: "isFirstLogin",
-      header: "Status",
+      header: tCommon('table.status'),
       render: (value) =>
         value ? (
-          <Badge variant="warning" size="sm">First Login</Badge>
+          <Badge variant="warning" size="sm">{tCommon('status.first_login')}</Badge>
         ) : (
-          <Badge variant="success" size="sm">Active</Badge>
+          <Badge variant="success" size="sm">{tCommon('status.active')}</Badge>
         ),
     },
     {
       key: "createdAt",
-      header: "Created",
+      header: tCommon('table.created'),
       sortable: true,
       render: (value) => (
         <span className="text-sm text-gray-600">{formatDate(value)}</span>
@@ -140,20 +165,20 @@ export default function UsersPage() {
     },
     {
       key: "id",
-      header: "Actions",
+      header: tCommon('table.actions'),
       render: (_, user) => (
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" onClick={() => router.push(`/admin/users/${user.id}/edit`)}>
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
             </svg>
-            Edit
+            {tCommon('actions.edit')}
           </Button>
           <Button variant="ghost" size="sm" onClick={() => handleDeleteClick(user)} className="text-danger-600 hover:bg-danger-50">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
             </svg>
-            Delete
+            {tCommon('actions.delete')}
           </Button>
         </div>
       ),
@@ -177,26 +202,27 @@ export default function UsersPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">User Management</h1>
-          <p className="text-gray-600 mt-1">Manage resident accounts and administrators</p>
+          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">{t('title')}</h1>
+          <p className="text-gray-600 mt-1">{t('subtitle')}</p>
         </div>
         <Link href="/admin/users/create">
           <Button variant="primary" size="lg">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
-            Add User
+            {t('add_user')}
           </Button>
         </Link>
       </div>
 
       {successMessage && <Alert variant="success" message={successMessage} autoClose />}
+      {errorMessage && <Alert variant="danger" message={errorMessage} autoClose />}
 
       <div className="bg-white rounded-xl border-2 border-gray-200 p-4">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1">
             <Input
-              placeholder="Search by name or email..."
+              placeholder={t('search_placeholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               leftIcon={
@@ -213,21 +239,21 @@ export default function UsersPage() {
               onChange={(e) => setRoleFilter(e.target.value as any)}
               className="w-full px-4 py-2.5 text-sm text-gray-900 bg-white border-2 border-gray-300 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:border-primary-500 focus:ring-primary-100"
             >
-              <option value="ALL">All Roles</option>
-              <option value="ADMIN">Admin</option>
-              <option value="USER">User</option>
+              <option value="ALL">{t('all_roles')}</option>
+              <option value="ADMIN">{tCommon('navigation.admin.admin_panel').replace(' Panel', '')}</option>
+              <option value="USER">{tCommon('navigation.user.resident_portal').replace(' Portal', '').replace('Resident', 'User')}</option>
             </select>
           </div>
         </div>
         <div className="flex items-center gap-4 mt-4 pt-4 border-t-2 border-gray-100">
           <span className="text-sm text-gray-600">
-            Showing <span className="font-semibold">{filteredUsers.length}</span> of{" "}
-            <span className="font-semibold">{users.length}</span> users
+            {tCommon('table.showing')} <span className="font-semibold">{filteredUsers.length}</span> {tCommon('table.of')}{" "}
+            <span className="font-semibold">{users.length}</span> {t('showing_users')}
           </span>
         </div>
       </div>
 
-      <Table data={paginatedData} columns={columns} keyExtractor={(user) => user.id} emptyMessage="No users found" />
+      <Table data={paginatedData} columns={columns} keyExtractor={(user) => user.id} emptyMessage={t('no_users_found')} />
 
       {/* Pagination */}
       {paginatedData.length > 0 && (
@@ -245,9 +271,9 @@ export default function UsersPage() {
         isOpen={deleteModalOpen}
         onClose={() => setDeleteModalOpen(false)}
         onConfirm={handleDeleteConfirm}
-        title="Delete User"
-        message={`Are you sure you want to delete "${userToDelete?.name}"? This action cannot be undone.`}
-        confirmText="Delete"
+        title={t('delete_user')}
+        message={t('delete_confirmation', { name: userToDelete?.name ?? '' })}
+        confirmText={tCommon('actions.delete')}
         variant="danger"
         isLoading={isDeleting}
       />

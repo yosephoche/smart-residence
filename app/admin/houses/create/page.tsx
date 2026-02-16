@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Card } from "@/components/ui/Card";
 import Alert from "@/components/ui/Alert";
 import { Skeleton } from "@/components/ui/Loading";
@@ -9,7 +10,11 @@ import HouseForm from "@/components/forms/HouseForm";
 import { HouseFormData } from "@/lib/validations/house.schema";
 import { HouseType, User } from "@/types";
 
+export const dynamic = 'force-dynamic';
+
 export default function CreateHousePage() {
+  const t = useTranslations('houses');
+  const tCommon = useTranslations('common');
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -58,7 +63,7 @@ export default function CreateHousePage() {
 
     if (!res.ok) {
       const err = await res.json();
-      setError(err.error || "Failed to create house");
+      setError(err.error || t('create_error'));
       setIsSubmitting(false);
       return;
     }
@@ -99,10 +104,10 @@ export default function CreateHousePage() {
     <div className="max-w-2xl mx-auto space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
-          Add New House
+          {t('add_house')}
         </h1>
         <p className="text-gray-600 mt-1">
-          Register a new property in the residential area
+          {t('create_subtitle')}
         </p>
       </div>
 

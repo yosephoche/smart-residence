@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import SessionWrapper from "@/components/layouts/SessionWrapper";
+import { NextIntlClientProvider } from 'next-intl';
+import { getUserLocale } from '@/services/locale.service';
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -10,15 +12,20 @@ export const metadata: Metadata = {
   description: "Housing payment (IPL) management application for residential areas",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getUserLocale();
+  const messages = (await import(`@/messages/${locale}.json`)).default;
+
   return (
-    <html lang="id">
+    <html lang={locale}>
       <body className={inter.className}>
-        <SessionWrapper>{children}</SessionWrapper>
+        <NextIntlClientProvider locale={locale} messages={messages}>
+          <SessionWrapper>{children}</SessionWrapper>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

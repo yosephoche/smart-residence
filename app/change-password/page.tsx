@@ -13,12 +13,17 @@ import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Alert from "@/components/ui/Alert";
 import AuthGuard from "@/components/layouts/AuthGuard";
+import { useTranslations } from "next-intl";
+
+export const dynamic = 'force-dynamic';
 
 function ChangePasswordContent() {
   const router = useRouter();
   const { user, changePassword, logout } = useAuth();
   const [error, setError] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const t = useTranslations('auth');
+  const tCommon = useTranslations('common');
 
   const {
     register,
@@ -69,10 +74,10 @@ function ChangePasswordContent() {
               </svg>
             </div>
             <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
-              Change Password Required
+              {t('change_password_required')}
             </h1>
             <p className="text-sm text-gray-600 mt-2">
-              For security reasons, please change your default password before continuing.
+              {t('change_password_message')}
             </p>
           </div>
 
@@ -80,8 +85,8 @@ function ChangePasswordContent() {
           <div className="mb-6">
             <Alert
               variant="warning"
-              title="First Time Login"
-              message="You must change your password to access the system."
+              title={t('first_time_login')}
+              message={t('must_change_password')}
             />
           </div>
 
@@ -95,9 +100,9 @@ function ChangePasswordContent() {
           {/* Change Password Form */}
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             <Input
-              label="Current Password"
+              label={t('current_password')}
               type="password"
-              placeholder="Enter current password"
+              placeholder={t('current_password_placeholder')}
               error={errors.oldPassword?.message}
               {...register("oldPassword")}
               fullWidth
@@ -106,11 +111,11 @@ function ChangePasswordContent() {
             />
 
             <Input
-              label="New Password"
+              label={t('new_password')}
               type="password"
-              placeholder="Enter new password"
+              placeholder={t('new_password_placeholder')}
               error={errors.newPassword?.message}
-              helperText="Must be at least 6 characters with a mix of uppercase, lowercase, or numbers"
+              helperText={t('password_hint')}
               {...register("newPassword")}
               fullWidth
               required
@@ -118,9 +123,9 @@ function ChangePasswordContent() {
             />
 
             <Input
-              label="Confirm New Password"
+              label={t('confirm_password')}
               type="password"
-              placeholder="Confirm new password"
+              placeholder={t('confirm_password_placeholder')}
               error={errors.confirmPassword?.message}
               {...register("confirmPassword")}
               fullWidth
@@ -137,7 +142,7 @@ function ChangePasswordContent() {
                 onClick={handleLogout}
                 disabled={isSubmitting}
               >
-                Cancel
+                {tCommon('actions.cancel')}
               </Button>
               <Button
                 type="submit"
@@ -146,7 +151,7 @@ function ChangePasswordContent() {
                 fullWidth
                 isLoading={isSubmitting}
               >
-                Change Password
+                {t('change_password')}
               </Button>
             </div>
           </form>
@@ -154,26 +159,26 @@ function ChangePasswordContent() {
           {/* Password Requirements */}
           <div className="mt-6 p-4 bg-gray-50 rounded-lg border-2 border-gray-200">
             <p className="text-xs font-medium text-gray-700 mb-2">
-              Password Requirements:
+              {t('password_requirements')}
             </p>
             <ul className="space-y-1 text-xs text-gray-600">
               <li className="flex items-start gap-2">
                 <svg className="w-4 h-4 text-success-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
-                <span>At least 6 characters long</span>
+                <span>{t('requirement_min_length')}</span>
               </li>
               <li className="flex items-start gap-2">
                 <svg className="w-4 h-4 text-success-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
-                <span>Contains uppercase, lowercase, or numbers</span>
+                <span>{t('requirement_mixed_case')}</span>
               </li>
               <li className="flex items-start gap-2">
                 <svg className="w-4 h-4 text-success-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
-                <span>Different from current password</span>
+                <span>{t('requirement_different')}</span>
               </li>
             </ul>
           </div>

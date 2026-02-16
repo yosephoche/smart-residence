@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { JobType } from "@prisma/client";
 import Table, { Column, Pagination } from "@/components/ui/Table";
 import Badge from "@/components/ui/Badge";
@@ -9,6 +10,8 @@ import Modal from "@/components/ui/Modal";
 import Input from "@/components/ui/Input";
 import { Plus, Sparkles, Trash2, Calendar } from "lucide-react";
 import { usePagination } from "@/lib/hooks/usePagination";
+
+export const dynamic = 'force-dynamic';
 
 interface Schedule {
   id: string;
@@ -42,6 +45,8 @@ interface Staff {
 }
 
 export default function SchedulePage() {
+  const t = useTranslations('staff.schedule');
+  const tCommon = useTranslations('common');
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [staff, setStaff] = useState<Staff[]>([]);
   const [shiftTemplates, setShiftTemplates] = useState<ShiftTemplate[]>([]);
@@ -216,7 +221,7 @@ export default function SchedulePage() {
       if (!res.ok) throw new Error(data.error || "Failed to generate schedules");
 
       alert(
-        `Success! Created ${data.result.created} schedules, skipped ${data.result.skipped} existing.`
+        t('schedules_generated') + ` ${data.result.created} ${tCommon('messages.created')}, ${data.result.skipped} ${tCommon('messages.skipped')}`
       );
       await fetchSchedules();
       setIsAutoGenModalOpen(false);
@@ -233,7 +238,7 @@ export default function SchedulePage() {
   };
 
   const handleDeleteSchedule = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this schedule?")) return;
+    if (!confirm(t('delete_confirmation'))) return;
 
     try {
       const res = await fetch(`/api/admin/schedules/${id}`, {
@@ -258,7 +263,7 @@ export default function SchedulePage() {
   const columns: Column<Schedule>[] = [
     {
       key: "date",
-      header: "Date",
+      header: t('date'),
       render: (_, row) => (
         <span className="font-medium">
           {new Date(row.date).toLocaleDateString("id-ID", {
@@ -271,19 +276,19 @@ export default function SchedulePage() {
     },
     {
       key: "staff",
-      header: "Staff",
+      header: t('staff'),
       render: (_, row) => (
         <div>
           <div className="font-medium">{row.staff.name}</div>
           <div className="text-sm text-gray-500">
-            {row.staff.staffJobType.replace("_", " ")}
+            {tCommon(`job_types.${row.staff.staffJobType}`)}
           </div>
         </div>
       ),
     },
     {
       key: "shift",
-      header: "Shift",
+      header: t('shift'),
       render: (_, row) => (
         <div>
           <div className="font-medium">{row.shiftTemplate.shiftName}</div>
@@ -295,7 +300,7 @@ export default function SchedulePage() {
     },
     {
       key: "notes",
-      header: "Notes",
+      header: tCommon('table.notes'),
       render: (_, row) =>
         row.notes ? (
           <span className="text-sm text-gray-600">{row.notes}</span>
@@ -305,12 +310,12 @@ export default function SchedulePage() {
     },
     {
       key: "actions",
-      header: "Actions",
+      header: tCommon('table.actions'),
       render: (_, row) => (
         <button
           onClick={() => handleDeleteSchedule(row.id)}
           className="text-red-600 hover:text-red-700"
-          title="Delete"
+          title={tCommon('actions.delete')}
         >
           <Trash2 className="w-4 h-4" />
         </button>
@@ -331,33 +336,33 @@ export default function SchedulePage() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Staff Schedule</h1>
-          <p className="text-gray-500 mt-1">Manage staff shift assignments</p>
+          <h1 className="text-3xl font-bold text-gray-900">{t('title')}</h1>
+          <p className="text-gray-500 mt-1">{t('subtitle')}</p>
         </div>
         <div className="flex gap-3">
           <Button onClick={() => setIsAutoGenModalOpen(true)} variant="secondary">
             <Sparkles className="w-4 h-4 mr-2" />
-            Auto-Generate
+            {t('auto_generate')}
           </Button>
           <Button onClick={() => setIsCreateModalOpen(true)}>
             <Plus className="w-4 h-4 mr-2" />
-            Assign Shift
+            {t('create_assignment')}
           </Button>
         </div>
       </div>
 
       {/* Date Range Filter */}
       <div className="bg-white p-4 rounded-lg border border-gray-200 space-y-4">
-        <h3 className="font-semibold text-gray-900">Date Range</h3>
+        <h3 className="font-semibold text-gray-900">{t('date_range')}</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Input
-            label="Start Date"
+            label={t('start_date')}
             type="date"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
           />
           <Input
-            label="End Date"
+            label={t('end_date')}
             type="date"
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
@@ -377,7 +382,7 @@ export default function SchedulePage() {
         columns={columns}
         data={paginatedData}
         keyExtractor={(row) => row.id}
-        emptyMessage="No schedules found"
+        emptyMessage={t('no_schedules')}
       />
 
       {/* Pagination */}
@@ -396,13 +401,13 @@ export default function SchedulePage() {
       <Modal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
-        title="Assign Shift"
+        title={t('assign_shift')}
       >
         <form onSubmit={handleCreateSchedule} className="space-y-4">
           {/* Staff */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Staff *
+              {t('staff_label')} *
             </label>
             <select
               value={createForm.staffId}
@@ -410,10 +415,10 @@ export default function SchedulePage() {
               required
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             >
-              <option value="">Select staff</option>
+              <option value="">{t('select_staff')}</option>
               {staff.map((s) => (
                 <option key={s.id} value={s.id}>
-                  {s.name} ({s.staffJobType})
+                  {s.name} ({tCommon(`job_types.${s.staffJobType}`)})
                 </option>
               ))}
             </select>
@@ -422,7 +427,7 @@ export default function SchedulePage() {
           {/* Shift Template */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Shift *
+              {t('shift_label')} *
             </label>
             <select
               value={createForm.shiftTemplateId}
@@ -433,13 +438,19 @@ export default function SchedulePage() {
               disabled={!createForm.staffId}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent disabled:bg-gray-100"
             >
-              <option value="">Select shift</option>
-              {availableTemplates.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.shiftName} ({t.startTime} - {t.endTime})
+              <option value="">{t('select_shift')}</option>
+              {availableTemplates.map((template) => (
+                <option key={template.id} value={template.id}>
+                  {template.shiftName} ({template.startTime} - {template.endTime})
                 </option>
               ))}
             </select>
+            {!createForm.staffId && (
+              <p className="text-xs text-gray-500 mt-1">{t('staff_required')}</p>
+            )}
+            {createForm.staffId && availableTemplates.length === 0 && (
+              <p className="text-xs text-gray-500 mt-1">{t('no_shifts_available')}</p>
+            )}
           </div>
 
           {/* Bulk Toggle */}
@@ -453,7 +464,7 @@ export default function SchedulePage() {
               className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
             />
             <span className="text-sm font-medium text-gray-700">
-              Assign to multiple dates (bulk)
+              {tCommon('messages.assign_bulk')}
             </span>
           </label>
 
@@ -461,14 +472,14 @@ export default function SchedulePage() {
           {createForm.isBulk ? (
             <div className="grid grid-cols-2 gap-3">
               <Input
-                label="Start Date *"
+                label={t('start_date_label')}
                 type="date"
                 value={createForm.date}
                 onChange={(e) => setCreateForm({ ...createForm, date: e.target.value })}
                 required
               />
               <Input
-                label="End Date *"
+                label={t('end_date_label')}
                 type="date"
                 value={createForm.endDate}
                 onChange={(e) =>
@@ -479,7 +490,7 @@ export default function SchedulePage() {
             </div>
           ) : (
             <Input
-              label="Date *"
+              label={t('date_label')}
               type="date"
               value={createForm.date}
               onChange={(e) => setCreateForm({ ...createForm, date: e.target.value })}
@@ -490,7 +501,7 @@ export default function SchedulePage() {
           {/* Notes */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Notes (optional)
+              {tCommon('labels.notes')}
             </label>
             <textarea
               value={createForm.notes}
@@ -511,10 +522,10 @@ export default function SchedulePage() {
               variant="secondary"
               onClick={() => setIsCreateModalOpen(false)}
             >
-              Cancel
+              {tCommon('actions.cancel')}
             </Button>
             <Button type="submit" disabled={creating}>
-              {creating ? "Creating..." : "Assign"}
+              {creating ? tCommon('actions.creating') : tCommon('actions.assign')}
             </Button>
           </div>
         </form>
@@ -524,28 +535,27 @@ export default function SchedulePage() {
       <Modal
         isOpen={isAutoGenModalOpen}
         onClose={() => setIsAutoGenModalOpen(false)}
-        title="Auto-Generate Schedules"
+        title={t('auto_generate_title')}
       >
         <form onSubmit={handleAutoGenerate} className="space-y-4">
           <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg text-sm">
             <p>
-              Auto-generate will create schedules for all staff of the selected job type.
+              {t('auto_generate_help')}
             </p>
             <ul className="list-disc list-inside mt-2 space-y-1">
               <li>
-                <strong>Security:</strong> Rotates 2 shifts evenly across all security
-                staff
+                <strong>{t('security_rotation')}:</strong> {t('rotation_help')}
               </li>
               <li>
-                <strong>Others:</strong> Assigns single shift to all staff of that type
+                <strong>{t('other_jobs')}:</strong> {t('other_help')}
               </li>
             </ul>
-            <p className="mt-2">Existing schedules will be skipped (no duplicates).</p>
+            <p className="mt-2">{tCommon('messages.no_duplicates')}</p>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Job Type *
+              {t('job_type')} *
             </label>
             <select
               value={autoGenForm.jobType}
@@ -555,17 +565,17 @@ export default function SchedulePage() {
               required
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             >
-              <option value="SECURITY">Security</option>
-              <option value="CLEANING">Cleaning</option>
-              <option value="GARDENING">Gardening</option>
-              <option value="MAINTENANCE">Maintenance</option>
-              <option value="OTHER">Other</option>
+              <option value="SECURITY">{tCommon('job_types.SECURITY')}</option>
+              <option value="CLEANING">{tCommon('job_types.CLEANING')}</option>
+              <option value="GARDENING">{tCommon('job_types.GARDENING')}</option>
+              <option value="MAINTENANCE">{tCommon('job_types.MAINTENANCE')}</option>
+              <option value="OTHER">{tCommon('job_types.OTHER')}</option>
             </select>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <Input
-              label="Start Date *"
+              label={t('start_date_label')}
               type="date"
               value={autoGenForm.startDate}
               onChange={(e) =>
@@ -574,7 +584,7 @@ export default function SchedulePage() {
               required
             />
             <Input
-              label="End Date *"
+              label={t('end_date_label')}
               type="date"
               value={autoGenForm.endDate}
               onChange={(e) =>
@@ -594,10 +604,10 @@ export default function SchedulePage() {
               variant="secondary"
               onClick={() => setIsAutoGenModalOpen(false)}
             >
-              Cancel
+              {tCommon('actions.cancel')}
             </Button>
             <Button type="submit" disabled={generating}>
-              {generating ? "Generating..." : "Generate"}
+              {generating ? t('generating') : t('generate')}
             </Button>
           </div>
         </form>

@@ -1,5 +1,8 @@
+'use client';
+
 import Badge from "@/components/ui/Badge";
 import { PaymentStatus } from "@/types";
+import { useTranslations } from "next-intl";
 
 interface PaymentStatusBadgeProps {
   status: PaymentStatus;
@@ -12,6 +15,8 @@ export default function PaymentStatusBadge({
   size = "md",
   showDot = false,
 }: PaymentStatusBadgeProps) {
+  const t = useTranslations('common.status');
+
   const variants: Record<PaymentStatus, "success" | "warning" | "danger"> = {
     APPROVED: "success",
     PENDING: "warning",
@@ -19,9 +24,9 @@ export default function PaymentStatusBadge({
   };
 
   const labels: Record<PaymentStatus, string> = {
-    APPROVED: "Approved",
-    PENDING: "Pending",
-    REJECTED: "Rejected",
+    APPROVED: t('approved'),
+    PENDING: t('pending'),
+    REJECTED: t('rejected'),
   };
 
   return (

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { JobType } from "@prisma/client";
 import Table, { Column, Pagination } from "@/components/ui/Table";
 import Badge from "@/components/ui/Badge";
@@ -9,6 +10,8 @@ import { ImageModal } from "@/components/ui/ImageModal";
 import { Download, MapPin, Image as ImageIcon } from "lucide-react";
 import { usePagination } from "@/lib/hooks/usePagination";
 import { exportCSV, mapAttendancesForExport } from "@/lib/utils/export";
+
+export const dynamic = 'force-dynamic';
 
 interface Attendance {
   id: string;
@@ -36,6 +39,8 @@ interface Attendance {
 }
 
 export default function AdminAttendancePage() {
+  const t = useTranslations('staff.attendance');
+  const tCommon = useTranslations('common');
   const [attendances, setAttendances] = useState<Attendance[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -125,7 +130,7 @@ export default function AdminAttendancePage() {
   const columns: Column<Attendance>[] = [
     {
       key: "staff",
-      header: "Staff",
+      header: t('staff'),
       render: (_, row) => (
         <div>
           <div className="font-medium">{row.staff.name}</div>
@@ -137,7 +142,7 @@ export default function AdminAttendancePage() {
     },
     {
       key: "schedule",
-      header: "Shift",
+      header: t('shift'),
       render: (_, row) =>
         row.schedule ? (
           <div>
@@ -152,7 +157,7 @@ export default function AdminAttendancePage() {
     },
     {
       key: "clockInAt",
-      header: "Clock In",
+      header: t('clock_in'),
       render: (_, row) => (
         <div className="space-y-1">
           <div className="text-sm">{formatDateTime(row.clockInAt)}</div>
@@ -160,7 +165,7 @@ export default function AdminAttendancePage() {
             <button
               onClick={() => setSelectedImage(row.clockInPhoto)}
               className="text-primary-600 hover:text-primary-700"
-              title="View photo"
+              title={t('view_photo')}
             >
               <ImageIcon className="w-4 h-4" />
             </button>
@@ -169,7 +174,7 @@ export default function AdminAttendancePage() {
               target="_blank"
               rel="noopener noreferrer"
               className="text-primary-600 hover:text-primary-700"
-              title="View location"
+              title={t('view_location')}
             >
               <MapPin className="w-4 h-4" />
             </a>
@@ -179,7 +184,7 @@ export default function AdminAttendancePage() {
     },
     {
       key: "clockOutAt",
-      header: "Clock Out",
+      header: t('clock_out'),
       render: (_, row) =>
         row.clockOutAt ? (
           <div className="space-y-1">
@@ -188,7 +193,7 @@ export default function AdminAttendancePage() {
               <button
                 onClick={() => setSelectedImage(row.clockOutPhoto!)}
                 className="text-primary-600 hover:text-primary-700"
-                title="View photo"
+                title={t('view_photo')}
               >
                 <ImageIcon className="w-4 h-4" />
               </button>
@@ -197,29 +202,29 @@ export default function AdminAttendancePage() {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-primary-600 hover:text-primary-700"
-                title="View location"
+                title={t('view_location')}
               >
                 <MapPin className="w-4 h-4" />
               </a>
             </div>
           </div>
         ) : (
-          <Badge variant="warning">In Progress</Badge>
+          <Badge variant="warning">{t('in_progress')}</Badge>
         ),
     },
     {
       key: "duration",
-      header: "Duration",
+      header: t('duration'),
       render: (_, row) => calculateDuration(row.clockInAt, row.clockOutAt),
     },
     {
       key: "lateMinutes",
-      header: "Status",
+      header: t('status'),
       render: (_, row) =>
         row.lateMinutes && row.lateMinutes > 0 ? (
-          <Badge variant="danger">Late {row.lateMinutes} min</Badge>
+          <Badge variant="danger">{t('late')} {row.lateMinutes} {t('minutes')}</Badge>
         ) : (
-          <Badge variant="success">On Time</Badge>
+          <Badge variant="success">{t('on_time')}</Badge>
         ),
     },
   ];
@@ -237,40 +242,40 @@ export default function AdminAttendancePage() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Staff Attendance</h1>
-          <p className="text-gray-500 mt-1">View and manage staff attendance records</p>
+          <h1 className="text-3xl font-bold text-gray-900">{t('title')}</h1>
+          <p className="text-gray-500 mt-1">{t('subtitle')}</p>
         </div>
         <Button onClick={handleExportCSV} variant="secondary">
           <Download className="w-4 h-4 mr-2" />
-          Export CSV
+          {t('export_csv')}
         </Button>
       </div>
 
       {/* Filters */}
       <div className="bg-white p-4 rounded-lg border border-gray-200 space-y-4">
-        <h3 className="font-semibold text-gray-900">Filters</h3>
+        <h3 className="font-semibold text-gray-900">{tCommon('filters.title')}</h3>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Job Type
+              {tCommon('labels.job_type')}
             </label>
             <select
               value={jobTypeFilter}
               onChange={(e) => setJobTypeFilter(e.target.value as JobType | "ALL")}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             >
-              <option value="ALL">All Job Types</option>
-              <option value="SECURITY">Security</option>
-              <option value="CLEANING">Cleaning</option>
-              <option value="GARDENING">Gardening</option>
-              <option value="MAINTENANCE">Maintenance</option>
-              <option value="OTHER">Other</option>
+              <option value="ALL">{t('all_jobs')}</option>
+              <option value="SECURITY">{tCommon('job_types.SECURITY')}</option>
+              <option value="CLEANING">{tCommon('job_types.CLEANING')}</option>
+              <option value="GARDENING">{tCommon('job_types.GARDENING')}</option>
+              <option value="MAINTENANCE">{tCommon('job_types.MAINTENANCE')}</option>
+              <option value="OTHER">{tCommon('job_types.OTHER')}</option>
             </select>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Start Date
+              {t('start_date')}
             </label>
             <input
               type="date"
@@ -282,7 +287,7 @@ export default function AdminAttendancePage() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              End Date
+              {t('end_date')}
             </label>
             <input
               type="date"
@@ -300,7 +305,7 @@ export default function AdminAttendancePage() {
                 onChange={(e) => setLateOnly(e.target.checked)}
                 className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
               />
-              <span className="text-sm font-medium text-gray-700">Late Only</span>
+              <span className="text-sm font-medium text-gray-700">{t('show_late_only')}</span>
             </label>
           </div>
         </div>
@@ -318,7 +323,7 @@ export default function AdminAttendancePage() {
         columns={columns}
         data={paginatedData}
         keyExtractor={(row) => row.id}
-        emptyMessage="No attendance records found"
+        emptyMessage={t('no_attendance')}
       />
 
       {/* Pagination */}
@@ -339,7 +344,7 @@ export default function AdminAttendancePage() {
           isOpen={!!selectedImage}
           imageSrc={selectedImage}
           onClose={() => setSelectedImage(null)}
-          altText="Attendance Photo"
+          altText={t('view_photo')}
         />
       )}
     </div>

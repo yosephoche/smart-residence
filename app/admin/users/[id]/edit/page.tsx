@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Card } from "@/components/ui/Card";
 import Alert from "@/components/ui/Alert";
 import Loading, { Skeleton } from "@/components/ui/Loading";
@@ -9,7 +10,12 @@ import UserForm from "@/components/forms/UserForm";
 import { UserFormData } from "@/lib/validations/user.schema";
 import { User } from "@/types";
 
+export const dynamic = 'force-dynamic';
+
 export default function EditUserPage() {
+  const t = useTranslations('users');
+  const tForm = useTranslations('users.form');
+  const tCommon = useTranslations('common');
   const router = useRouter();
   const params = useParams();
   const userId = params.id as string;
@@ -94,14 +100,14 @@ export default function EditUserPage() {
       <div className="max-w-2xl mx-auto space-y-6">
         <Alert
           variant="error"
-          title="User Not Found"
-          message="The user you're trying to edit doesn't exist."
+          title={t('no_users_found')}
+          message={t('no_users_found')}
         />
         <button
           onClick={() => router.push("/admin/users")}
           className="text-primary-600 hover:text-primary-700 font-medium"
         >
-          ← Back to Users
+          ← {tCommon('actions.back')}
         </button>
       </div>
     );
@@ -118,13 +124,13 @@ export default function EditUserPage() {
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
-          Back to Users
+          {tCommon('actions.back')}
         </button>
         <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
-          Edit User
+          {tForm('update_user')}
         </h1>
         <p className="text-gray-600 mt-1">
-          Update user information for {user?.name}
+          {t('subtitle')}
         </p>
       </div>
 

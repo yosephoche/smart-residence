@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useTranslations } from "next-intl";
 import { userFormSchema, UserFormData } from "@/lib/validations/user.schema";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
@@ -23,6 +24,8 @@ export default function UserForm({
   onCancel,
   isSubmitting = false,
 }: UserFormProps) {
+  const t = useTranslations('users.form');
+  const tCommon = useTranslations('common');
   const isEditMode = !!user;
   const [availableHouses, setAvailableHouses] = useState<any[]>([]);
   const [isLoadingHouses, setIsLoadingHouses] = useState(false);
@@ -66,8 +69,8 @@ export default function UserForm({
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
       <Input
-        label="Full Name"
-        placeholder="Enter full name"
+        label={t('full_name')}
+        placeholder={t('name_placeholder')}
         error={errors.name?.message}
         {...register("name")}
         fullWidth
@@ -75,11 +78,11 @@ export default function UserForm({
       />
 
       <Input
-        label="Email Address"
+        label={t('email_address')}
         type="email"
-        placeholder="user@example.com"
+        placeholder={t('email_placeholder')}
         error={errors.email?.message}
-        helperText={isEditMode ? "Email cannot be changed after creation" : undefined}
+        helperText={isEditMode ? t('email_readonly') : undefined}
         {...register("email")}
         fullWidth
         required
@@ -88,15 +91,15 @@ export default function UserForm({
 
       <div className="flex flex-col gap-1.5">
         <label className="text-sm font-medium text-gray-700 tracking-tight">
-          Role <span className="text-danger-500 ml-1">*</span>
+          {t('role')} <span className="text-danger-500 ml-1">*</span>
         </label>
         <select
           {...register("role")}
           className="w-full px-4 py-2.5 text-sm text-gray-900 bg-white border-2 border-gray-300 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:border-primary-500 focus:ring-primary-100"
         >
-          <option value="USER">User (Resident)</option>
-          <option value="ADMIN">Admin</option>
-          <option value="STAFF">Staff</option>
+          <option value="USER">{t('role_user')}</option>
+          <option value="ADMIN">{t('role_admin')}</option>
+          <option value="STAFF">{t('role_staff')}</option>
         </select>
         {errors.role && (
           <p className="text-xs text-danger-600">{errors.role.message}</p>
@@ -106,18 +109,18 @@ export default function UserForm({
       {!isEditMode && role === "STAFF" && (
         <div className="flex flex-col gap-1.5">
           <label className="text-sm font-medium text-gray-700 tracking-tight">
-            Job Type <span className="text-danger-500 ml-1">*</span>
+            {t('job_type')} <span className="text-danger-500 ml-1">*</span>
           </label>
           <select
             {...register("staffJobType")}
             className="w-full px-4 py-2.5 text-sm text-gray-900 bg-white border-2 border-gray-300 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:border-primary-500 focus:ring-primary-100"
           >
-            <option value="">Select job type...</option>
-            <option value="SECURITY">Security</option>
-            <option value="CLEANING">Cleaning</option>
-            <option value="GARDENING">Gardening</option>
-            <option value="MAINTENANCE">Maintenance</option>
-            <option value="OTHER">Other</option>
+            <option value="">{t('job_type_placeholder')}</option>
+            <option value="SECURITY">{t('job_security')}</option>
+            <option value="CLEANING">{t('job_cleaning')}</option>
+            <option value="GARDENING">{t('job_gardening')}</option>
+            <option value="MAINTENANCE">{t('job_maintenance')}</option>
+            <option value="OTHER">{t('job_other')}</option>
           </select>
           {errors.staffJobType && (
             <p className="text-xs text-danger-600">{errors.staffJobType.message}</p>
@@ -128,11 +131,11 @@ export default function UserForm({
       {!isEditMode && role === "USER" && (
         <div className="flex flex-col gap-1.5">
           <label className="text-sm font-medium text-gray-700 tracking-tight">
-            Assign House (Optional)
+            {t('assign_house')}
           </label>
           <SearchableSelect
             options={[
-              { value: "", label: "No house (assign later)" },
+              { value: "", label: t('no_house') },
               ...availableHouses.map((house) => ({
                 value: house.id,
                 label: `${house.houseNumber} - Block ${house.block} (${house.houseType?.typeName})`,
@@ -141,15 +144,15 @@ export default function UserForm({
             ]}
             value={houseId || ""}
             onChange={(value) => setValue("houseId", value)}
-            placeholder="Search house number..."
-            emptyMessage="No vacant houses found"
+            placeholder={t('search_house')}
+            emptyMessage={t('no_vacant_houses')}
             disabled={isLoadingHouses}
           />
           {isLoadingHouses && (
-            <p className="text-xs text-gray-500">Loading available houses...</p>
+            <p className="text-xs text-gray-500">{t('loading_houses')}</p>
           )}
           <p className="text-xs text-gray-500">
-            Select a house to assign this user immediately, or leave empty to assign later
+            {t('assign_house_help')}
           </p>
           {errors.houseId && (
             <p className="text-xs text-danger-600">{errors.houseId.message}</p>
@@ -160,8 +163,7 @@ export default function UserForm({
       {isEditMode && (
         <div className="p-4 bg-gray-50 rounded-lg border-2 border-gray-200">
           <p className="text-xs text-gray-600">
-            <strong>Note:</strong> Password cannot be changed from this form. Users
-            must change their own password after logging in.
+            <strong>{t('password_note')}</strong> {t('password_note_message')}
           </p>
         </div>
       )}
@@ -175,7 +177,7 @@ export default function UserForm({
           disabled={isSubmitting}
           fullWidth
         >
-          Cancel
+          {tCommon('actions.cancel')}
         </Button>
         <Button
           type="submit"
@@ -184,7 +186,7 @@ export default function UserForm({
           isLoading={isSubmitting}
           fullWidth
         >
-          {isEditMode ? "Update User" : "Create User"}
+          {isEditMode ? t('update_user') : t('create_user')}
         </Button>
       </div>
     </form>

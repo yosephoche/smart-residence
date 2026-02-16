@@ -2,12 +2,15 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { Card, CardHeader, CardContent } from "@/components/ui/Card";
 import StatCard from "@/components/ui/StatCard";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Loading";
 import { formatCurrency, formatDate } from "@/lib/utils";
+
+export const dynamic = 'force-dynamic';
 
 interface User {
   id: string;
@@ -42,6 +45,8 @@ interface PaymentStats {
 }
 
 export default function AdminDashboardPage() {
+  const t = useTranslations('dashboard.admin');
+  const tCommon = useTranslations('common');
   const [users, setUsers] = useState<User[]>([]);
   const [houses, setHouses] = useState<House[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
@@ -116,19 +121,19 @@ export default function AdminDashboardPage() {
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
-          Dashboard Overview
+          {t('title')}
         </h1>
         <p className="text-gray-600 mt-1">
-          Welcome back! Here&apos;s what&apos;s happening with your residential area.
+          {t('subtitle')}
         </p>
       </div>
 
       {/* Financial Metrics Row */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <StatCard
-          title="Total Pemasukan"
+          title={t('total_income')}
           value={totalIncome}
-          subtitle="All-time income"
+          subtitle={t('total_income_subtitle')}
           variant="success"
           compactNumbers={true}
           compactThreshold={10_000_000}
@@ -140,9 +145,9 @@ export default function AdminDashboardPage() {
         />
 
         <StatCard
-          title="Total Pengeluaran"
+          title={t('total_expenses')}
           value={totalExpenses}
-          subtitle="All-time expenses"
+          subtitle={t('total_expenses_subtitle')}
           variant="danger"
           compactNumbers={true}
           compactThreshold={10_000_000}
@@ -154,9 +159,9 @@ export default function AdminDashboardPage() {
         />
 
         <StatCard
-          title="Pemasukan Bulan Ini"
+          title={t('monthly_income')}
           value={monthlyIncome}
-          subtitle="Current month income"
+          subtitle={t('monthly_income_subtitle')}
           variant="success"
           compactNumbers={true}
           compactThreshold={10_000_000}
@@ -168,9 +173,9 @@ export default function AdminDashboardPage() {
         />
 
         <StatCard
-          title="Pengeluaran Bulan Ini"
+          title={t('monthly_expenses')}
           value={monthlyExpenses}
-          subtitle="Current month expenses"
+          subtitle={t('monthly_expenses_subtitle')}
           variant="danger"
           compactNumbers={true}
           compactThreshold={10_000_000}
@@ -185,9 +190,9 @@ export default function AdminDashboardPage() {
       {/* Operational Metrics Row */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <StatCard
-          title="Total Residents"
+          title={t('total_residents')}
           value={totalUsers}
-          subtitle={`${totalUsers} active residents`}
+          subtitle={`${totalUsers} ${t('residents_subtitle')}`}
           variant="primary"
           icon={
             <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -197,9 +202,9 @@ export default function AdminDashboardPage() {
         />
 
         <StatCard
-          title="Houses"
+          title={t('houses')}
           value={`${occupiedHouses}/${totalHouses}`}
-          subtitle={`${totalHouses - occupiedHouses} available`}
+          subtitle={`${totalHouses - occupiedHouses} ${t('houses_subtitle')}`}
           variant="info"
           icon={
             <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -209,9 +214,9 @@ export default function AdminDashboardPage() {
         />
 
         <StatCard
-          title="Pending Payments"
+          title={t('pending_payments')}
           value={stats?.pending ?? 0}
-          subtitle="Awaiting approval"
+          subtitle={t('pending_payments_subtitle')}
           variant="warning"
           icon={
             <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -228,11 +233,11 @@ export default function AdminDashboardPage() {
           <CardHeader action={
             <Link href="/admin/payments">
               <Button variant="ghost" size="sm">
-                View All
+                {tCommon('actions.view_all')}
               </Button>
             </Link>
           }>
-            Pending Payments
+            {t('pending_payments')}
           </CardHeader>
           <CardContent>
             {pendingPayments.length === 0 ? (
@@ -240,7 +245,7 @@ export default function AdminDashboardPage() {
                 <svg className="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <p className="text-sm">No pending payments</p>
+                <p className="text-sm">{t('no_pending_payments')}</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -262,7 +267,7 @@ export default function AdminDashboardPage() {
                         </p>
                       </div>
                       <Badge variant="warning" size="sm">
-                        Pending
+                        {tCommon('status.pending')}
                       </Badge>
                     </div>
                   );
@@ -277,11 +282,11 @@ export default function AdminDashboardPage() {
           <CardHeader action={
             <Link href="/admin/users">
               <Button variant="ghost" size="sm">
-                View All
+                {tCommon('actions.view_all')}
               </Button>
             </Link>
           }>
-            Recent Residents
+            {t('recent_residents')}
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
@@ -324,23 +329,23 @@ export default function AdminDashboardPage() {
 
       {/* Payment Statistics */}
       <Card>
-        <CardHeader>Payment Statistics</CardHeader>
+        <CardHeader>{t('payment_statistics')}</CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="p-4 bg-gray-50 rounded-lg border-2 border-gray-200">
-              <p className="text-xs font-medium text-gray-600 mb-1">Total Payments</p>
+              <p className="text-xs font-medium text-gray-600 mb-1">{t('total_payments')}</p>
               <p className="text-2xl font-bold text-gray-900">{stats?.total ?? 0}</p>
             </div>
             <div className="p-4 bg-warning-50 rounded-lg border-2 border-warning-200">
-              <p className="text-xs font-medium text-warning-700 mb-1">Pending</p>
+              <p className="text-xs font-medium text-warning-700 mb-1">{tCommon('status.pending')}</p>
               <p className="text-2xl font-bold text-warning-900">{stats?.pending ?? 0}</p>
             </div>
             <div className="p-4 bg-success-50 rounded-lg border-2 border-success-200">
-              <p className="text-xs font-medium text-success-700 mb-1">Approved</p>
+              <p className="text-xs font-medium text-success-700 mb-1">{tCommon('status.approved')}</p>
               <p className="text-2xl font-bold text-success-900">{stats?.approved ?? 0}</p>
             </div>
             <div className="p-4 bg-danger-50 rounded-lg border-2 border-danger-200">
-              <p className="text-xs font-medium text-danger-700 mb-1">Rejected</p>
+              <p className="text-xs font-medium text-danger-700 mb-1">{tCommon('status.rejected')}</p>
               <p className="text-2xl font-bold text-danger-900">{stats?.rejected ?? 0}</p>
             </div>
           </div>
@@ -350,11 +355,11 @@ export default function AdminDashboardPage() {
       {/* Net Revenue Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
-          <CardHeader>Total Net Revenue</CardHeader>
+          <CardHeader>{t('total_net_revenue')}</CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 mb-1">Total Pemasukan - Total Pengeluaran</p>
+                <p className="text-sm text-gray-600 mb-1">{t('total_net_revenue_subtitle')}</p>
                 <p className="text-3xl font-bold text-gray-900">{formatCurrency(netRevenue)}</p>
                 <p className="text-xs text-gray-500 mt-1">
                   {formatCurrency(totalIncome)} - {formatCurrency(totalExpenses)}
@@ -372,11 +377,11 @@ export default function AdminDashboardPage() {
         </Card>
 
         <Card>
-          <CardHeader>Monthly Net Revenue</CardHeader>
+          <CardHeader>{t('monthly_net_revenue')}</CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 mb-1">Pemasukan Bulan Ini - Pengeluaran Bulan Ini</p>
+                <p className="text-sm text-gray-600 mb-1">{t('monthly_net_revenue_subtitle')}</p>
                 <p className="text-3xl font-bold text-gray-900">{formatCurrency(monthlyNetRevenue)}</p>
                 <p className="text-xs text-gray-500 mt-1">
                   {formatCurrency(monthlyIncome)} - {formatCurrency(monthlyExpenses)}

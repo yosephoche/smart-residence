@@ -9,12 +9,17 @@ import { loginSchema, LoginFormData } from "@/lib/validations/auth.schema";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Alert from "@/components/ui/Alert";
+import { useTranslations } from "next-intl";
+
+export const dynamic = 'force-dynamic';
 
 export default function LoginPage() {
   const router = useRouter();
   const { login } = useAuth();
   const [error, setError] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const t = useTranslations('auth');
+  const tCommon = useTranslations('common');
 
   const {
     register,
@@ -60,10 +65,10 @@ export default function LoginPage() {
               </svg>
             </div>
             <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
-              SmartResidence
+              {tCommon('app_name')}
             </h1>
             <p className="text-sm text-gray-600 mt-1">
-              IPL Management System
+              {tCommon('app_description')}
             </p>
           </div>
 
@@ -77,9 +82,9 @@ export default function LoginPage() {
           {/* Login Form */}
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             <Input
-              label="Email"
+              label={t('email')}
               type="email"
-              placeholder="your.email@example.com"
+              placeholder={t('email_placeholder')}
               error={errors.email?.message}
               {...register("email")}
               fullWidth
@@ -102,9 +107,9 @@ export default function LoginPage() {
             />
 
             <Input
-              label="Password"
+              label={t('password')}
               type="password"
-              placeholder="Enter your password"
+              placeholder={t('password_placeholder')}
               error={errors.password?.message}
               {...register("password")}
               fullWidth
@@ -133,21 +138,21 @@ export default function LoginPage() {
               fullWidth
               isLoading={isSubmitting}
             >
-              Sign In
+              {t('sign_in')}
             </Button>
           </form>
 
           {/* Development Credentials Hint */}
           <div className="mt-6 p-4 bg-gray-50 rounded-lg border-2 border-gray-200">
             <p className="text-xs font-medium text-gray-700 mb-2">
-              Demo Credentials:
+              {t('demo_credentials')}
             </p>
             <div className="space-y-1 text-xs text-gray-600">
               <p>
-                <span className="font-semibold">Admin:</span> admin@smartresidence.com / sakura2026
+                <span className="font-semibold">{t('admin')}:</span> {t('demo_admin')}
               </p>
               <p>
-                <span className="font-semibold">User:</span> john@gmail.com / sakura2026
+                <span className="font-semibold">{t('user')}:</span> {t('demo_user')}
               </p>
             </div>
           </div>
@@ -155,7 +160,7 @@ export default function LoginPage() {
 
         {/* Footer */}
         <p className="text-center text-xs text-gray-500 mt-6">
-          © 2026 SmartResidence. All rights reserved.
+          {tCommon('copyright')}
         </p>
       </div>
     </div>

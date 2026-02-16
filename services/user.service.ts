@@ -146,6 +146,80 @@ export async function updateUser(
 }
 
 export async function deleteUser(id: string) {
-  await prisma.user.delete({ where: { id } });
+  // First, fetch user with all relations to check what's blocking deletion
+  const user = await prisma.user.findUnique({
+    where: { id },
+    include: {
+      houses: { select: { id: true, houseNumber: true, block: true } },
+      payments: { select: { id: true } },
+      approvedPayments: { select: { id: true } },
+      expenses: { select: { id: true } },
+      incomes: { select: { id: true } },
+      systemConfigUpdates: { select: { id: true } },
+      attendances: { select: { id: true } },
+      shiftReports: { select: { id: true } },
+      staffSchedules: { select: { id: true } },
+      createdSchedules: { select: { id: true } },
+    },
+  });
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  // Build list of blocking relations
+  const blockingRelations: string[] = [];
+
+  if (user.payments.length > 0) {
+    blockingRelations.push(`${user.payments.length} payment(s)`);
+  }
+  if (user.approvedPayments.length > 0) {
+    blockingRelations.push(`${user.approvedPayments.length} approved payment(s)`);
+  }
+  if (user.expenses.length > 0) {
+    blockingRelations.push(`${user.expenses.length} expense(s)`);
+  }
+  if (user.incomes.length > 0) {
+    blockingRelations.push(`${user.incomes.length} income record(s)`);
+  }
+  if (user.systemConfigUpdates.length > 0) {
+    blockingRelations.push(`${user.systemConfigUpdates.length} system config update(s)`);
+  }
+  if (user.attendances.length > 0) {
+    blockingRelations.push(`${user.attendances.length} attendance record(s)`);
+  }
+  if (user.shiftReports.length > 0) {
+    blockingRelations.push(`${user.shiftReports.length} shift report(s)`);
+  }
+  if (user.staffSchedules.length > 0) {
+    blockingRelations.push(`${user.staffSchedules.length} staff schedule(s)`);
+  }
+  if (user.createdSchedules.length > 0) {
+    blockingRelations.push(`${user.createdSchedules.length} schedule(s) they created`);
+  }
+
+  // If any blocking relations exist, throw detailed error
+  if (blockingRelations.length > 0) {
+    const relationsText = blockingRelations.join(", ");
+    throw new Error(
+      `Cannot delete user "${user.name}" because they have associated records: ${relationsText}. ` +
+      `Please reassign or remove these records before deleting the user.`
+    );
+  }
+
+  // Use transaction to safely unassign houses and delete user
+  await prisma.$transaction(async (tx) => {
+    // Unassign any houses (safe - houses can exist without users)
+    if (user.houses.length > 0) {
+      await tx.house.updateMany({
+        where: { userId: id },
+        data: { userId: null },
+      });
+    }
+
+    // Now safe to delete user
+    await tx.user.delete({ where: { id } });
+  });
+
   return true;
 }

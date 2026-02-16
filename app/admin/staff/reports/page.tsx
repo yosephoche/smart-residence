@@ -1,12 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { JobType, ShiftReportType } from "@prisma/client";
 import Table, { Column, Pagination } from "@/components/ui/Table";
 import Badge from "@/components/ui/Badge";
 import { ImageModal } from "@/components/ui/ImageModal";
 import { Image as ImageIcon } from "lucide-react";
 import { usePagination } from "@/lib/hooks/usePagination";
+
+export const dynamic = 'force-dynamic';
 
 interface ShiftReport {
   id: string;
@@ -22,6 +25,8 @@ interface ShiftReport {
 }
 
 export default function AdminShiftReportsPage() {
+  const t = useTranslations('staff.reports');
+  const tCommon = useTranslations('common');
   const [reports, setReports] = useState<ShiftReport[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -102,34 +107,25 @@ export default function AdminShiftReportsPage() {
   };
 
   const getReportTypeLabel = (type: ShiftReportType) => {
-    switch (type) {
-      case "SHIFT_START":
-        return "Start";
-      case "SHIFT_MIDDLE":
-        return "Middle";
-      case "SHIFT_END":
-        return "End";
-      default:
-        return type;
-    }
+    return t(`types.${type}`);
   };
 
   const columns: Column<ShiftReport>[] = [
     {
       key: "staff",
-      header: "Staff",
+      header: t('staff'),
       render: (_, row) => (
         <div>
           <div className="font-medium">{row.staff.name}</div>
           <div className="text-sm text-gray-500">
-            {row.staff.staffJobType.replace("_", " ")}
+            {tCommon(`job_types.${row.staff.staffJobType}`)}
           </div>
         </div>
       ),
     },
     {
       key: "type",
-      header: "Type",
+      header: t('type'),
       render: (_, row) => (
         <Badge variant={getReportTypeBadgeVariant(row.reportType)}>
           {getReportTypeLabel(row.reportType)}
@@ -138,7 +134,7 @@ export default function AdminShiftReportsPage() {
     },
     {
       key: "report",
-      header: "Report",
+      header: t('report'),
       render: (_, row) => (
         <div className="max-w-md">
           <p className="text-sm text-gray-700 line-clamp-2">{row.content}</p>
@@ -147,13 +143,13 @@ export default function AdminShiftReportsPage() {
     },
     {
       key: "photo",
-      header: "Photo",
+      header: t('photo'),
       render: (_, row) =>
         row.photoUrl ? (
           <button
             onClick={() => setSelectedImage(row.photoUrl!)}
             className="text-primary-600 hover:text-primary-700"
-            title="View photo"
+            title={t('view_photo')}
           >
             <ImageIcon className="w-5 h-5" />
           </button>
@@ -163,7 +159,7 @@ export default function AdminShiftReportsPage() {
     },
     {
       key: "reportedAt",
-      header: "Reported At",
+      header: t('reported_at'),
       render: (_, row) => (
         <div className="text-sm">{formatDateTime(row.reportedAt)}</div>
       ),
@@ -182,35 +178,35 @@ export default function AdminShiftReportsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Shift Reports</h1>
-        <p className="text-gray-500 mt-1">View all staff shift reports</p>
+        <h1 className="text-3xl font-bold text-gray-900">{t('title')}</h1>
+        <p className="text-gray-500 mt-1">{t('subtitle')}</p>
       </div>
 
       {/* Filters */}
       <div className="bg-white p-4 rounded-lg border border-gray-200 space-y-4">
-        <h3 className="font-semibold text-gray-900">Filters</h3>
+        <h3 className="font-semibold text-gray-900">{tCommon('filters.title')}</h3>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Job Type
+              {tCommon('labels.job_type')}
             </label>
             <select
               value={jobTypeFilter}
               onChange={(e) => setJobTypeFilter(e.target.value as JobType | "ALL")}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             >
-              <option value="ALL">All Job Types</option>
-              <option value="SECURITY">Security</option>
-              <option value="CLEANING">Cleaning</option>
-              <option value="GARDENING">Gardening</option>
-              <option value="MAINTENANCE">Maintenance</option>
-              <option value="OTHER">Other</option>
+              <option value="ALL">{t('all_jobs')}</option>
+              <option value="SECURITY">{tCommon('job_types.SECURITY')}</option>
+              <option value="CLEANING">{tCommon('job_types.CLEANING')}</option>
+              <option value="GARDENING">{tCommon('job_types.GARDENING')}</option>
+              <option value="MAINTENANCE">{tCommon('job_types.MAINTENANCE')}</option>
+              <option value="OTHER">{tCommon('job_types.OTHER')}</option>
             </select>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Report Type
+              {tCommon('labels.report_type')}
             </label>
             <select
               value={reportTypeFilter}
@@ -219,16 +215,16 @@ export default function AdminShiftReportsPage() {
               }
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             >
-              <option value="ALL">All Types</option>
-              <option value="SHIFT_START">Start</option>
-              <option value="SHIFT_MIDDLE">Middle</option>
-              <option value="SHIFT_END">End</option>
+              <option value="ALL">{t('all_types')}</option>
+              <option value="SHIFT_START">{t('types.SHIFT_START')}</option>
+              <option value="SHIFT_MIDDLE">{t('types.SHIFT_MIDDLE')}</option>
+              <option value="SHIFT_END">{t('types.SHIFT_END')}</option>
             </select>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Start Date
+              {t('start_date')}
             </label>
             <input
               type="date"
@@ -240,7 +236,7 @@ export default function AdminShiftReportsPage() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              End Date
+              {t('end_date')}
             </label>
             <input
               type="date"
@@ -264,7 +260,7 @@ export default function AdminShiftReportsPage() {
         columns={columns}
         data={paginatedData}
         keyExtractor={(row) => row.id}
-        emptyMessage="No shift reports found"
+        emptyMessage={t('no_reports')}
       />
 
       {/* Pagination */}
@@ -285,7 +281,7 @@ export default function AdminShiftReportsPage() {
           isOpen={!!selectedImage}
           imageSrc={selectedImage}
           onClose={() => setSelectedImage(null)}
-          altText="Shift Report Photo"
+          altText={t('report_photo')}
         />
       )}
     </div>

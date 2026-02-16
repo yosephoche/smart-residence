@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-client";
 import { useState } from "react";
+import LanguageSwitcher from "@/components/i18n/LanguageSwitcher";
+import { useTranslations } from "next-intl";
 
 interface NavItem {
   name: string;
@@ -12,49 +14,50 @@ interface NavItem {
   icon: React.ReactNode;
 }
 
-const navItems: NavItem[] = [
-  {
-    name: "Dashboard",
-    href: "/user/dashboard",
-    icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-      </svg>
-    ),
-  },
-  {
-    name: "Upload Payment",
-    href: "/user/payment",
-    icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-      </svg>
-    ),
-  },
-  {
-    name: "Payment History",
-    href: "/user/history",
-    icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-      </svg>
-    ),
-  },
-  {
-    name: "Expenses",
-    href: "/user/expenses",
-    icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2zM10 8.5a.5.5 0 11-1 0 .5.5 0 011 0zm5 5a.5.5 0 11-1 0 .5.5 0 011 0z" />
-      </svg>
-    ),
-  },
-];
-
 export default function UserNavbar() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
+  const t = useTranslations();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const navItems: NavItem[] = [
+    {
+      name: t('navigation.user.dashboard'),
+      href: "/user/dashboard",
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+        </svg>
+      ),
+    },
+    {
+      name: t('navigation.user.upload_payment'),
+      href: "/user/payment",
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+        </svg>
+      ),
+    },
+    {
+      name: t('navigation.user.payment_history'),
+      href: "/user/history",
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+        </svg>
+      ),
+    },
+    {
+      name: t('navigation.user.expenses'),
+      href: "/user/expenses",
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2zM10 8.5a.5.5 0 11-1 0 .5.5 0 011 0zm5 5a.5.5 0 11-1 0 .5.5 0 011 0z" />
+        </svg>
+      ),
+    },
+  ];
 
   return (
     <nav className="bg-white border-b-2 border-gray-200 sticky top-0 z-40 shadow-sm">
@@ -69,7 +72,7 @@ export default function UserNavbar() {
             </div>
             <div>
               <h1 className="font-bold text-gray-900 text-lg tracking-tight">SmartResidence</h1>
-              <p className="text-xs text-gray-500 hidden sm:block">Resident Portal</p>
+              <p className="text-xs text-gray-500 hidden sm:block">{t('navigation.user.resident_portal')}</p>
             </div>
           </div>
 
@@ -109,10 +112,14 @@ export default function UserNavbar() {
                 <p className="text-xs text-gray-500">{user?.email}</p>
               </div>
             </div>
+
+            {/* Language Switcher */}
+            <LanguageSwitcher />
+
             <button
               onClick={logout}
               className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-              title="Logout"
+              title={t('common.actions.logout')}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -161,8 +168,8 @@ export default function UserNavbar() {
               })}
             </div>
 
-            <div className="mt-4 pt-4 border-t-2 border-gray-100">
-              <div className="flex items-center gap-3 px-4 py-2 mb-2">
+            <div className="mt-4 pt-4 border-t-2 border-gray-100 space-y-3">
+              <div className="flex items-center gap-3 px-4 py-2">
                 <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
                   <span className="text-primary-700 font-semibold text-sm">
                     {user?.name.charAt(0).toUpperCase()}
@@ -173,6 +180,12 @@ export default function UserNavbar() {
                   <p className="text-xs text-gray-500">{user?.email}</p>
                 </div>
               </div>
+
+              {/* Language Switcher */}
+              <div className="px-4">
+                <LanguageSwitcher />
+              </div>
+
               <button
                 onClick={logout}
                 className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
@@ -180,7 +193,7 @@ export default function UserNavbar() {
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                 </svg>
-                Logout
+                {t('common.actions.logout')}
               </button>
             </div>
           </div>

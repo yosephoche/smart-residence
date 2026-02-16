@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { JobType } from "@prisma/client";
 import Table, { Column } from "@/components/ui/Table";
 import Badge from "@/components/ui/Badge";
@@ -8,6 +9,8 @@ import Button from "@/components/ui/Button";
 import Modal from "@/components/ui/Modal";
 import Input from "@/components/ui/Input";
 import { Plus, Edit, Trash2 } from "lucide-react";
+
+export const dynamic = 'force-dynamic';
 
 interface ShiftTemplate {
   id: string;
@@ -21,6 +24,8 @@ interface ShiftTemplate {
 }
 
 export default function ShiftTemplatesPage() {
+  const t = useTranslations('staff.shifts');
+  const tCommon = useTranslations('common');
   const [templates, setTemplates] = useState<ShiftTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -127,7 +132,7 @@ export default function ShiftTemplatesPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this shift template?")) return;
+    if (!confirm(t('delete_confirmation'))) return;
 
     try {
       const res = await fetch(`/api/admin/shift-templates/${id}`, {
@@ -147,21 +152,21 @@ export default function ShiftTemplatesPage() {
   const columns: Column<ShiftTemplate>[] = [
     {
       key: "jobType",
-      header: "Job Type",
+      header: t('job_type'),
       render: (_, row) => (
-        <Badge variant="info">{row.jobType.replace("_", " ")}</Badge>
+        <Badge variant="info">{tCommon(`job_types.${row.jobType}`)}</Badge>
       ),
     },
     {
       key: "shiftName",
-      header: "Shift Name",
+      header: t('shift_name'),
       render: (_, row) => (
         <span className="font-medium">{row.shiftName}</span>
       ),
     },
     {
       key: "time",
-      header: "Time",
+      header: tCommon('labels.time'),
       render: (_, row) => (
         <span className="text-sm">
           {row.startTime} - {row.endTime}
@@ -170,43 +175,43 @@ export default function ShiftTemplatesPage() {
     },
     {
       key: "tolerance",
-      header: "Tolerance",
+      header: t('tolerance'),
       render: (_, row) => (
-        <span className="text-sm">{row.toleranceMinutes} minutes</span>
+        <span className="text-sm">{row.toleranceMinutes} {tCommon('time.minutes')}</span>
       ),
     },
     {
       key: "requiredStaff",
-      header: "Required Staff",
+      header: t('required_staff'),
       render: (_, row) => (
-        <span className="text-sm font-medium">{row.requiredStaffCount} staff</span>
+        <span className="text-sm font-medium">{row.requiredStaffCount} {tCommon('labels.staff')}</span>
       ),
     },
     {
       key: "status",
-      header: "Status",
+      header: tCommon('table.status'),
       render: (_, row) => (
         <Badge variant={row.isActive ? "success" : "default"}>
-          {row.isActive ? "Active" : "Inactive"}
+          {row.isActive ? t('active') : t('inactive')}
         </Badge>
       ),
     },
     {
       key: "actions",
-      header: "Actions",
+      header: tCommon('table.actions'),
       render: (_, row) => (
         <div className="flex gap-2">
           <button
             onClick={() => handleOpenModal(row)}
             className="text-primary-600 hover:text-primary-700"
-            title="Edit"
+            title={tCommon('actions.edit')}
           >
             <Edit className="w-4 h-4" />
           </button>
           <button
             onClick={() => handleDelete(row.id)}
             className="text-red-600 hover:text-red-700"
-            title="Delete"
+            title={tCommon('actions.delete')}
           >
             <Trash2 className="w-4 h-4" />
           </button>
@@ -228,12 +233,12 @@ export default function ShiftTemplatesPage() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Shift Templates</h1>
-          <p className="text-gray-500 mt-1">Manage shift configurations for staff</p>
+          <h1 className="text-3xl font-bold text-gray-900">{t('title')}</h1>
+          <p className="text-gray-500 mt-1">{t('subtitle')}</p>
         </div>
         <Button onClick={() => handleOpenModal()}>
           <Plus className="w-4 h-4 mr-2" />
-          Add Template
+          {t('add_template')}
         </Button>
       </div>
 
@@ -249,20 +254,20 @@ export default function ShiftTemplatesPage() {
         columns={columns}
         data={templates}
         keyExtractor={(row) => row.id}
-        emptyMessage="No shift templates found"
+        emptyMessage={t('no_templates')}
       />
 
       {/* Create/Edit Modal */}
       <Modal
         isOpen={isModalOpen}
         onClose={handleCloseModal}
-        title={editingTemplate ? "Edit Shift Template" : "Create Shift Template"}
+        title={editingTemplate ? t('edit_template') : tCommon('actions.create') + ' ' + t('add_template')}
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Job Type */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Job Type
+              {t('job_type')}
             </label>
             <select
               value={formData.jobType}
@@ -272,32 +277,32 @@ export default function ShiftTemplatesPage() {
               disabled={!!editingTemplate}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent disabled:bg-gray-100"
             >
-              <option value="SECURITY">Security</option>
-              <option value="CLEANING">Cleaning</option>
-              <option value="GARDENING">Gardening</option>
-              <option value="MAINTENANCE">Maintenance</option>
-              <option value="OTHER">Other</option>
+              <option value="SECURITY">{tCommon('job_types.SECURITY')}</option>
+              <option value="CLEANING">{tCommon('job_types.CLEANING')}</option>
+              <option value="GARDENING">{tCommon('job_types.GARDENING')}</option>
+              <option value="MAINTENANCE">{tCommon('job_types.MAINTENANCE')}</option>
+              <option value="OTHER">{tCommon('job_types.OTHER')}</option>
             </select>
             {editingTemplate && (
               <p className="text-xs text-gray-500 mt-1">
-                Job type cannot be changed after creation
+                {tCommon('messages.job_type_immutable')}
               </p>
             )}
           </div>
 
           {/* Shift Name */}
           <Input
-            label="Shift Name"
+            label={t('shift_name_label')}
             type="text"
             value={formData.shiftName}
             onChange={(e) => setFormData({ ...formData, shiftName: e.target.value })}
             required
-            placeholder="e.g., Morning, Evening, Day Shift"
+            placeholder={t('shift_name_placeholder')}
           />
 
           {/* Start Time */}
           <Input
-            label="Start Time"
+            label={t('start_time_label')}
             type="time"
             value={formData.startTime}
             onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
@@ -306,7 +311,7 @@ export default function ShiftTemplatesPage() {
 
           {/* End Time */}
           <Input
-            label="End Time"
+            label={t('end_time_label')}
             type="time"
             value={formData.endTime}
             onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
@@ -316,7 +321,7 @@ export default function ShiftTemplatesPage() {
           {/* Tolerance and Required Staff Count */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
-              label="Tolerance (minutes)"
+              label={t('tolerance_label')}
               type="number"
               min="0"
               max="120"
@@ -325,11 +330,11 @@ export default function ShiftTemplatesPage() {
                 setFormData({ ...formData, toleranceMinutes: parseInt(e.target.value) })
               }
               required
-              helperText="Grace period for late detection"
+              helperText={t('tolerance_help')}
             />
 
             <Input
-              label="Required Staff Count"
+              label={t('required_staff_label')}
               type="number"
               min="1"
               max="20"
@@ -338,7 +343,7 @@ export default function ShiftTemplatesPage() {
                 setFormData({ ...formData, requiredStaffCount: parseInt(e.target.value) })
               }
               required
-              helperText="Number of staff needed for this shift"
+              helperText={tCommon('messages.required_staff_help')}
             />
           </div>
 
@@ -350,10 +355,10 @@ export default function ShiftTemplatesPage() {
           {/* Actions */}
           <div className="flex gap-3 justify-end">
             <Button type="button" variant="secondary" onClick={handleCloseModal}>
-              Cancel
+              {tCommon('actions.cancel')}
             </Button>
             <Button type="submit" disabled={submitting}>
-              {submitting ? "Saving..." : editingTemplate ? "Update" : "Create"}
+              {submitting ? tCommon('actions.saving') : editingTemplate ? tCommon('actions.update') : tCommon('actions.create')}
             </Button>
           </div>
         </form>

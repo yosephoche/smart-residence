@@ -8,6 +8,7 @@ import Button from "@/components/ui/Button";
 import FileUpload from "@/components/ui/FileUpload";
 import { formatCurrency } from "@/lib/utils";
 import { calculateTotalPayment, getMonthOptions, computeNextStartMonth, computeCoveredMonths, formatPaymentMonth } from "@/lib/calculations";
+import { useTranslations } from "next-intl";
 
 interface PaymentUploadFormProps {
   monthlyRate: number;
@@ -29,6 +30,8 @@ export default function PaymentUploadForm({
   isOutsideUploadWindow,
 }: PaymentUploadFormProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const t = useTranslations('payments.form');
+  const tCommon = useTranslations('common');
 
   const {
     handleSubmit,
@@ -73,12 +76,12 @@ export default function PaymentUploadForm({
             </svg>
           </div>
           <div>
-            <p className="text-sm font-medium text-primary-900">Payment For</p>
+            <p className="text-sm font-medium text-primary-900">{t('payment_for')}</p>
             <p className="text-lg font-bold text-primary-900">{houseNumber}</p>
           </div>
         </div>
         <div className="bg-primary-100 rounded-lg p-3">
-          <p className="text-xs font-medium text-primary-800 mb-1">Monthly IPL Rate</p>
+          <p className="text-xs font-medium text-primary-800 mb-1">{t('monthly_rate')}</p>
           <p className="text-2xl font-bold text-primary-900">{formatCurrency(monthlyRate)}</p>
         </div>
       </div>
@@ -86,7 +89,7 @@ export default function PaymentUploadForm({
       {/* Month Selection */}
       <div className="flex flex-col gap-1.5">
         <label className="text-sm font-medium text-gray-700 tracking-tight">
-          Number of Months <span className="text-danger-500 ml-1">*</span>
+          {t('number_of_months')} <span className="text-danger-500 ml-1">*</span>
         </label>
         <Controller
           name="amountMonths"
@@ -109,7 +112,7 @@ export default function PaymentUploadForm({
           <p className="text-xs text-danger-600">{errors.amountMonths.message}</p>
         )}
         <p className="text-xs text-gray-500">
-          Select how many months of IPL you are paying for
+          {t('number_of_months_help')}
         </p>
       </div>
 
@@ -117,9 +120,9 @@ export default function PaymentUploadForm({
       <div className="bg-success-50 border-2 border-success-200 rounded-xl p-5">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-success-700 mb-1">Total Payment Amount</p>
+            <p className="text-sm font-medium text-success-700 mb-1">{t('total_amount')}</p>
             <p className="text-xs text-success-600">
-              {formatCurrency(monthlyRate)} × {selectedMonths} month{selectedMonths !== 1 ? 's' : ''}
+              {formatCurrency(monthlyRate)} × {selectedMonths} {t('months_label')}
             </p>
           </div>
           <div className="text-right">
@@ -132,7 +135,7 @@ export default function PaymentUploadForm({
 
       {/* Covered Months Preview */}
       <div className="border-2 border-gray-200 rounded-xl p-4">
-        <p className="text-sm font-semibold text-gray-800 mb-3">Bulan yang Akan Dicakup</p>
+        <p className="text-sm font-semibold text-gray-800 mb-3">{t('months_covered')}</p>
         <div className="flex flex-wrap gap-2">
           {previewMonths.map((pm) => {
             const isOccupied = occupiedMonths.some(
@@ -150,7 +153,7 @@ export default function PaymentUploadForm({
                 {formatPaymentMonth(pm)}
                 {isOccupied && (
                   <span className="text-xs font-semibold bg-danger-200 text-danger-800 px-1.5 py-0.5 rounded">
-                    Sudah Diisi
+                    {t('already_filled')}
                   </span>
                 )}
               </span>
@@ -159,7 +162,7 @@ export default function PaymentUploadForm({
         </div>
         {hasOverlap && (
           <p className="text-xs text-danger-700 mt-3 font-medium">
-            Bulan yang ditandai merah sudah memiliki pembayaran yang sedang diproses atau telah disetujui. Pilih jumlah bulan yang berbeda.
+            {t('conflict_error')}
           </p>
         )}
       </div>
@@ -170,9 +173,9 @@ export default function PaymentUploadForm({
         control={control}
         render={({ field: { onChange, value, ...field } }) => (
           <FileUpload
-            label="Upload Payment Proof"
+            label={t('upload_proof')}
             error={errors.proofImage?.message as string}
-            helperText="Upload a clear photo of your bank transfer receipt (JPG, PNG max 2MB)"
+            helperText={t('upload_proof_help')}
             onChange={(file) => {
               setSelectedFile(file);
               onChange(file);
@@ -190,14 +193,14 @@ export default function PaymentUploadForm({
           <svg className="w-5 h-5 text-primary-600" fill="currentColor" viewBox="0 0 20 20">
             <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
           </svg>
-          Payment Instructions
+          {t('payment_instructions')}
         </h3>
         <ol className="text-sm text-gray-700 space-y-2 ml-7 list-decimal">
-          <li>Transfer the exact amount shown above to the residential account</li>
-          <li>Take a clear photo of your transfer receipt</li>
-          <li>Upload the receipt image using the form above</li>
-          <li>Submit and wait for admin approval (usually within 1-2 business days)</li>
-          <li>You&apos;ll be notified once your payment is approved</li>
+          <li>{t('instruction_1')}</li>
+          <li>{t('instruction_2')}</li>
+          <li>{t('instruction_3')}</li>
+          <li>{t('instruction_4')}</li>
+          <li>{t('instruction_5')}</li>
         </ol>
       </div>
 
@@ -211,7 +214,7 @@ export default function PaymentUploadForm({
           disabled={isSubmitting}
           fullWidth
         >
-          Cancel
+          {tCommon('actions.cancel')}
         </Button>
         <Button
           type="submit"
@@ -221,7 +224,7 @@ export default function PaymentUploadForm({
           disabled={isSubmitDisabled}
           fullWidth
         >
-          Submit Payment
+          {t('submit_payment')}
         </Button>
       </div>
     </form>

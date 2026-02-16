@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import { Upload } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Card, CardHeader, CardContent } from "@/components/ui/Card";
 import StatCard from "@/components/ui/StatCard";
 import Button from "@/components/ui/Button";
@@ -13,6 +14,8 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 import { formatPaymentMonth } from "@/lib/calculations";
 import FloatingActionButton from "@/components/ui/FloatingActionButton";
 import PaymentUploadModal from "@/components/modals/PaymentUploadModal";
+
+export const dynamic = 'force-dynamic';
 
 interface House {
   id: string;
@@ -31,6 +34,10 @@ interface Payment {
 }
 
 export default function UserDashboardPage() {
+  const t = useTranslations('dashboard.user');
+  const tCommon = useTranslations('common');
+  const tAdmin = useTranslations('dashboard.admin');
+  const tNav = useTranslations('navigation.user');
   const { user } = useAuth();
   const [houses, setHouses] = useState<House[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
@@ -155,33 +162,33 @@ export default function UserDashboardPage() {
     <div className="space-y-8">
       <div>
         <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
-          Welcome back, {user?.name}!
+          {t('welcome', { name: user?.name || '' })}
         </h1>
-        <p className="text-gray-600 mt-1">Here&apos;s your IPL payment overview</p>
+        <p className="text-gray-600 mt-1">{t('subtitle')}</p>
       </div>
 
       {/* House Information */}
       {house ? (
         <Card>
-          <CardHeader>My House Information</CardHeader>
+          <CardHeader>{t('my_house_info')}</CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="bg-gray-50 rounded-lg p-4 border-2 border-gray-200">
-                <p className="text-sm font-medium text-gray-600 mb-1">House Number</p>
+                <p className="text-sm font-medium text-gray-600 mb-1">{t('house_number')}</p>
                 <p className="text-2xl font-bold text-gray-900">{house.houseNumber}</p>
-                <p className="text-xs text-gray-500 mt-1">Block {house.block}</p>
+                <p className="text-xs text-gray-500 mt-1">{t('block')} {house.block}</p>
               </div>
               <div className="bg-primary-50 rounded-lg p-4 border-2 border-primary-200">
-                <p className="text-sm font-medium text-primary-700 mb-1">House Type</p>
+                <p className="text-sm font-medium text-primary-700 mb-1">{t('house_type')}</p>
                 <p className="text-2xl font-bold text-primary-900">{house.houseType?.typeName}</p>
                 {house.houseType?.description && (
                   <p className="text-xs text-primary-700 mt-1">{house.houseType.description}</p>
                 )}
               </div>
               <div className="bg-success-50 rounded-lg p-4 border-2 border-success-200">
-                <p className="text-sm font-medium text-success-700 mb-1">Monthly IPL</p>
+                <p className="text-sm font-medium text-success-700 mb-1">{t('monthly_ipl')}</p>
                 <p className="text-2xl font-bold text-success-900">{formatCurrency(monthlyRate)}</p>
-                <p className="text-xs text-success-700 mt-1">per month</p>
+                <p className="text-xs text-success-700 mt-1">{t('per_month')}</p>
               </div>
             </div>
           </CardContent>
@@ -193,8 +200,8 @@ export default function UserDashboardPage() {
               <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
               </svg>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">No House Assigned</h3>
-              <p className="text-gray-600 mb-4">Please contact the administrator to assign a house to your account.</p>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('no_house_assigned')}</h3>
+              <p className="text-gray-600 mb-4">{t('no_house_message')}</p>
             </div>
           </CardContent>
         </Card>
@@ -205,9 +212,9 @@ export default function UserDashboardPage() {
         <>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <StatCard
-            title="Paid Months"
+            title={t('paid_months')}
             value={totalPaidMonths}
-            subtitle="of 12 months"
+            subtitle={t('of_12_months')}
             variant="info"
             icon={
               <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -218,9 +225,9 @@ export default function UserDashboardPage() {
 
           <div className="relative">
             <StatCard
-              title="This Month"
-              value={currentMonthStatus === "APPROVED" ? "Paid" : currentMonthStatus === "PENDING" ? "Pending" : "Unpaid"}
-              subtitle={currentMonthLabel + (currentMonthStatus === "PENDING" ? " · Awaiting approval" : "")}
+              title={t('this_month')}
+              value={currentMonthStatus === "APPROVED" ? t('paid') : currentMonthStatus === "PENDING" ? tCommon('status.pending') : t('unpaid')}
+              subtitle={currentMonthLabel + (currentMonthStatus === "PENDING" ? " · " + t('awaiting_approval') : "")}
               variant={currentMonthStatus === "APPROVED" ? "success" : currentMonthStatus === "PENDING" ? "warning" : "danger"}
               icon={
                 currentMonthStatus === "APPROVED" ? (
@@ -241,16 +248,16 @@ export default function UserDashboardPage() {
             {currentMonthStatus === "UNPAID" && (
               <div className="mt-3">
                 <Link href="/user/payment" className="inline-block">
-                  <Button variant="danger" size="sm">Pay Now</Button>
+                  <Button variant="danger" size="sm">{tCommon('actions.pay_now')}</Button>
                 </Link>
               </div>
             )}
           </div>
 
           <StatCard
-            title="Total Paid"
+            title={t('total_paid')}
             value={totalPaid}
-            subtitle="this year"
+            subtitle={t('this_year')}
             variant="success"
             compactNumbers={true}
             compactThreshold={10_000_000}
@@ -262,9 +269,9 @@ export default function UserDashboardPage() {
           />
 
           <StatCard
-            title="Pending"
+            title={tCommon('status.pending')}
             value={pendingPayments.length}
-            subtitle="awaiting approval"
+            subtitle={t('awaiting_approval')}
             variant="warning"
             icon={
               <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -276,12 +283,12 @@ export default function UserDashboardPage() {
 
         {/* Financial Overview */}
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Financial Overview</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">{t('financial_overview')}</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <StatCard
-              title="Total Pemasukan"
+              title={tAdmin('total_income')}
               value={totalIncome}
-              subtitle="All-time income"
+              subtitle={tAdmin('total_income_subtitle')}
               variant="success"
               compactNumbers={true}
               compactThreshold={10_000_000}
@@ -293,9 +300,9 @@ export default function UserDashboardPage() {
             />
 
             <StatCard
-              title="Total Pengeluaran"
+              title={tAdmin('total_expenses')}
               value={totalExpenses}
-              subtitle="All-time expenses"
+              subtitle={tAdmin('total_expenses_subtitle')}
               variant="danger"
               compactNumbers={true}
               compactThreshold={10_000_000}
@@ -307,9 +314,9 @@ export default function UserDashboardPage() {
             />
 
             <StatCard
-              title="Pemasukan Bulan Ini"
+              title={tAdmin('monthly_income')}
               value={monthlyIncome}
-              subtitle="Current month income"
+              subtitle={tAdmin('monthly_income_subtitle')}
               variant="success"
               compactNumbers={true}
               compactThreshold={10_000_000}
@@ -321,9 +328,9 @@ export default function UserDashboardPage() {
             />
 
             <StatCard
-              title="Pengeluaran Bulan Ini"
+              title={tAdmin('monthly_expenses')}
               value={monthlyExpenses}
-              subtitle="Current month expenses"
+              subtitle={tAdmin('monthly_expenses_subtitle')}
               variant="danger"
               compactNumbers={true}
               compactThreshold={10_000_000}
@@ -341,7 +348,7 @@ export default function UserDashboardPage() {
       {/* Quick Actions & Recent Payments */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
-          <CardHeader>Quick Actions</CardHeader>
+          <CardHeader>{t('quick_actions')}</CardHeader>
           <CardContent>
             <div className="space-y-3">
               <Link href="/user/payment" className="block">
@@ -352,8 +359,8 @@ export default function UserDashboardPage() {
                     </svg>
                   </div>
                   <div>
-                    <p className="font-semibold text-gray-900">Upload Payment Proof</p>
-                    <p className="text-sm text-gray-600">Submit your IPL payment</p>
+                    <p className="font-semibold text-gray-900">{t('upload_payment_proof')}</p>
+                    <p className="text-sm text-gray-600">{t('upload_payment_subtitle')}</p>
                   </div>
                 </button>
               </Link>
@@ -365,8 +372,8 @@ export default function UserDashboardPage() {
                     </svg>
                   </div>
                   <div>
-                    <p className="font-semibold text-gray-900">View Payment History</p>
-                    <p className="text-sm text-gray-600">Check past transactions</p>
+                    <p className="font-semibold text-gray-900">{t('view_payment_history')}</p>
+                    <p className="text-sm text-gray-600">{t('view_payment_subtitle')}</p>
                   </div>
                 </button>
               </Link>
@@ -377,10 +384,10 @@ export default function UserDashboardPage() {
         <Card>
           <CardHeader action={
             <Link href="/user/history">
-              <Button variant="ghost" size="sm">View All</Button>
+              <Button variant="ghost" size="sm">{tCommon('actions.view_all')}</Button>
             </Link>
           }>
-            Recent Payments
+            {t('recent_payments')}
           </CardHeader>
           <CardContent>
             {recentPayments.length === 0 ? (
@@ -388,7 +395,7 @@ export default function UserDashboardPage() {
                 <svg className="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
-                <p className="text-sm">No payments yet</p>
+                <p className="text-sm">{t('no_payments_yet')}</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -396,7 +403,7 @@ export default function UserDashboardPage() {
                   <div key={payment.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
                     <div className="flex-1">
                       <p className="text-sm font-medium text-gray-900">
-                        {payment.amountMonths} Month{payment.amountMonths !== 1 ? "s" : ""} Payment
+                        {payment.amountMonths} {payment.amountMonths !== 1 ? t('month_plural') : t('month')} {t('payment')}
                       </p>
                       <p className="text-xs text-gray-500">{formatDate(payment.createdAt)}</p>
                     </div>
@@ -406,7 +413,7 @@ export default function UserDashboardPage() {
                         variant={payment.status === "APPROVED" ? "success" : payment.status === "REJECTED" ? "danger" : "warning"}
                         size="sm"
                       >
-                        {payment.status}
+                        {tCommon(`status.${payment.status.toLowerCase()}`)}
                       </Badge>
                     </div>
                   </div>
@@ -423,7 +430,7 @@ export default function UserDashboardPage() {
           <FloatingActionButton
             onClick={handleOpenUploadModal}
             icon={<Upload className="w-6 h-6" />}
-            label="Upload Pembayaran"
+            label={tNav('upload_payment')}
           />
 
           {/* Payment Upload Modal */}

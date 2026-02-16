@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { useTranslations } from "next-intl";
 import { Card, CardHeader, CardContent } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import Table, { Pagination } from "@/components/ui/Table";
@@ -13,7 +14,11 @@ import { getExpenseCategoryOptions } from "@/lib/calculations";
 import { exportCSV, exportXLSX, mapExpensesForExport } from "@/lib/utils/export";
 import { usePagination } from "@/lib/hooks/usePagination";
 
+export const dynamic = 'force-dynamic';
+
 export default function AdminExpensesPage() {
+  const t = useTranslations('expenses');
+  const tCommon = useTranslations('common');
   const [expenses, setExpenses] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -99,7 +104,7 @@ export default function AdminExpensesPage() {
       if (res.ok) {
         await fetchExpenses();
         setShowAddModal(false);
-        alert("Expense added successfully!");
+        alert(t('expense_added_success'));
       } else {
         const error = await res.json();
         alert(`Error: ${error.error}`);
@@ -110,12 +115,12 @@ export default function AdminExpensesPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this expense?")) return;
+    if (!confirm(t('delete_confirmation'))) return;
 
     const res = await fetch(`/api/expenses/${id}`, { method: "DELETE" });
     if (res.ok) {
       await fetchExpenses();
-      alert("Expense deleted successfully!");
+      alert(t('expense_deleted_success'));
     }
   };
 
@@ -146,11 +151,11 @@ export default function AdminExpensesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Expenses Management</h1>
-          <p className="text-gray-600 mt-1">Track and manage residential expenses</p>
+          <h1 className="text-3xl font-bold text-gray-900">{t('title')}</h1>
+          <p className="text-gray-600 mt-1">{t('subtitle')}</p>
         </div>
         <Button onClick={() => setShowAddModal(true)}>
-          + Add Expense
+          + {t('add_expense')}
         </Button>
       </div>
 
@@ -158,25 +163,25 @@ export default function AdminExpensesPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardContent>
-            <p className="text-sm text-gray-600">Total Expenses (Filtered)</p>
+            <p className="text-sm text-gray-600">{t('total_expenses_filtered')}</p>
             <p className="text-2xl font-bold text-gray-900">{formatCurrency(totalFiltered)}</p>
-            <p className="text-xs text-gray-500 mt-1">{filteredExpenses.length} transactions</p>
+            <p className="text-xs text-gray-500 mt-1">{filteredExpenses.length} {t('transactions')}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent>
-            <p className="text-sm text-gray-600">Total Expenses (All Time)</p>
+            <p className="text-sm text-gray-600">{t('total_expenses_all_time')}</p>
             <p className="text-2xl font-bold text-gray-900">{formatCurrency(expenses.reduce((sum, e) => sum + Number(e.amount), 0))}</p>
-            <p className="text-xs text-gray-500 mt-1">{expenses.length} transactions</p>
+            <p className="text-xs text-gray-500 mt-1">{expenses.length} {t('transactions')}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent>
-            <p className="text-sm text-gray-600">Average Expense</p>
+            <p className="text-sm text-gray-600">{t('average_expense')}</p>
             <p className="text-2xl font-bold text-gray-900">
               {formatCurrency(filteredExpenses.length > 0 ? totalFiltered / filteredExpenses.length : 0)}
             </p>
-            <p className="text-xs text-gray-500 mt-1">per transaction</p>
+            <p className="text-xs text-gray-500 mt-1">{t('per_transaction')}</p>
           </CardContent>
         </Card>
       </div>
@@ -190,7 +195,7 @@ export default function AdminExpensesPage() {
               onChange={(e) => setCategoryFilter(e.target.value)}
               className="px-3 py-2 border rounded-lg"
             >
-              <option value="ALL">All Categories</option>
+              <option value="ALL">{t('all_categories')}</option>
               {categories.map((cat) => (
                 <option key={cat.value} value={cat.value}>{cat.label}</option>
               ))}
@@ -201,7 +206,7 @@ export default function AdminExpensesPage() {
               onChange={(e) => setFilterYear(Number(e.target.value))}
               className="px-3 py-2 border rounded-lg"
             >
-              <option value={0}>All Years</option>
+              <option value={0}>{t('all_years')}</option>
               {availableYears.map((year) => (
                 <option key={year} value={year}>{year}</option>
               ))}
@@ -213,7 +218,7 @@ export default function AdminExpensesPage() {
               className="px-3 py-2 border rounded-lg"
               disabled={filterYear === 0}
             >
-              <option value={0}>All Months</option>
+              <option value={0}>{t('all_months')}</option>
               {Array.from({ length: 12 }, (_, i) => (
                 <option key={i + 1} value={i + 1}>
                   {new Date(2000, i).toLocaleDateString("id-ID", { month: "long" })}
@@ -223,16 +228,16 @@ export default function AdminExpensesPage() {
 
             {hasActiveFilters && (
               <Button variant="ghost" size="sm" onClick={handleClearFilters}>
-                Clear Filters
+                {t('clear_filters')}
               </Button>
             )}
 
             <div className="ml-auto flex gap-2">
               <Button variant="ghost" size="sm" onClick={() => handleExport("csv")}>
-                Export CSV
+                {t('export_csv')}
               </Button>
               <Button variant="ghost" size="sm" onClick={() => handleExport("xlsx")}>
-                Export Excel
+                {t('export_excel')}
               </Button>
             </div>
           </div>
@@ -241,22 +246,22 @@ export default function AdminExpensesPage() {
 
       {/* Table */}
       <Card>
-        <CardHeader>All Expenses ({filteredExpenses.length})</CardHeader>
+        <CardHeader>{t('all_expenses')} ({filteredExpenses.length})</CardHeader>
         <CardContent>
           <Table
             columns={[
-              { key: "date", header: "Date", sortable: true, render: (val) => formatDate(val) },
-              { key: "category", header: "Category", render: (val) => <ExpenseCategoryBadge category={val} /> },
-              { key: "description", header: "Description" },
-              { key: "amount", header: "Amount", sortable: true, render: (val) => formatCurrency(Number(val)) },
-              { key: "creator", header: "Created By", render: (val) => val?.name ?? "-" },
+              { key: "date", header: t('date'), sortable: true, render: (val) => formatDate(val) },
+              { key: "category", header: t('category'), render: (val) => <ExpenseCategoryBadge category={val} /> },
+              { key: "description", header: t('description') },
+              { key: "amount", header: t('amount'), sortable: true, render: (val) => formatCurrency(Number(val)) },
+              { key: "creator", header: t('created_by'), render: (val) => val?.name ?? "-" },
               {
                 key: "id",
-                header: "Actions",
+                header: tCommon('table.actions'),
                 render: (val) => (
                   <div className="flex gap-2">
                     <Button variant="danger" size="sm" onClick={() => handleDelete(val)}>
-                      Delete
+                      {tCommon('actions.delete')}
                     </Button>
                   </div>
                 ),
@@ -264,7 +269,7 @@ export default function AdminExpensesPage() {
             ]}
             data={paginatedData}
             keyExtractor={(row) => row.id}
-            emptyMessage="No expenses found"
+            emptyMessage={t('no_expenses_found')}
           />
 
           {/* Pagination */}
@@ -284,7 +289,7 @@ export default function AdminExpensesPage() {
       </Card>
 
       {/* Add Expense Modal */}
-      <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)} title="Add New Expense">
+      <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)} title={t('add_new_expense')}>
         <ExpenseForm
           onSubmit={handleAddExpense}
           onCancel={() => setShowAddModal(false)}

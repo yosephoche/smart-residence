@@ -1,10 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { UploadWindowConfigForm } from "@/components/forms/UploadWindowConfigForm";
 import { DefaultPasswordConfigForm } from "@/components/forms/DefaultPasswordConfigForm";
 import { GeofenceConfigForm } from "@/components/forms/GeofenceConfigForm";
 import { Settings, AlertCircle, CheckCircle, Key, MapPin } from "lucide-react";
+
+export const dynamic = 'force-dynamic';
 
 interface UploadWindowConfig {
   enabled: boolean;
@@ -23,6 +26,7 @@ interface GeofenceConfig {
 }
 
 export default function SettingsPage() {
+  const t = useTranslations('settings');
   const [uploadWindowConfig, setUploadWindowConfig] =
     useState<UploadWindowConfig | null>(null);
   const [defaultPasswordConfig, setDefaultPasswordConfig] =
@@ -66,7 +70,7 @@ export default function SettingsPage() {
       console.error("Error fetching configs:", error);
       setAlert({
         type: "error",
-        message: "Gagal memuat konfigurasi. Silakan refresh halaman.",
+        message: t('load_error'),
       });
     } finally {
       setLoading(false);
@@ -77,7 +81,7 @@ export default function SettingsPage() {
     setUploadWindowConfig(config);
     setAlert({
       type: "success",
-      message: "Konfigurasi periode upload berhasil disimpan.",
+      message: t('upload_window_saved'),
     });
 
     // Auto-dismiss success message after 5 seconds
@@ -88,7 +92,7 @@ export default function SettingsPage() {
     setDefaultPasswordConfig(config);
     setAlert({
       type: "success",
-      message: "Password default berhasil diubah.",
+      message: t('password_saved'),
     });
 
     // Auto-dismiss success message after 5 seconds
@@ -99,7 +103,7 @@ export default function SettingsPage() {
     setGeofenceConfig(config);
     setAlert({
       type: "success",
-      message: "Konfigurasi geofence berhasil disimpan.",
+      message: t('geofence_saved'),
     });
 
     // Auto-dismiss success message after 5 seconds
@@ -118,10 +122,10 @@ export default function SettingsPage() {
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
           <Settings className="w-7 h-7" />
-          Pengaturan Sistem
+          {t('title')}
         </h1>
         <p className="text-gray-600 mt-1">
-          Kelola pengaturan sistem aplikasi
+          {t('subtitle')}
         </p>
       </div>
 
