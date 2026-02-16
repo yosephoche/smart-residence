@@ -216,7 +216,7 @@ export default function UsersPage() {
       </div>
 
       {successMessage && <Alert variant="success" message={successMessage} autoClose />}
-      {errorMessage && <Alert variant="danger" message={errorMessage} autoClose />}
+      {errorMessage && <Alert variant="error" message={errorMessage} autoClose />}
 
       <div className="bg-white rounded-xl border-2 border-gray-200 p-4">
         <div className="flex flex-col md:flex-row gap-4">
