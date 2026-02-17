@@ -5,7 +5,8 @@ import { useTranslations } from "next-intl";
 import { UploadWindowConfigForm } from "@/components/forms/UploadWindowConfigForm";
 import { DefaultPasswordConfigForm } from "@/components/forms/DefaultPasswordConfigForm";
 import { GeofenceConfigForm } from "@/components/forms/GeofenceConfigForm";
-import { Settings, AlertCircle, CheckCircle, Key, MapPin } from "lucide-react";
+import BankDetailsConfigForm from "@/components/forms/BankDetailsConfigForm";
+import { Settings, AlertCircle, CheckCircle, Key, MapPin, CreditCard } from "lucide-react";
 
 export const dynamic = 'force-dynamic';
 
@@ -312,6 +313,50 @@ export default function SettingsPage() {
             </li>
             <li>
               Radius yang direkomendasikan: 50-200 meter tergantung ukuran area
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      {/* Bank Details Configuration */}
+      <div className="bg-white rounded-lg shadow border border-gray-200 mt-6">
+        <div className="p-6 border-b border-gray-200">
+          <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+            <CreditCard className="w-5 h-5" />
+            Konfigurasi Rekening Bank
+          </h2>
+          <p className="text-sm text-gray-600 mt-1">
+            Atur informasi rekening bank untuk pembayaran IPL
+          </p>
+        </div>
+
+        <div className="p-6">
+          {loading ? (
+            <div className="animate-pulse space-y-4">
+              <div className="h-12 bg-gray-200 rounded"></div>
+              <div className="h-12 bg-gray-200 rounded"></div>
+              <div className="h-12 bg-gray-200 rounded"></div>
+            </div>
+          ) : (
+            <BankDetailsConfigForm />
+          )}
+        </div>
+
+        <div className="p-6 bg-green-50 border-t border-green-200">
+          <h3 className="font-medium text-green-900 mb-2 flex items-center gap-2">
+            <AlertCircle className="w-4 h-4" />
+            Informasi
+          </h3>
+          <ul className="text-sm text-green-800 space-y-1 ml-6 list-disc">
+            <li>
+              Informasi rekening akan ditampilkan di halaman upload pembayaran user
+            </li>
+            <li>Pastikan nomor rekening yang dimasukkan benar dan aktif</li>
+            <li>
+              Perubahan konfigurasi akan langsung terlihat di halaman upload user
+            </li>
+            <li>
+              Rekening yang ditampilkan adalah rekening tujuan transfer IPL
             </li>
           </ul>
         </div>

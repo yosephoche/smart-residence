@@ -9,7 +9,9 @@
     "lint": "next lint",
     "postinstall": "prisma generate",
     "backfill-income": "source /Users/yosephparai/.nvm/nvm.sh && nvm use 22 && npx ts-node scripts/backfill-income.ts",
-    "backfill-income:dry-run": "npm run backfill-income -- --dry-run"
+    "backfill-income:dry-run": "npm run backfill-income -- --dry-run",
+    "cleanup-data": "source /Users/yosephparai/.nvm/nvm.sh && nvm use 22 && npx ts-node scripts/cleanup-data.ts",
+    "cleanup-data:dry-run": "npm run cleanup-data -- --dry-run"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
@@ -17,6 +19,7 @@
     "bcryptjs": "^2.4.3",
     "cloudinary": "^2.9.0",
     "clsx": "^2.1.1",
+    "framer-motion": "^12.34.1",
     "lucide-react": "^0.563.0",
     "next": "^15.1.6",
     "next-auth": "^5.0.0-beta.25",
@@ -24,7 +27,9 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.54.2",
+    "recharts": "^3.7.0",
     "sharp": "^0.33.5",
+    "sonner": "^2.0.7",
     "tailwind-merge": "^3.4.0",
     "xlsx": "^0.18.5",
     "zod": "^3.24.1"

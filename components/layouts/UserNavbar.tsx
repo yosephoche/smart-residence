@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-client";
-import { useState } from "react";
 import LanguageSwitcher from "@/components/i18n/LanguageSwitcher";
 import { useTranslations } from "next-intl";
 
@@ -18,7 +17,6 @@ export default function UserNavbar() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
   const t = useTranslations();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const navItems: NavItem[] = [
     {
@@ -100,7 +98,7 @@ export default function UserNavbar() {
           </div>
 
           {/* User Menu */}
-          <div className="hidden md:flex items-center gap-3">
+          <div className="flex items-center gap-3">
             <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg">
               <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
                 <span className="text-primary-700 font-semibold text-xs">
@@ -126,78 +124,7 @@ export default function UserNavbar() {
               </svg>
             </button>
           </div>
-
-          {/* Mobile Menu Button */}
-          <button
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="md:hidden p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              {isMobileMenuOpen ? (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              ) : (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              )}
-            </svg>
-          </button>
         </div>
-
-        {/* Mobile Menu */}
-        {isMobileMenuOpen && (
-          <div className="md:hidden py-4 border-t-2 border-gray-100">
-            <div className="space-y-1">
-              {navItems.map((item) => {
-                const isActive = pathname === item.href;
-
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className={cn(
-                      "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all",
-                      isActive
-                        ? "bg-primary-600 text-white"
-                        : "text-gray-700 hover:bg-gray-100"
-                    )}
-                  >
-                    {item.icon}
-                    {item.name}
-                  </Link>
-                );
-              })}
-            </div>
-
-            <div className="mt-4 pt-4 border-t-2 border-gray-100 space-y-3">
-              <div className="flex items-center gap-3 px-4 py-2">
-                <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
-                  <span className="text-primary-700 font-semibold text-sm">
-                    {user?.name.charAt(0).toUpperCase()}
-                  </span>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-900">{user?.name}</p>
-                  <p className="text-xs text-gray-500">{user?.email}</p>
-                </div>
-              </div>
-
-              {/* Language Switcher */}
-              <div className="px-4">
-                <LanguageSwitcher />
-              </div>
-
-              <button
-                onClick={logout}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                </svg>
-                {t('common.actions.logout')}
-              </button>
-            </div>
-          </div>
-        )}
       </div>
     </nav>
   );

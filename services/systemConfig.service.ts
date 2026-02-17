@@ -166,3 +166,56 @@ export async function getGeofenceConfig(): Promise<GeofenceConfig> {
     return DEFAULT_GEOFENCE_CONFIG;
   }
 }
+
+// Default bank details configuration values
+const DEFAULT_BANK_DETAILS = {
+  bankName: "BCA",
+  accountNumber: "1234567890",
+  accountName: "PT Perumahan Melati",
+};
+
+export interface BankDetailsConfig {
+  bankName: string;
+  accountNumber: string;
+  accountName: string;
+}
+
+/**
+ * Get the bank details configuration from the database
+ * Falls back to default if no config exists
+ */
+export async function getBankDetailsConfig(): Promise<BankDetailsConfig> {
+  try {
+    const config = await prisma.systemConfig.findUnique({
+      where: { key: "bank_details" },
+    });
+
+    if (!config) {
+      return DEFAULT_BANK_DETAILS;
+    }
+
+    const value = config.value as unknown as BankDetailsConfig;
+    return {
+      bankName: value.bankName ?? DEFAULT_BANK_DETAILS.bankName,
+      accountNumber: value.accountNumber ?? DEFAULT_BANK_DETAILS.accountNumber,
+      accountName: value.accountName ?? DEFAULT_BANK_DETAILS.accountName,
+    };
+  } catch (error) {
+    console.error("Error fetching bank details config:", error);
+    return DEFAULT_BANK_DETAILS;
+  }
+}
+
+/**
+ * Set bank details configuration
+ */
+export async function setBankDetailsConfig(
+  config: BankDetailsConfig,
+  updatedBy: string
+): Promise<void> {
+  await setConfig("bank_details", config, updatedBy);
+
+  // Invalidate cache
+  const { invalidateBankDetailsCache } = await import("@/lib/cache/bank-details");
+  invalidateBankDetailsCache();
+}
