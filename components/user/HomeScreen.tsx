@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import {
   Home as HomeIcon,
   CheckCircle,
@@ -258,10 +259,13 @@ export function HomeScreen() {
       >
         <div className="flex items-center justify-between mb-3">
           <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">Ringkasan Keuangan</p>
-          <button className="text-xs text-blue-600 font-medium flex items-center gap-0.5">
+          <Link
+            href="/user/finance"
+            className="text-xs text-blue-600 font-medium flex items-center gap-0.5"
+          >
             Detail
             <ChevronRight className="w-3.5 h-3.5" />
-          </button>
+          </Link>
         </div>
 
         <div className="flex gap-3 mb-4">

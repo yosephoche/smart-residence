@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   UploadCloud,
@@ -9,10 +9,16 @@ import {
   CheckCircle,
   Calendar,
   CreditCard,
+  CalendarRange,
+  Minus,
+  Plus,
+  CheckCircle2,
+  AlertCircle,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-client';
 import { formatCurrency } from '@/lib/utils';
 import { toast } from 'sonner';
+import { computeCoveredMonths, formatPaymentMonth } from '@/lib/calculations';
 
 interface House {
   id: string;
@@ -68,6 +74,8 @@ export default function UploadScreen() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [amountMonths, setAmountMonths] = useState(1);
+  const [occupiedMonths, setOccupiedMonths] = useState<Array<{ year: number; month: number }>>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -87,13 +95,21 @@ export default function UploadScreen() {
           bankRes.json(),
         ]);
 
-        setHouse(houseData[0] || null);
+        const houseRecord = houseData[0] || null;
+        setHouse(houseRecord);
         setAvailableMonths(monthsData);
         setBankDetails(bankData);
 
         // Auto-select first available month
         if (monthsData.length > 0) {
           setSelectedMonth(monthsData[0]);
+        }
+
+        // Fetch occupied months for conflict detection
+        if (houseRecord?.id) {
+          const occupiedRes = await fetch(`/api/payments/occupied-months?houseId=${houseRecord.id}`);
+          const occupiedData = await occupiedRes.json();
+          setOccupiedMonths(occupiedData);
         }
       } catch (error) {
         console.error('Error fetching upload data:', error);
@@ -105,6 +121,23 @@ export default function UploadScreen() {
 
     fetchData();
   }, [user?.id]);
+
+  // Compute covered months based on selected month and amount
+  const coveredMonths = useMemo(() => {
+    if (!selectedMonth) return [];
+    return computeCoveredMonths(
+      { year: selectedMonth.value.year, month: selectedMonth.value.month },
+      amountMonths
+    );
+  }, [selectedMonth, amountMonths]);
+
+  // Check for conflicts with occupied months
+  const hasOverlap = useMemo(() => {
+    if (coveredMonths.length === 0) return false;
+    return coveredMonths.some((cm) =>
+      occupiedMonths.some((om) => om.year === cm.year && om.month === cm.month)
+    );
+  }, [coveredMonths, occupiedMonths]);
 
   const handleFileSelect = () => {
     fileInputRef.current?.click();
@@ -130,16 +163,15 @@ export default function UploadScreen() {
   };
 
   const handleSubmit = async () => {
-    if (!selectedFile || !selectedMonth || !house) return;
+    if (!selectedFile || !selectedMonth || !house || hasOverlap) return;
 
     setIsSubmitting(true);
 
     try {
       const formData = new FormData();
-      formData.append('file', selectedFile);
-      formData.append('amountMonths', '1');
-      formData.append('startMonth', String(selectedMonth.value.month));
-      formData.append('startYear', String(selectedMonth.value.year));
+      formData.append('proofImage', selectedFile);
+      formData.append('amountMonths', String(amountMonths));
+      formData.append('houseId', house.id);
 
       const response = await fetch('/api/payments', {
         method: 'POST',
@@ -153,15 +185,18 @@ export default function UploadScreen() {
         setTimeout(() => {
           setIsSubmitted(false);
           setSelectedFile(null);
-          // Refresh available months
-          fetch('/api/payments/available-months')
-            .then((r) => r.json())
-            .then((data) => {
-              setAvailableMonths(data);
-              if (data.length > 0) {
-                setSelectedMonth(data[0]);
-              }
-            });
+          setAmountMonths(1);
+          // Refresh available months and occupied months
+          Promise.all([
+            fetch('/api/payments/available-months').then((r) => r.json()),
+            fetch(`/api/payments/occupied-months?houseId=${house.id}`).then((r) => r.json()),
+          ]).then(([monthsData, occupiedData]) => {
+            setAvailableMonths(monthsData);
+            setOccupiedMonths(occupiedData);
+            if (monthsData.length > 0) {
+              setSelectedMonth(monthsData[0]);
+            }
+          });
         }, 3000);
       } else {
         const error = await response.json();
@@ -209,6 +244,52 @@ export default function UploadScreen() {
         <p className="text-sm text-slate-400 mt-0.5">Upload bukti pembayaran IPL bulanan Anda</p>
       </motion.div>
 
+      {/* Month Amount Stepper */}
+      <motion.div variants={itemVariants}>
+        <div className="bg-white rounded-2xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)]">
+          <div className="flex items-center gap-2 mb-3">
+            <CalendarRange className="w-4 h-4 text-slate-400" />
+            <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">
+              Jumlah Bulan
+            </p>
+          </div>
+
+          {/* Month stepper */}
+          <div className="flex items-center justify-between">
+            <button
+              onClick={() => setAmountMonths(Math.max(1, amountMonths - 1))}
+              disabled={amountMonths === 1}
+              className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center disabled:opacity-30 active:scale-95 transition-transform"
+            >
+              <Minus className="w-4 h-4 text-slate-600" />
+            </button>
+
+            <div className="text-center">
+              <p className="text-2xl font-bold text-slate-800">{amountMonths}</p>
+              <p className="text-[11px] text-slate-400 mt-0.5">bulan</p>
+            </div>
+
+            <button
+              onClick={() => setAmountMonths(Math.min(12, amountMonths + 1))}
+              disabled={amountMonths === 12}
+              className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center disabled:opacity-30 active:scale-95 transition-transform"
+            >
+              <Plus className="w-4 h-4 text-blue-600" />
+            </button>
+          </div>
+
+          {/* Total preview */}
+          <div className="mt-3 pt-3 border-t border-slate-50">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-slate-400">Total Pembayaran</span>
+              <span className="text-sm font-bold text-blue-600">
+                {house?.houseType ? formatCurrency(Number(house.houseType.price) * amountMonths) : '-'}
+              </span>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+
       {/* Month Selector */}
       <motion.div
         variants={itemVariants}
@@ -216,7 +297,7 @@ export default function UploadScreen() {
       >
         <div className="flex items-center gap-2 mb-3">
           <Calendar className="w-4 h-4 text-slate-400" />
-          <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">Periode Pembayaran</p>
+          <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">Bulan Mulai</p>
         </div>
         <div className="flex flex-wrap gap-2">
           {availableMonths.slice(0, 4).map((month) => (
@@ -235,6 +316,55 @@ export default function UploadScreen() {
         </div>
       </motion.div>
 
+      {/* Covered Months Preview */}
+      {coveredMonths.length > 0 && (
+        <motion.div variants={itemVariants}>
+          <div className="bg-blue-50 rounded-2xl p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <CheckCircle2 className="w-4 h-4 text-blue-600" />
+              <p className="text-xs font-medium text-blue-600 uppercase tracking-wider">
+                Bulan yang Dibayar
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {coveredMonths.map((m) => {
+                const isOccupied = occupiedMonths.some(
+                  (om) => om.year === m.year && om.month === m.month
+                );
+                return (
+                  <span
+                    key={`${m.year}-${m.month}`}
+                    className={`text-[10px] font-semibold px-2 py-1 rounded-full ${
+                      isOccupied
+                        ? 'bg-red-100 text-red-700'
+                        : 'bg-blue-100 text-blue-700'
+                    }`}
+                  >
+                    {formatPaymentMonth(m)}
+                  </span>
+                );
+              })}
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Overlap Warning */}
+      {hasOverlap && (
+        <motion.div variants={itemVariants}>
+          <div className="bg-red-50 rounded-2xl p-4 flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-medium text-red-800">Tumpang Tindih Bulan</p>
+              <p className="text-xs text-red-600 mt-1">
+                Beberapa bulan yang dipilih sudah memiliki pembayaran pending atau disetujui.
+                Silakan pilih jumlah bulan yang berbeda atau bulan awal yang berbeda.
+              </p>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
       {/* Payment Info */}
       <motion.div
         variants={itemVariants}
@@ -246,16 +376,22 @@ export default function UploadScreen() {
         </div>
         <div className="space-y-2.5">
           <div className="flex justify-between">
-            <span className="text-sm text-slate-500">Tagihan IPL</span>
-            <span className="text-sm font-semibold text-slate-800">
+            <span className="text-sm text-slate-500">Tagihan IPL/Bulan</span>
+            <span className="text-sm font-medium text-slate-700">
               {house.houseType ? formatCurrency(Number(house.houseType.price)) : '-'}
             </span>
           </div>
           <div className="flex justify-between">
-            <span className="text-sm text-slate-500">Periode</span>
-            <span className="text-sm font-medium text-slate-700">{selectedMonth?.label || '-'}</span>
+            <span className="text-sm text-slate-500">Jumlah Bulan</span>
+            <span className="text-sm font-medium text-slate-700">{amountMonths} bulan</span>
           </div>
-          <div className="flex justify-between">
+          <div className="flex justify-between pt-2 border-t border-slate-100">
+            <span className="text-sm font-medium text-slate-700">Total Bayar</span>
+            <span className="text-base font-bold text-blue-600">
+              {house.houseType ? formatCurrency(Number(house.houseType.price) * amountMonths) : '-'}
+            </span>
+          </div>
+          <div className="flex justify-between pt-2 border-t border-slate-100">
             <span className="text-sm text-slate-500">Rekening Tujuan</span>
             <span className="text-sm font-medium text-slate-700">
               {bankDetails?.bankName} {bankDetails?.accountNumber}
@@ -333,10 +469,20 @@ export default function UploadScreen() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0 }}
-              className="w-full bg-emerald-500 text-white rounded-2xl p-4 flex items-center justify-center gap-2 font-semibold text-sm"
+              className="bg-emerald-500 text-white rounded-2xl p-6 flex flex-col items-center justify-center gap-3"
             >
-              <CheckCircle className="w-5 h-5" />
-              Bukti Bayar Berhasil Diupload!
+              <CheckCircle2 className="w-12 h-12" />
+              <div className="text-center">
+                <p className="font-bold text-lg">Bukti Transfer Berhasil Dikirim!</p>
+                <p className="text-sm text-emerald-50 mt-1">
+                  Pembayaran untuk {amountMonths} bulan sedang diproses
+                </p>
+                {coveredMonths.length > 0 && (
+                  <p className="text-xs text-emerald-100 mt-2">
+                    {coveredMonths.map((m) => formatPaymentMonth(m)).join(', ')}
+                  </p>
+                )}
+              </div>
             </motion.div>
           ) : (
             <motion.button
@@ -345,9 +491,9 @@ export default function UploadScreen() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={handleSubmit}
-              disabled={!selectedFile || isSubmitting}
+              disabled={!selectedFile || isSubmitting || hasOverlap}
               className={`w-full rounded-2xl p-4 flex items-center justify-center gap-2 font-semibold text-sm transition-all duration-200 active:scale-[0.98] ${
-                selectedFile && !isSubmitting
+                selectedFile && !isSubmitting && !hasOverlap
                   ? 'bg-blue-600 text-white hover:bg-blue-700'
                   : 'bg-slate-100 text-slate-300 cursor-not-allowed'
               }`}
