@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import { Search, Home, User, DollarSign, AlertCircle } from "lucide-react";
 import Input from "@/components/ui/Input";
 
@@ -18,6 +19,29 @@ interface UnpaidHouse {
     email: string;
   };
 }
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.08,
+      delayChildren: 0.05,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 16 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.4,
+      ease: [0.25, 0.46, 0.45, 0.94],
+    },
+  },
+};
 
 export default function UnpaidResidentsPage() {
   const [unpaidHouses, setUnpaidHouses] = useState<UnpaidHouse[]>([]);
@@ -86,10 +110,12 @@ export default function UnpaidResidentsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading unpaid residents...</p>
+      <div className="px-4 pt-2 pb-4">
+        <div className="animate-pulse space-y-4">
+          <div className="h-20 bg-slate-200 rounded-2xl" />
+          <div className="h-16 bg-slate-200 rounded-2xl" />
+          <div className="h-24 bg-slate-200 rounded-2xl" />
+          <div className="h-32 bg-slate-200 rounded-2xl" />
         </div>
       </div>
     );
@@ -97,16 +123,16 @@ export default function UnpaidResidentsPage() {
 
   if (error) {
     return (
-      <div className="max-w-2xl mx-auto">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+      <div className="px-4 pt-2 pb-4">
+        <div className="bg-red-50 border border-red-100 rounded-2xl p-6 text-center">
           <AlertCircle className="w-12 h-12 text-red-600 mx-auto mb-3" />
-          <p className="text-red-800 font-medium mb-2">Failed to Load Data</p>
+          <p className="text-red-800 font-medium mb-2">Gagal Memuat Data</p>
           <p className="text-sm text-red-600">{error}</p>
           <button
             onClick={fetchUnpaidHouses}
-            className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+            className="mt-4 px-4 py-2 bg-red-600 text-white rounded-2xl active:scale-[0.98] transition-transform duration-150"
           >
-            Try Again
+            Coba Lagi
           </button>
         </div>
       </div>
@@ -114,114 +140,128 @@ export default function UnpaidResidentsPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Unpaid Residents</h1>
-        <p className="text-sm text-gray-600 mt-1">
-          Residents who haven&apos;t paid this month
+    <motion.div
+      className="px-4 pt-2 pb-4 space-y-4"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
+      <motion.div variants={itemVariants}>
+        <h1 className="text-xl font-bold text-slate-900">Penghuni Belum Bayar</h1>
+        <p className="text-sm text-slate-400 mt-0.5">
+          Penghuni yang belum bayar bulan ini
         </p>
-      </div>
+      </motion.div>
 
       {/* Search Bar */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+      <motion.div variants={itemVariants} className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
         <input
           type="text"
-          placeholder="Search by house number, block, or resident name..."
+          placeholder="Cari berdasarkan nomor rumah, blok, atau nama..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-10 pr-4 py-3 text-sm border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500"
+          className="w-full pl-10 pr-4 py-3 text-sm border-2 border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500"
         />
-      </div>
+      </motion.div>
 
       {/* Stats */}
-      <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+      <motion.div
+        variants={itemVariants}
+        className="bg-amber-50 border border-amber-100 rounded-2xl p-3"
+      >
         <div className="flex items-center gap-3">
           <AlertCircle className="w-5 h-5 text-amber-600" />
           <div>
             <p className="text-sm font-medium text-amber-900">
-              {filteredHouses.length} {filteredHouses.length === 1 ? "Resident" : "Residents"} Unpaid
+              {filteredHouses.length} {filteredHouses.length === 1 ? "Penghuni" : "Penghuni"} Belum Bayar
             </p>
             <p className="text-xs text-amber-700">
-              {searchQuery ? "Matching search" : "Total for this month"}
+              {searchQuery ? "Hasil pencarian" : "Total bulan ini"}
             </p>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Unpaid List */}
       {filteredHouses.length > 0 ? (
-        <div className="space-y-3">
+        <motion.div variants={itemVariants} className="space-y-3">
           {filteredHouses.map((item, index) => (
-            <div
+            <motion.div
               key={index}
-              className="bg-white rounded-lg shadow-sm border-2 border-amber-200 p-4 hover:shadow-md transition-shadow"
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.1 + index * 0.04 }}
+              className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)] border border-amber-100 p-4"
             >
               {/* House Info */}
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
+                  <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center">
                     <Home className="w-5 h-5 text-amber-600" />
                   </div>
                   <div>
-                    <p className="font-semibold text-gray-900">
-                      House {item.house.houseNumber}
+                    <p className="font-semibold text-slate-900">
+                      Rumah {item.house.houseNumber}
                     </p>
-                    <p className="text-sm text-gray-600">Block {item.house.block}</p>
+                    <p className="text-sm text-slate-400">Blok {item.house.block}</p>
                   </div>
                 </div>
-                <span className="px-2 py-1 bg-amber-100 text-amber-700 text-xs font-medium rounded">
-                  Unpaid
+                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-amber-50 text-amber-600">
+                  Belum Bayar
                 </span>
               </div>
 
               {/* Resident Info */}
               <div className="grid grid-cols-1 gap-2 pl-13">
                 <div className="flex items-center gap-2">
-                  <User className="w-4 h-4 text-gray-400" />
+                  <User className="w-4 h-4 text-slate-400" />
                   <div>
-                    <p className="text-sm font-medium text-gray-900">{item.user.name}</p>
-                    <p className="text-xs text-gray-500">{item.user.email}</p>
+                    <p className="text-sm font-medium text-slate-800">{item.user.name}</p>
+                    <p className="text-xs text-slate-400">{item.user.email}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <DollarSign className="w-4 h-4 text-gray-400" />
+                  <DollarSign className="w-4 h-4 text-slate-400" />
                   <div>
-                    <p className="text-sm text-gray-700">
+                    <p className="text-sm text-slate-700">
                       {item.house.houseType.typeName}
                     </p>
-                    <p className="text-xs font-medium text-gray-900">
-                      {formatCurrency(item.house.houseType.price)}/month
+                    <p className="text-xs font-medium text-slate-800">
+                      {formatCurrency(item.house.houseType.price)}/bulan
                     </p>
                   </div>
                 </div>
               </div>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       ) : (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
+        <motion.div
+          variants={itemVariants}
+          className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)] p-12 text-center"
+        >
           {searchQuery ? (
             <>
-              <Search className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-              <p className="text-gray-600 font-medium mb-1">No results found</p>
-              <p className="text-sm text-gray-500">
-                Try a different search term
+              <Search className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+              <p className="text-slate-600 font-medium mb-1">Tidak ada hasil</p>
+              <p className="text-sm text-slate-400">
+                Coba kata kunci lain
               </p>
             </>
           ) : (
             <>
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                <AlertCircle className="w-8 h-8 text-green-600" />
+              <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-3">
+                <AlertCircle className="w-8 h-8 text-emerald-600" />
               </div>
-              <p className="text-gray-900 font-medium mb-1">All Paid!</p>
-              <p className="text-sm text-gray-500">
-                All residents have paid for this month
+              <p className="text-slate-900 font-medium mb-1">Semua Sudah Bayar!</p>
+              <p className="text-sm text-slate-400">
+                Semua penghuni sudah membayar bulan ini
               </p>
             </>
           )}
-        </div>
+        </motion.div>
       )}
-    </div>
+    </motion.div>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 import { Camera, MapPin, Clock, CheckCircle } from "lucide-react";
 import CameraCapture from "@/components/ui/CameraCapture";
 import Button from "@/components/ui/Button";
@@ -21,6 +22,29 @@ interface TodaySchedule {
     endTime: string;
   };
 }
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.08,
+      delayChildren: 0.05,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 16 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.4,
+      ease: [0.25, 0.46, 0.45, 0.94],
+    },
+  },
+};
 
 export default function AttendancePage() {
   const router = useRouter();
@@ -211,84 +235,95 @@ export default function AttendancePage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading attendance...</p>
+      <div className="px-4 pt-2 pb-4">
+        <div className="animate-pulse space-y-4">
+          <div className="h-20 bg-slate-200 rounded-2xl" />
+          <div className="h-64 bg-slate-200 rounded-2xl" />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Attendance</h1>
-        <p className="text-sm text-gray-600 mt-1">Clock in and out of your shift</p>
-      </div>
+    <motion.div
+      className="px-4 pt-2 pb-4 space-y-4"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
+      <motion.div variants={itemVariants}>
+        <h1 className="text-xl font-bold text-slate-900">Absensi</h1>
+        <p className="text-sm text-slate-400 mt-0.5">Clock in dan clock out shift Anda</p>
+      </motion.div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <motion.div
+          variants={itemVariants}
+          className="bg-red-50 border border-red-200 rounded-2xl p-4"
+        >
           <p className="text-sm text-red-800">{error}</p>
-        </div>
+        </motion.div>
       )}
 
       {/* Clock In Form (when not clocked in) */}
       {!activeShift && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 space-y-4">
-          <h2 className="text-lg font-semibold text-gray-900">Clock In</h2>
+        <motion.div
+          variants={itemVariants}
+          className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)] p-4 space-y-4"
+        >
+          <h2 className="text-sm font-semibold text-slate-900">Clock In</h2>
 
           {/* Display scheduled shift if exists */}
           {todaySchedule && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <h3 className="text-sm font-semibold text-blue-900 mb-1">
-                Your Scheduled Shift
+            <div className="bg-blue-50 border border-blue-100 rounded-2xl p-3">
+              <h3 className="text-xs font-semibold text-blue-900 mb-1">
+                Jadwal Shift Anda
               </h3>
               <p className="text-sm text-blue-800">
                 {todaySchedule.shiftTemplate.shiftName}
               </p>
-              <p className="text-sm text-blue-700">
+              <p className="text-xs text-blue-700 mt-0.5">
                 {todaySchedule.shiftTemplate.startTime} - {todaySchedule.shiftTemplate.endTime}
               </p>
             </div>
           )}
 
           {!todaySchedule && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-              <p className="text-sm text-yellow-800">
-                You don&apos;t have a scheduled shift for today. Please contact admin if this is incorrect.
+            <div className="bg-amber-50 border border-amber-100 rounded-2xl p-3">
+              <p className="text-sm text-amber-800">
+                Anda tidak memiliki jadwal shift hari ini. Hubungi admin jika ini tidak benar.
               </p>
             </div>
           )}
 
           {/* Shift Start Time */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Shift Start Time <span className="text-red-500">*</span>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              Waktu Mulai Shift <span className="text-red-500">*</span>
             </label>
             <input
               type="time"
               value={shiftStartTime}
               onChange={(e) => setShiftStartTime(e.target.value)}
-              className="w-full px-4 py-2.5 text-sm border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500"
+              className="w-full px-4 py-2.5 text-sm border-2 border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500"
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-slate-400 mt-1">
               {todaySchedule
-                ? "Pre-filled from your schedule (you can modify if needed)"
-                : "Enter your shift start time"}
+                ? "Diisi otomatis dari jadwal (bisa diubah jika perlu)"
+                : "Masukkan waktu mulai shift"}
             </p>
           </div>
 
           {/* Photo Capture */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Selfie <span className="text-red-500">*</span>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              Foto Selfie <span className="text-red-500">*</span>
             </label>
             {clockInPhoto ? (
               <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm text-green-700">
+                <div className="flex items-center gap-2 text-sm text-emerald-600">
                   <CheckCircle className="w-5 h-5" />
-                  Photo captured
+                  Foto berhasil diambil
                 </div>
                 <Button
                   type="button"
@@ -296,7 +331,7 @@ export default function AttendancePage() {
                   size="sm"
                   onClick={() => setShowClockInCamera(true)}
                 >
-                  Retake Photo
+                  Ambil Ulang Foto
                 </Button>
               </div>
             ) : (
@@ -307,23 +342,23 @@ export default function AttendancePage() {
                 className="w-full"
               >
                 <Camera className="w-5 h-5 mr-2" />
-                Take Selfie
+                Ambil Foto Selfie
               </Button>
             )}
           </div>
 
           {/* Location Capture */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Location <span className="text-red-500">*</span>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              Lokasi <span className="text-red-500">*</span>
             </label>
             {clockInLocation ? (
               <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm text-green-700">
+                <div className="flex items-center gap-2 text-sm text-emerald-600">
                   <CheckCircle className="w-5 h-5" />
-                  Location captured
+                  Lokasi berhasil diambil
                 </div>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-slate-400">
                   Lat: {clockInLocation.lat.toFixed(6)}, Lon: {clockInLocation.lon.toFixed(6)}
                 </p>
                 <Button
@@ -332,7 +367,7 @@ export default function AttendancePage() {
                   size="sm"
                   onClick={() => captureLocation(setClockInLocation)}
                 >
-                  Recapture Location
+                  Ambil Ulang Lokasi
                 </Button>
               </div>
             ) : (
@@ -343,7 +378,7 @@ export default function AttendancePage() {
                 className="w-full"
               >
                 <MapPin className="w-5 h-5 mr-2" />
-                Capture Location
+                Ambil Lokasi
               </Button>
             )}
           </div>
@@ -355,42 +390,46 @@ export default function AttendancePage() {
             isLoading={submitting}
             disabled={!shiftStartTime || !clockInPhoto || !clockInLocation}
             fullWidth
+            className="active:scale-[0.98] transition-transform duration-150"
           >
             <Clock className="w-5 h-5 mr-2" />
             Clock In
           </Button>
-        </div>
+        </motion.div>
       )}
 
       {/* Clock Out Form (when clocked in) */}
       {activeShift && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 space-y-4">
-          <div className="flex items-center gap-3 pb-4 border-b border-gray-200">
-            <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+        <motion.div
+          variants={itemVariants}
+          className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)] p-4 space-y-4"
+        >
+          <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
+            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">Currently On Shift</h2>
-              <p className="text-sm text-gray-600">
-                Clocked in at {formatDate(activeShift.clockInAt)}
+              <h2 className="text-sm font-semibold text-slate-900">Sedang Bertugas</h2>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Clock in: {formatDate(activeShift.clockInAt)}
               </p>
             </div>
           </div>
 
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="bg-blue-50 border border-blue-100 rounded-2xl p-3">
             <p className="text-sm text-blue-800">
-              Complete the following steps to clock out
+              Lengkapi langkah berikut untuk clock out
             </p>
           </div>
 
           {/* Photo Capture */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Selfie <span className="text-red-500">*</span>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              Foto Selfie <span className="text-red-500">*</span>
             </label>
             {clockOutPhoto ? (
               <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm text-green-700">
+                <div className="flex items-center gap-2 text-sm text-emerald-600">
                   <CheckCircle className="w-5 h-5" />
-                  Photo captured
+                  Foto berhasil diambil
                 </div>
                 <Button
                   type="button"
@@ -398,7 +437,7 @@ export default function AttendancePage() {
                   size="sm"
                   onClick={() => setShowClockOutCamera(true)}
                 >
-                  Retake Photo
+                  Ambil Ulang Foto
                 </Button>
               </div>
             ) : (
@@ -409,23 +448,23 @@ export default function AttendancePage() {
                 className="w-full"
               >
                 <Camera className="w-5 h-5 mr-2" />
-                Take Selfie
+                Ambil Foto Selfie
               </Button>
             )}
           </div>
 
           {/* Location Capture */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Location <span className="text-red-500">*</span>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              Lokasi <span className="text-red-500">*</span>
             </label>
             {clockOutLocation ? (
               <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm text-green-700">
+                <div className="flex items-center gap-2 text-sm text-emerald-600">
                   <CheckCircle className="w-5 h-5" />
-                  Location captured
+                  Lokasi berhasil diambil
                 </div>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-slate-400">
                   Lat: {clockOutLocation.lat.toFixed(6)}, Lon: {clockOutLocation.lon.toFixed(6)}
                 </p>
                 <Button
@@ -434,7 +473,7 @@ export default function AttendancePage() {
                   size="sm"
                   onClick={() => captureLocation(setClockOutLocation)}
                 >
-                  Recapture Location
+                  Ambil Ulang Lokasi
                 </Button>
               </div>
             ) : (
@@ -445,7 +484,7 @@ export default function AttendancePage() {
                 className="w-full"
               >
                 <MapPin className="w-5 h-5 mr-2" />
-                Capture Location
+                Ambil Lokasi
               </Button>
             )}
           </div>
@@ -457,11 +496,12 @@ export default function AttendancePage() {
             isLoading={submitting}
             disabled={!clockOutPhoto || !clockOutLocation}
             fullWidth
+            className="active:scale-[0.98] transition-transform duration-150"
           >
             <Clock className="w-5 h-5 mr-2" />
             Clock Out
           </Button>
-        </div>
+        </motion.div>
       )}
 
       {/* Camera Modals */}
@@ -484,6 +524,6 @@ export default function AttendancePage() {
           onClose={() => setShowClockOutCamera(false)}
         />
       )}
-    </div>
+    </motion.div>
   );
 }

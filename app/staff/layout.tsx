@@ -1,47 +1,92 @@
-import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
-import StaffBottomNav from "@/components/layouts/StaffBottomNav";
+"use client";
 
-export default async function StaffLayout({
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { AnimatePresence } from "framer-motion";
+import StaffBottomNav from "@/components/layouts/StaffBottomNav";
+import { Home, Loader2 } from "lucide-react";
+
+export default function StaffLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const session = await auth();
+  const { data: session, status } = useSession();
+  const router = useRouter();
 
-  // Role guard - only STAFF can access
-  if (!session?.user) {
-    redirect("/login");
+  useEffect(() => {
+    if (status === "loading") return;
+
+    if (!session?.user) {
+      router.push("/login");
+      return;
+    }
+
+    if (session.user.role !== "STAFF") {
+      router.push("/login");
+    }
+  }, [session, status, router]);
+
+  // Get user initials for avatar
+  const getInitials = (name: string) => {
+    const parts = name.split(" ");
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+  };
+
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen w-full bg-slate-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 text-blue-600 animate-spin mx-auto mb-4" />
+          <p className="text-sm text-slate-600">Memuat...</p>
+        </div>
+      </div>
+    );
   }
 
-  if (session.user.role !== "STAFF") {
-    redirect("/login");
+  if (!session?.user || session.user.role !== "STAFF") {
+    return null;
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
-      {/* Top bar with user info */}
-      <div className="sticky top-0 z-30 bg-white border-b border-gray-200 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-lg font-bold text-gray-900">SmartResidence</h1>
-              <p className="text-sm text-gray-600">Staff Portal</p>
+    <div className="min-h-screen w-full bg-slate-50 flex flex-col max-w-md mx-auto relative">
+      {/* Status Bar Spacer */}
+      <div className="h-12 bg-white flex-shrink-0" />
+
+      {/* Header */}
+      <header className="bg-white px-4 pb-3 flex-shrink-0">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
+              <Home className="w-4 h-4 text-white" />
             </div>
-            <div className="text-right">
-              <p className="text-sm font-medium text-gray-900">{session.user.name}</p>
-              <p className="text-xs text-gray-500 capitalize">
+            <div>
+              <span className="text-sm font-bold text-slate-800">
+                Staff Portal
+              </span>
+              <p className="text-[10px] text-slate-400 capitalize">
                 {session.user.staffJobType?.toLowerCase()}
               </p>
             </div>
           </div>
+          <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center">
+            <span className="text-xs font-bold text-blue-600">
+              {getInitials(session.user.name)}
+            </span>
+          </div>
         </div>
-      </div>
+      </header>
 
-      {/* Main content area */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6">{children}</main>
+      {/* Content Area */}
+      <main className="flex-1 overflow-y-auto pb-24">
+        <AnimatePresence mode="wait">{children}</AnimatePresence>
+      </main>
 
-      {/* Bottom navigation */}
+      {/* Bottom Tab Navigation */}
       <StaffBottomNav />
     </div>
   );

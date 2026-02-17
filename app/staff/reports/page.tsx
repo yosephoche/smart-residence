@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import { FileText, Image as ImageIcon, CheckCircle, Clock, AlertCircle } from "lucide-react";
 import Button from "@/components/ui/Button";
 
@@ -15,6 +16,29 @@ interface ShiftReport {
     shiftStartTime: string;
   } | null;
 }
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.08,
+      delayChildren: 0.05,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 16 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.4,
+      ease: [0.25, 0.46, 0.45, 0.94],
+    },
+  },
+};
 
 export default function ShiftReportsPage() {
   const [reports, setReports] = useState<ShiftReport[]>([]);
@@ -121,113 +145,122 @@ export default function ShiftReportsPage() {
 
   const getReportTypeBadge = (type: string) => {
     const config = {
-      SHIFT_START: { label: "Start", color: "bg-blue-100 text-blue-700" },
-      SHIFT_MIDDLE: { label: "Middle", color: "bg-amber-100 text-amber-700" },
-      SHIFT_END: { label: "End", color: "bg-green-100 text-green-700" },
+      SHIFT_START: { label: "Mulai", color: "bg-blue-50 text-blue-600" },
+      SHIFT_MIDDLE: { label: "Tengah", color: "bg-amber-50 text-amber-600" },
+      SHIFT_END: { label: "Selesai", color: "bg-emerald-50 text-emerald-600" },
     };
-    const { label, color } = config[type as keyof typeof config] || { label: type, color: "bg-gray-100 text-gray-700" };
-    return <span className={`px-2 py-1 rounded text-xs font-medium ${color}`}>{label}</span>;
+    const { label, color } = config[type as keyof typeof config] || { label: type, color: "bg-slate-100 text-slate-700" };
+    return <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${color}`}>{label}</span>;
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading reports...</p>
+      <div className="px-4 pt-2 pb-4">
+        <div className="animate-pulse space-y-4">
+          <div className="h-20 bg-slate-200 rounded-2xl" />
+          <div className="h-64 bg-slate-200 rounded-2xl" />
+          <div className="h-48 bg-slate-200 rounded-2xl" />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Shift Reports</h1>
-        <p className="text-sm text-gray-600 mt-1">
-          Submit periodic reports during your shift
+    <motion.div
+      className="px-4 pt-2 pb-4 space-y-4"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
+      <motion.div variants={itemVariants}>
+        <h1 className="text-xl font-bold text-slate-900">Laporan Shift</h1>
+        <p className="text-sm text-slate-400 mt-0.5">
+          Kirim laporan berkala selama shift Anda
         </p>
-      </div>
+      </motion.div>
 
       {/* Submit Report Form */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">
-          Submit Report
+      <motion.div
+        variants={itemVariants}
+        className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)] p-4"
+      >
+        <h2 className="text-sm font-semibold text-slate-900 mb-3">
+          Kirim Laporan
         </h2>
 
         {!activeShift && (
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
+          <div className="bg-amber-50 border border-amber-100 rounded-2xl p-3 mb-4">
             <div className="flex items-center gap-2">
               <AlertCircle className="w-5 h-5 text-amber-600" />
               <p className="text-sm text-amber-800">
-                You must clock in before you can submit reports
+                Anda harus clock in sebelum mengirim laporan
               </p>
             </div>
           </div>
         )}
 
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+          <div className="bg-red-50 border border-red-100 rounded-2xl p-3 mb-4">
             <p className="text-sm text-red-800">{error}</p>
           </div>
         )}
 
         {success && (
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+          <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-3 mb-4">
             <div className="flex items-center gap-2">
-              <CheckCircle className="w-5 h-5 text-green-600" />
-              <p className="text-sm text-green-800">{success}</p>
+              <CheckCircle className="w-5 h-5 text-emerald-600" />
+              <p className="text-sm text-emerald-800">{success}</p>
             </div>
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Report Type <span className="text-red-500">*</span>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              Tipe Laporan <span className="text-red-500">*</span>
             </label>
             <select
               value={reportType}
               onChange={(e) => setReportType(e.target.value as any)}
               disabled={!activeShift}
-              className="w-full px-4 py-2.5 text-sm border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+              className="w-full px-4 py-2.5 text-sm border-2 border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 disabled:bg-slate-100 disabled:cursor-not-allowed"
             >
-              <option value="SHIFT_START">Start of Shift</option>
-              <option value="SHIFT_MIDDLE">Middle of Shift</option>
-              <option value="SHIFT_END">End of Shift</option>
+              <option value="SHIFT_START">Awal Shift</option>
+              <option value="SHIFT_MIDDLE">Tengah Shift</option>
+              <option value="SHIFT_END">Akhir Shift</option>
             </select>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Report Content <span className="text-red-500">*</span>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              Isi Laporan <span className="text-red-500">*</span>
             </label>
             <textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
               disabled={!activeShift}
-              placeholder="Describe your observations, activities, or incidents (min. 10 characters)"
+              placeholder="Deskripsikan pengamatan, aktivitas, atau kejadian (min. 10 karakter)"
               rows={5}
-              className="w-full px-4 py-2.5 text-sm border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed resize-none"
+              className="w-full px-4 py-2.5 text-sm border-2 border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 disabled:bg-slate-100 disabled:cursor-not-allowed resize-none"
             />
-            <p className="text-xs text-gray-500 mt-1">
-              {content.length} characters (min. 10 required)
+            <p className="text-xs text-slate-400 mt-1">
+              {content.length} karakter (min. 10 diperlukan)
             </p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Photo (Optional)
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              Foto (Opsional)
             </label>
             <input
               type="file"
               accept="image/jpeg,image/png,image/jpg"
               onChange={(e) => setPhoto(e.target.files?.[0] || null)}
               disabled={!activeShift}
-              className="w-full px-4 py-2.5 text-sm border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+              className="w-full px-4 py-2.5 text-sm border-2 border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 disabled:bg-slate-100 disabled:cursor-not-allowed"
             />
             {photo && (
-              <div className="flex items-center gap-2 mt-2 text-sm text-green-700">
+              <div className="flex items-center gap-2 mt-2 text-sm text-emerald-600">
                 <CheckCircle className="w-4 h-4" />
                 {photo.name}
               </div>
@@ -241,66 +274,73 @@ export default function ShiftReportsPage() {
             isLoading={submitting}
             disabled={!activeShift || content.length < 10}
             fullWidth
+            className="active:scale-[0.98] transition-transform duration-150"
           >
             <FileText className="w-5 h-5 mr-2" />
-            Submit Report
+            Kirim Laporan
           </Button>
         </form>
-      </div>
+      </motion.div>
 
       {/* Recent Reports */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">
-          Recent Reports
+      <motion.div
+        variants={itemVariants}
+        className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)] p-4"
+      >
+        <h2 className="text-sm font-semibold text-slate-900 mb-3">
+          Laporan Terkini
         </h2>
 
         {reports.length > 0 ? (
-          <div className="space-y-4">
-            {reports.map((report) => (
-              <div
+          <div className="space-y-3">
+            {reports.map((report, index) => (
+              <motion.div
                 key={report.id}
-                className="border-2 border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors"
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.1 + index * 0.04 }}
+                className="border border-slate-100 rounded-2xl p-3"
               >
                 <div className="flex items-start justify-between mb-2">
                   {getReportTypeBadge(report.reportType)}
-                  <div className="flex items-center gap-1 text-xs text-gray-500">
+                  <div className="flex items-center gap-1 text-[11px] text-slate-400">
                     <Clock className="w-3 h-3" />
                     {formatDate(report.reportedAt)}
                   </div>
                 </div>
 
-                <p className="text-sm text-gray-700 mb-2 whitespace-pre-wrap">
+                <p className="text-sm text-slate-700 mb-2 whitespace-pre-wrap">
                   {report.content}
                 </p>
 
                 {report.photoUrl && (
-                  <div className="flex items-center gap-2 text-sm text-gray-500">
+                  <div className="flex items-center gap-2 text-sm text-slate-400">
                     <ImageIcon className="w-4 h-4" />
-                    Photo attached
+                    Foto terlampir
                   </div>
                 )}
 
                 {report.attendance && (
-                  <div className="mt-2 pt-2 border-t border-gray-200">
-                    <p className="text-xs text-gray-500">
+                  <div className="mt-2 pt-2 border-t border-slate-100">
+                    <p className="text-xs text-slate-400">
                       Shift: {report.attendance.shiftStartTime} -{" "}
                       {formatDate(report.attendance.clockInAt)}
                     </p>
                   </div>
                 )}
-              </div>
+              </motion.div>
             ))}
           </div>
         ) : (
           <div className="text-center py-8">
-            <FileText className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-            <p className="text-gray-600 font-medium mb-1">No Reports Yet</p>
-            <p className="text-sm text-gray-500">
-              Submit your first shift report above
+            <FileText className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+            <p className="text-slate-600 font-medium mb-1">Belum Ada Laporan</p>
+            <p className="text-sm text-slate-400">
+              Kirim laporan shift pertama Anda di atas
             </p>
           </div>
         )}
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
