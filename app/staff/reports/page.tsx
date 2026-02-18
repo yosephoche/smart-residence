@@ -26,7 +26,7 @@ const containerVariants = {
       delayChildren: 0.05,
     },
   },
-};
+} as const;
 
 const itemVariants = {
   hidden: { opacity: 0, y: 16 },
@@ -35,10 +35,10 @@ const itemVariants = {
     y: 0,
     transition: {
       duration: 0.4,
-      ease: [0.25, 0.46, 0.45, 0.94],
+      ease: [0.25, 0.46, 0.45, 0.94] as const,
     },
   },
-};
+} as const;
 
 export default function ShiftReportsPage() {
   const [reports, setReports] = useState<ShiftReport[]>([]);

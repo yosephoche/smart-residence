@@ -44,7 +44,7 @@ const containerVariants = {
       delayChildren: 0.05,
     },
   },
-};
+} as const;
 
 const itemVariants = {
   hidden: { opacity: 0, y: 12 },
@@ -53,10 +53,10 @@ const itemVariants = {
     y: 0,
     transition: {
       duration: 0.35,
-      ease: [0.25, 0.46, 0.45, 0.94] as any,
+      ease: [0.25, 0.46, 0.45, 0.94] as const as any,
     },
   },
-};
+} as const;
 
 const MenuItem: React.FC<{
   icon: React.ReactNode;
