@@ -150,7 +150,7 @@ export default function HouseTypesPage() {
       ),
     },
     {
-      key: "id",
+      key: "usage",
       header: t('usage'),
       render: (_, type) => {
         const count = houses.filter((h) => h.houseTypeId === type.id).length;
@@ -163,7 +163,7 @@ export default function HouseTypesPage() {
       },
     },
     {
-      key: "id",
+      key: "actions",
       header: tCommon('table.actions'),
       render: (_, type) => {
         const housesCount = houses.filter((h) => h.houseTypeId === type.id).length;

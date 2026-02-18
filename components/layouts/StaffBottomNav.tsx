@@ -94,7 +94,7 @@ const StaffBottomNav: React.FC = () => {
               {isActive && (
                 <motion.div
                   layoutId="staff-tab-indicator"
-                  className="absolute -top-2 left-1/2 -translate-x-1/2 w-8 h-1 bg-blue-600 rounded-full"
+                  className="absolute -top-2 left-0 right-0 mx-auto w-8 h-1 bg-blue-600 rounded-full"
                   transition={{
                     type: "spring",
                     stiffness: 400,

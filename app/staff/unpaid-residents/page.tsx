@@ -6,13 +6,12 @@ import { Search, Home, User, DollarSign, AlertCircle } from "lucide-react";
 import Input from "@/components/ui/Input";
 
 interface UnpaidHouse {
-  house: {
-    houseNumber: string;
-    block: string;
-    houseType: {
-      typeName: string;
-      price: number;
-    };
+  id: string;
+  houseNumber: string;
+  block: string;
+  houseType: {
+    typeName: string;
+    price: number;
   };
   user: {
     name: string;
@@ -62,8 +61,8 @@ export default function UnpaidResidentsPage() {
 
     const query = searchQuery.toLowerCase();
     const filtered = unpaidHouses.filter((item) => {
-      const houseNumber = item.house.houseNumber.toLowerCase();
-      const block = item.house.block.toLowerCase();
+      const houseNumber = item.houseNumber.toLowerCase();
+      const block = item.block.toLowerCase();
       const userName = item.user.name.toLowerCase();
       const email = item.user.email.toLowerCase();
 
@@ -202,9 +201,9 @@ export default function UnpaidResidentsPage() {
                   </div>
                   <div>
                     <p className="font-semibold text-slate-900">
-                      Rumah {item.house.houseNumber}
+                      Rumah {item.houseNumber}
                     </p>
-                    <p className="text-sm text-slate-400">Blok {item.house.block}</p>
+                    <p className="text-sm text-slate-400">Blok {item.block}</p>
                   </div>
                 </div>
                 <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-amber-50 text-amber-600">
@@ -225,10 +224,10 @@ export default function UnpaidResidentsPage() {
                   <DollarSign className="w-4 h-4 text-slate-400" />
                   <div>
                     <p className="text-sm text-slate-700">
-                      {item.house.houseType.typeName}
+                      {item.houseType.typeName}
                     </p>
                     <p className="text-xs font-medium text-slate-800">
-                      {formatCurrency(item.house.houseType.price)}/bulan
+                      {formatCurrency(item.houseType.price)}/bulan
                     </p>
                   </div>
                 </div>

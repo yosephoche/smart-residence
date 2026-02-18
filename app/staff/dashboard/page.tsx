@@ -13,6 +13,20 @@ interface ActiveShift {
   shiftReports: Array<{ reportType: string }>;
 }
 
+interface UnpaidHouse {
+  id: string;
+  houseNumber: string;
+  block: string;
+  houseType: {
+    typeName: string;
+    price: number;
+  };
+  user: {
+    name: string;
+    email: string;
+  };
+}
+
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
@@ -41,6 +55,7 @@ export default function StaffDashboard() {
   const { data: session } = useSession();
   const [activeShift, setActiveShift] = useState<ActiveShift | null>(null);
   const [attendanceHistory, setAttendanceHistory] = useState<any[]>([]);
+  const [unpaidResidents, setUnpaidResidents] = useState<UnpaidHouse[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -60,6 +75,13 @@ export default function StaffDashboard() {
       const historyRes = await fetch("/api/attendance/history?limit=5");
       const historyData = await historyRes.json();
       setAttendanceHistory(historyData.history || []);
+
+      // Fetch unpaid residents
+      const unpaidRes = await fetch("/api/payments/unpaid-this-month");
+      if (unpaidRes.ok) {
+        const unpaidData = await unpaidRes.json();
+        setUnpaidResidents(unpaidData || []);
+      }
     } catch (error) {
       console.error("Failed to fetch dashboard data:", error);
     } finally {
@@ -113,6 +135,7 @@ export default function StaffDashboard() {
           <div className="grid grid-cols-2 gap-4">
             <div className="h-24 bg-slate-200 rounded-2xl" />
             <div className="h-24 bg-slate-200 rounded-2xl" />
+            <div className="h-32 bg-slate-200 rounded-2xl col-span-2" />
           </div>
           <div className="h-48 bg-slate-200 rounded-2xl" />
         </div>
@@ -235,19 +258,58 @@ export default function StaffDashboard() {
           <p className="text-[10px] text-emerald-100 mt-0.5">Clock in/out</p>
         </button>
 
-        {/* Unpaid Residents - Spans 2 columns */}
-        <button
-          onClick={() => router.push("/staff/unpaid-residents")}
-          className="bg-amber-600 text-white rounded-2xl p-4 text-left active:scale-[0.98] transition-transform duration-150 col-span-2"
-        >
-          <div className="flex items-center gap-2 mb-2">
-            <AlertCircle className="w-7 h-7" />
-            <div>
-              <p className="text-sm font-semibold">Penghuni Belum Bayar</p>
-              <p className="text-[10px] text-amber-100 mt-0.5">Lihat daftar penghuni yang belum bayar bulan ini</p>
+        {/* Unpaid Residents Preview - Spans 2 columns */}
+        <div className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)] border border-amber-100 p-4 col-span-2">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 text-amber-600" />
+              <h3 className="text-sm font-semibold text-slate-900">Penghuni Belum Bayar</h3>
             </div>
+            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-amber-50 text-amber-600">
+              {unpaidResidents.length}
+            </span>
           </div>
-        </button>
+
+          {/* List (max 5) */}
+          {unpaidResidents.length > 0 ? (
+            <div className="space-y-2">
+              {unpaidResidents.slice(0, 5).map((item, index) => (
+                <div
+                  key={item.id}
+                  className="flex items-center justify-between py-2 border-b border-slate-50 last:border-0"
+                >
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-slate-800">
+                      Rumah {item.houseNumber}
+                    </p>
+                    <p className="text-[11px] text-slate-400">
+                      Blok {item.block} • {item.user.name}
+                    </p>
+                  </div>
+                </div>
+              ))}
+
+              {/* View All Link */}
+              <button
+                onClick={() => router.push("/staff/unpaid-residents")}
+                className="w-full mt-2 py-2.5 text-sm font-medium text-amber-600 bg-amber-50 rounded-xl active:scale-[0.98] transition-transform duration-150"
+              >
+                Lihat Semua ({unpaidResidents.length})
+              </button>
+            </div>
+          ) : (
+            <div className="text-center py-4">
+              <div className="w-12 h-12 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-2">
+                <AlertCircle className="w-6 h-6 text-emerald-600" />
+              </div>
+              <p className="text-sm font-medium text-slate-900">Semua Sudah Bayar!</p>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Tidak ada tunggakan bulan ini
+              </p>
+            </div>
+          )}
+        </div>
       </motion.div>
 
       {/* Recent Attendance */}

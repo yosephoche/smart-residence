@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { FileText, Image as ImageIcon, CheckCircle, Clock, AlertCircle } from "lucide-react";
+import { useTranslations } from 'next-intl';
 import Button from "@/components/ui/Button";
 
 interface ShiftReport {
@@ -41,6 +42,7 @@ const itemVariants = {
 } as const;
 
 export default function ShiftReportsPage() {
+  const t = useTranslations('staff.reports');
   const [reports, setReports] = useState<ShiftReport[]>([]);
   const [activeShift, setActiveShift] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -145,11 +147,20 @@ export default function ShiftReportsPage() {
 
   const getReportTypeBadge = (type: string) => {
     const config = {
-      SHIFT_START: { label: "Mulai", color: "bg-blue-50 text-blue-600" },
-      SHIFT_MIDDLE: { label: "Tengah", color: "bg-amber-50 text-amber-600" },
-      SHIFT_END: { label: "Selesai", color: "bg-emerald-50 text-emerald-600" },
+      SHIFT_START: { color: "bg-blue-50 text-blue-600" },
+      SHIFT_MIDDLE: { color: "bg-amber-50 text-amber-600" },
+      SHIFT_END: { color: "bg-emerald-50 text-emerald-600" },
     };
-    const { label, color } = config[type as keyof typeof config] || { label: type, color: "bg-slate-100 text-slate-700" };
+    const { color } = config[type as keyof typeof config] || { color: "bg-slate-100 text-slate-700" };
+
+    // Use shortened badge labels (first word) for compact display
+    const badgeLabels = {
+      SHIFT_START: t('types.SHIFT_START').split(' ')[0], // "Mulai" or "Shift"
+      SHIFT_MIDDLE: t('types.SHIFT_MIDDLE').split(' ')[0], // "Tengah" or "Shift"
+      SHIFT_END: t('types.SHIFT_END').split(' ')[0], // "Selesai" or "Shift"
+    };
+    const label = badgeLabels[type as keyof typeof badgeLabels] || type;
+
     return <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${color}`}>{label}</span>;
   };
 
@@ -225,9 +236,9 @@ export default function ShiftReportsPage() {
               disabled={!activeShift}
               className="w-full px-4 py-2.5 text-sm border-2 border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 disabled:bg-slate-100 disabled:cursor-not-allowed"
             >
-              <option value="SHIFT_START">Awal Shift</option>
-              <option value="SHIFT_MIDDLE">Tengah Shift</option>
-              <option value="SHIFT_END">Akhir Shift</option>
+              <option value="SHIFT_START">{t('types.SHIFT_START')}</option>
+              <option value="SHIFT_MIDDLE">{t('types.SHIFT_MIDDLE')}</option>
+              <option value="SHIFT_END">{t('types.SHIFT_END')}</option>
             </select>
           </div>
 

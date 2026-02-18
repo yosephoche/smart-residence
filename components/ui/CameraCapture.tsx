@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Camera, X, RotateCcw } from "lucide-react";
+import { Camera, X, RotateCcw, CheckCircle } from "lucide-react";
 
 interface CameraCaptureProps {
   onCapture: (file: File) => void;
@@ -140,7 +140,7 @@ export default function CameraCapture({ onCapture, onClose }: CameraCaptureProps
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black flex flex-col">
+    <div className="fixed inset-0 z-[100] bg-black flex flex-col">
       {/* Header */}
       <div className="flex items-center justify-between p-4 bg-black/50">
         <h2 className="text-white text-lg font-medium">Take a Selfie</h2>
@@ -178,7 +178,8 @@ export default function CameraCapture({ onCapture, onClose }: CameraCaptureProps
           <img
             src={capturedImage}
             alt="Captured selfie"
-            className="max-w-full max-h-full object-contain"
+            className="max-w-full max-h-full object-contain transform scale-x-[-1]"
+            style={{ minHeight: '300px' }}
           />
         )}
 
@@ -201,31 +202,32 @@ export default function CameraCapture({ onCapture, onClose }: CameraCaptureProps
 
       {/* Controls */}
       {!error && !loading && (
-        <div className="p-6 bg-black/50">
+        <div className="px-6 pt-6 pb-[calc(4rem+env(safe-area-inset-bottom))] bg-black/50 min-h-[220px] flex items-center justify-center">
           {capturedImage ? (
-            <div className="flex gap-4 justify-center">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full max-w-md px-2 sm:px-0">
               <button
                 onClick={retakePhoto}
-                className="flex items-center gap-2 px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors min-h-[44px]"
+                className="flex items-center justify-center gap-2 px-6 py-3 bg-gray-600 text-white rounded-2xl hover:bg-gray-700 active:scale-[0.98] transition-all duration-150 min-h-[52px] sm:flex-1"
               >
                 <RotateCcw className="w-5 h-5" />
-                Retake
+                <span className="font-medium">Retake</span>
               </button>
               <button
                 onClick={confirmPhoto}
-                className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium min-h-[44px]"
+                className="flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-2xl hover:bg-blue-700 active:scale-[0.98] transition-all duration-150 min-h-[52px] font-medium sm:flex-1"
               >
-                Use Photo
+                <CheckCircle className="w-5 h-5" />
+                <span>Use Photo</span>
               </button>
             </div>
           ) : (
             <div className="flex justify-center">
               <button
                 onClick={capturePhoto}
-                className="p-4 bg-white rounded-full hover:bg-gray-100 transition-colors min-h-[64px] min-w-[64px] flex items-center justify-center"
+                className="p-3 bg-white rounded-full hover:bg-gray-100 transition-colors min-h-[56px] min-w-[56px] flex items-center justify-center"
                 aria-label="Capture photo"
               >
-                <Camera className="w-8 h-8 text-gray-900" />
+                <Camera className="w-7 h-7 text-gray-900" />
               </button>
             </div>
           )}

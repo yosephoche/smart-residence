@@ -559,7 +559,9 @@
       "latitude": "Latitude",
       "longitude": "Longitude",
       "open_maps": "Open in Google Maps",
-      "showing_count": "Showing {filtered} of {total} attendance records"
+      "showing_count": "Showing {filtered} of {total} attendance records",
+      "geolocation_not_supported": "Geolocation is not supported by your browser",
+      "permission_denied": "Location permission denied. Please allow location access in your browser settings."
     },
     "shifts": {
       "title": "Shift Templates",
@@ -668,13 +670,6 @@
     "upload_window_saved": "Upload period configuration saved successfully.",
     "password_saved": "Default password changed successfully.",
     "geofence_saved": "Geofence configuration saved successfully."
-  },
-  "staff": {
-    "attendance": {
-      "title": "Staff Attendance",
-      "geolocation_not_supported": "Geolocation is not supported by your browser",
-      "permission_denied": "Location permission denied. Please allow location access in your browser settings."
-    }
   },
   "validation": {
     "required": "This field is required",

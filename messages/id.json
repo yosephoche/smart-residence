@@ -564,7 +564,8 @@
       "in_progress": "Sedang Berlangsung",
       "duration": "Durasi",
       "status": "Status",
-      "late": "Terlambat {minutes} menit",
+      "late": "Terlambat",
+      "minutes": "menit",
       "on_time": "Tepat Waktu",
       "no_records_found": "Tidak ada catatan kehadiran ditemukan",
       "no_attendance": "Tidak ada catatan kehadiran ditemukan",
@@ -628,7 +629,13 @@
       "view_photo": "Lihat foto",
       "no_reports_found": "Tidak ada laporan shift ditemukan",
       "no_reports": "Tidak ada laporan shift ditemukan",
-      "shift_report_photo": "Foto Laporan Shift"
+      "report_photo": "Foto Laporan Shift",
+      "shift_report_photo": "Foto Laporan Shift",
+      "types": {
+        "SHIFT_START": "Mulai Shift",
+        "SHIFT_MIDDLE": "Tengah Shift",
+        "SHIFT_END": "Selesai Shift"
+      }
     },
     "schedule": {
       "title": "Jadwal Staff",

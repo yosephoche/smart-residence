@@ -59,14 +59,8 @@ export const authConfig: NextAuthConfig = {
         return Response.redirect(new URL("/change-password", nextUrl));
       }
 
-      // If already changed password, don't allow access to change-password
-      if (!user.isFirstLogin && nextUrl.pathname === "/change-password") {
-        const dest =
-          user.role === "ADMIN" ? "/admin/dashboard" :
-          user.role === "STAFF" ? "/staff/dashboard" :
-          "/user/dashboard";
-        return Response.redirect(new URL(dest, nextUrl));
-      }
+      // Allow voluntary password changes - removed redirect block
+      // Users can now access /change-password even after first login
 
       // Role-based routing
       if (nextUrl.pathname.startsWith("/admin") && user.role !== "ADMIN") {

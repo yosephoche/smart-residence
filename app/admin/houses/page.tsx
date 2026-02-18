@@ -199,10 +199,10 @@ export default function HousesPage() {
       },
     },
     {
-      key: "userId",
+      key: "status",
       header: tCommon('table.status'),
-      render: (userId) =>
-        userId ? (
+      render: (_, house) =>
+        house.userId ? (
           <Badge variant="success" dot>
             {t('occupied')}
           </Badge>

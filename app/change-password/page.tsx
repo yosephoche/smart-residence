@@ -33,6 +33,8 @@ function ChangePasswordContent() {
     resolver: zodResolver(changePasswordSchema),
   });
 
+  const isFirstLogin = user?.isFirstLogin ?? false;
+
   const onSubmit = async (data: ChangePasswordFormData) => {
     setError("");
     setIsSubmitting(true);
@@ -47,9 +49,15 @@ function ChangePasswordContent() {
     }
   };
 
-  const handleLogout = () => {
-    logout();
-    router.push("/login");
+  const handleCancel = () => {
+    if (isFirstLogin) {
+      // First login - force logout
+      logout();
+      router.push("/login");
+    } else {
+      // Voluntary change - go back
+      router.back();
+    }
   };
 
   return (
@@ -58,7 +66,9 @@ function ChangePasswordContent() {
         <div className="bg-white rounded-2xl shadow-xl border-2 border-gray-200 p-8">
           {/* Header */}
           <div className="text-center mb-6">
-            <div className="w-16 h-16 bg-warning-500 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+            <div className={`w-16 h-16 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg ${
+              isFirstLogin ? 'bg-warning-500' : 'bg-blue-500'
+            }`}>
               <svg
                 className="w-8 h-8 text-white"
                 fill="none"
@@ -74,21 +84,23 @@ function ChangePasswordContent() {
               </svg>
             </div>
             <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
-              {t('change_password_required')}
+              {isFirstLogin ? t('change_password_required') : t('change_password')}
             </h1>
             <p className="text-sm text-gray-600 mt-2">
-              {t('change_password_message')}
+              {isFirstLogin ? t('change_password_message') : 'Ubah password akun Anda untuk keamanan yang lebih baik'}
             </p>
           </div>
 
-          {/* Warning Notice */}
-          <div className="mb-6">
-            <Alert
-              variant="warning"
-              title={t('first_time_login')}
-              message={t('must_change_password')}
-            />
-          </div>
+          {/* Warning Notice - Only show for first login */}
+          {isFirstLogin && (
+            <div className="mb-6">
+              <Alert
+                variant="warning"
+                title={t('first_time_login')}
+                message={t('must_change_password')}
+              />
+            </div>
+          )}
 
           {/* Error Alert */}
           {error && (
@@ -139,10 +151,10 @@ function ChangePasswordContent() {
                 variant="ghost"
                 size="lg"
                 fullWidth
-                onClick={handleLogout}
+                onClick={handleCancel}
                 disabled={isSubmitting}
               >
-                {tCommon('actions.cancel')}
+                {isFirstLogin ? 'Logout' : tCommon('actions.cancel')}
               </Button>
               <Button
                 type="submit"
