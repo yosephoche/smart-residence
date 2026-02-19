@@ -3,6 +3,23 @@
  */
 
 /**
+ * Validate email format
+ */
+export function validateEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+}
+
+/**
+ * Validate and parse price value
+ * Returns null if invalid (non-numeric or negative)
+ */
+function validatePrice(price: string | number): number | null {
+  const numPrice = typeof price === "string" ? parseFloat(price) : price;
+  return !isNaN(numPrice) && numPrice >= 0 ? numPrice : null;
+}
+
+/**
  * Parse CSV/XLSX file and return raw rows
  */
 export async function parseSpreadsheet(
@@ -58,7 +75,8 @@ export function validateImportStructure(
     return { valid: false, errors };
   }
 
-  const requiredColumns = ["houseNumber", "block", "houseTypeId"];
+  // houseTypeId is optional - can provide houseTypeId OR (type + price)
+  const requiredColumns = ["houseNumber", "block"];
   const firstRow = rows[0];
   const actualColumns = Object.keys(firstRow);
 
@@ -81,13 +99,21 @@ export function validateImportStructure(
 export function normalizeImportRow(row: Record<string, string>): {
   houseNumber: string;
   block: string;
-  houseTypeId: string;
+  houseTypeId?: string;
   userId?: string;
+  name?: string;
+  email?: string;
+  type?: string;
+  price?: number;
 } {
   return {
     houseNumber: row.houseNumber?.trim() || "",
     block: row.block?.trim() || "",
-    houseTypeId: row.houseTypeId?.trim() || "",
+    houseTypeId: row.houseTypeId?.trim() || undefined,
     userId: row.userId?.trim() || undefined,
+    name: row.name?.trim() || undefined,
+    email: row.email?.trim().toLowerCase() || undefined,
+    type: row.type?.trim() || undefined,
+    price: row.price ? validatePrice(row.price) ?? undefined : undefined,
   };
 }

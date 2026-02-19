@@ -85,7 +85,16 @@ export const POST = auth(async (req) => {
     const normalizedRows = rows.map((row) => normalizeImportRow(row));
 
     // Bulk import
-    const { created, errors } = await bulkImportHouses(normalizedRows);
+    const {
+      created,
+      errors,
+      usersCreated,
+      usersLinked,
+      userErrors,
+      houseTypesCreated,
+      houseTypesLinked,
+      houseTypeErrors,
+    } = await bulkImportHouses(normalizedRows);
 
     // Return response
     return NextResponse.json(
@@ -95,8 +104,16 @@ export const POST = auth(async (req) => {
           totalRows: normalizedRows.length,
           successCount: created.length,
           failureCount: errors.length,
+          usersCreated,
+          usersLinked,
+          userErrorCount: userErrors.length,
+          houseTypesCreated,
+          houseTypesLinked,
+          houseTypeErrorCount: houseTypeErrors.length,
         },
         errors,
+        userErrors,
+        houseTypeErrors,
         createdHouses: created,
       },
       { status: 200 }

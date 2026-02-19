@@ -13,10 +13,26 @@ interface ImportResult {
     totalRows: number;
     successCount: number;
     failureCount: number;
+    usersCreated: number;
+    usersLinked: number;
+    userErrorCount: number;
+    houseTypesCreated: number;
+    houseTypesLinked: number;
+    houseTypeErrorCount: number;
   };
   errors: Array<{
     row: number;
     houseNumber: string;
+    errors: string[];
+  }>;
+  userErrors: Array<{
+    row: number;
+    email: string;
+    errors: string[];
+  }>;
+  houseTypeErrors: Array<{
+    row: number;
+    typeName: string;
     errors: string[];
   }>;
 }
@@ -112,18 +128,78 @@ export default function ImportHousesForm({
               <div className="text-2xl font-bold text-green-600">
                 {result.summary.successCount}
               </div>
-              <div className="text-sm text-gray-600">Successful</div>
+              <div className="text-sm text-gray-600">Houses Created</div>
             </div>
             <div>
               <div className="text-2xl font-bold text-red-600">
                 {result.summary.failureCount}
               </div>
-              <div className="text-sm text-gray-600">Failed</div>
+              <div className="text-sm text-gray-600">Houses Failed</div>
             </div>
           </div>
+
+          {/* House Types Summary */}
+          {(result.summary.houseTypesCreated > 0 ||
+            result.summary.houseTypesLinked > 0) && (
+            <div className="border-t border-gray-200 pt-3 mt-3">
+              <h4 className="text-sm font-semibold text-gray-700 mb-2">
+                House Types
+              </h4>
+              <div className="grid grid-cols-3 gap-4 text-center">
+                <div>
+                  <div className="text-xl font-bold text-green-600">
+                    {result.summary.houseTypesCreated}
+                  </div>
+                  <div className="text-xs text-gray-600">Created</div>
+                </div>
+                <div>
+                  <div className="text-xl font-bold text-teal-600">
+                    {result.summary.houseTypesLinked}
+                  </div>
+                  <div className="text-xs text-gray-600">Linked Existing</div>
+                </div>
+                <div>
+                  <div className="text-xl font-bold text-red-600">
+                    {result.summary.houseTypeErrorCount}
+                  </div>
+                  <div className="text-xs text-gray-600">Type Errors</div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* User Accounts Summary */}
+          {(result.summary.usersCreated > 0 ||
+            result.summary.usersLinked > 0) && (
+            <div className="border-t border-gray-200 pt-3 mt-3">
+              <h4 className="text-sm font-semibold text-gray-700 mb-2">
+                User Accounts
+              </h4>
+              <div className="grid grid-cols-3 gap-4 text-center">
+                <div>
+                  <div className="text-xl font-bold text-blue-600">
+                    {result.summary.usersCreated}
+                  </div>
+                  <div className="text-xs text-gray-600">Created</div>
+                </div>
+                <div>
+                  <div className="text-xl font-bold text-purple-600">
+                    {result.summary.usersLinked}
+                  </div>
+                  <div className="text-xs text-gray-600">Linked Existing</div>
+                </div>
+                <div>
+                  <div className="text-xl font-bold text-orange-600">
+                    {result.summary.userErrorCount}
+                  </div>
+                  <div className="text-xs text-gray-600">User Errors</div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Success message */}
+        {/* Success messages */}
         {result.summary.successCount > 0 && (
           <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded">
             Successfully imported {result.summary.successCount} house
@@ -131,11 +207,42 @@ export default function ImportHousesForm({
           </div>
         )}
 
-        {/* Error table */}
+        {result.summary.houseTypesCreated > 0 && (
+          <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded">
+            Created {result.summary.houseTypesCreated} new house type
+            {result.summary.houseTypesCreated !== 1 ? "s" : ""}.
+          </div>
+        )}
+
+        {result.summary.houseTypesLinked > 0 && (
+          <div className="bg-teal-50 border border-teal-200 text-teal-800 px-4 py-3 rounded">
+            Linked {result.summary.houseTypesLinked} house
+            {result.summary.houseTypesLinked !== 1 ? "s" : ""} to existing house
+            types.
+          </div>
+        )}
+
+        {result.summary.usersCreated > 0 && (
+          <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded">
+            Created {result.summary.usersCreated} new user account
+            {result.summary.usersCreated !== 1 ? "s" : ""} with default
+            password. Users will be prompted to change password on first login.
+          </div>
+        )}
+
+        {result.summary.usersLinked > 0 && (
+          <div className="bg-purple-50 border border-purple-200 text-purple-800 px-4 py-3 rounded">
+            Linked {result.summary.usersLinked} house
+            {result.summary.usersLinked !== 1 ? "s" : ""} to existing user
+            accounts.
+          </div>
+        )}
+
+        {/* House Error table */}
         {result.errors.length > 0 && (
           <div className="space-y-2">
             <h4 className="font-semibold text-red-700">
-              Errors ({result.errors.length})
+              House Errors ({result.errors.length})
             </h4>
             <div className="max-h-96 overflow-y-auto border border-gray-200 rounded">
               <table className="min-w-full divide-y divide-gray-200">
@@ -162,6 +269,104 @@ export default function ImportHousesForm({
                         {error.houseNumber}
                       </td>
                       <td className="px-4 py-3 text-sm text-red-600">
+                        <ul className="list-disc list-inside">
+                          {error.errors.map((err, errIdx) => (
+                            <li key={errIdx}>{err}</li>
+                          ))}
+                        </ul>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* House Type Errors table */}
+        {result.houseTypeErrors && result.houseTypeErrors.length > 0 && (
+          <div className="space-y-2">
+            <h4 className="font-semibold text-red-700">
+              House Type Creation Errors ({result.houseTypeErrors.length})
+            </h4>
+            <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-2 rounded text-sm">
+              Note: Houses were NOT created for these rows due to house type
+              errors.
+            </div>
+            <div className="max-h-96 overflow-y-auto border border-gray-200 rounded">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50 sticky top-0">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Row
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Type Name
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Errors
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {result.houseTypeErrors.map((error, idx) => (
+                    <tr key={idx} className="hover:bg-gray-50">
+                      <td className="px-4 py-3 text-sm text-gray-900">
+                        {error.row}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-900">
+                        {error.typeName}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-red-600">
+                        <ul className="list-disc list-inside">
+                          {error.errors.map((err, errIdx) => (
+                            <li key={errIdx}>{err}</li>
+                          ))}
+                        </ul>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* User Errors table */}
+        {result.userErrors && result.userErrors.length > 0 && (
+          <div className="space-y-2">
+            <h4 className="font-semibold text-orange-700">
+              User Creation Errors ({result.userErrors.length})
+            </h4>
+            <div className="bg-orange-50 border border-orange-200 text-orange-800 px-4 py-2 rounded text-sm">
+              Note: Houses were still created for these rows, but user accounts
+              could not be created.
+            </div>
+            <div className="max-h-96 overflow-y-auto border border-gray-200 rounded">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50 sticky top-0">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Row
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Email
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Errors
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {result.userErrors.map((error, idx) => (
+                    <tr key={idx} className="hover:bg-gray-50">
+                      <td className="px-4 py-3 text-sm text-gray-900">
+                        {error.row}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-900">
+                        {error.email}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-orange-600">
                         <ul className="list-disc list-inside">
                           {error.errors.map((err, errIdx) => (
                             <li key={errIdx}>{err}</li>
@@ -225,12 +430,50 @@ export default function ImportHousesForm({
             <strong>block</strong> - Required (e.g., &quot;Sakura 2&quot;)
           </li>
           <li>
-            <strong>houseTypeId</strong> - Required (valid house type ID)
+            <strong>houseTypeId</strong> - Optional (provide houseTypeId OR
+            type+price)
+          </li>
+          <li>
+            <strong>type</strong> - Optional (house type name, e.g.,
+            &quot;Ruko&quot;, &quot;Type 50&quot;)
+          </li>
+          <li>
+            <strong>price</strong> - Optional (monthly fee in Rupiah, e.g.,
+            50000)
           </li>
           <li>
             <strong>userId</strong> - Optional (leave empty if not assigned)
           </li>
+          <li>
+            <strong>name</strong> - Optional (user&apos;s full name for
+            auto-creation)
+          </li>
+          <li>
+            <strong>email</strong> - Optional (user&apos;s email for
+            auto-creation)
+          </li>
         </ul>
+
+        <p className="text-sm text-blue-800 mt-3 font-semibold">
+          Auto-Create House Types:
+        </p>
+        <p className="text-sm text-blue-800">
+          If <strong>houseTypeId</strong> is empty but both <strong>type</strong>{" "}
+          and <strong>price</strong> are provided, a house type will be
+          automatically created (if type name doesn&apos;t exist) and used for
+          the house. Existing types with the same name will be reused.
+        </p>
+
+        <p className="text-sm text-blue-800 mt-3 font-semibold">
+          Auto-Create Users:
+        </p>
+        <p className="text-sm text-blue-800">
+          If both <strong>name</strong> and <strong>email</strong> are provided,
+          a user account will be automatically created (if email doesn&apos;t
+          exist) and linked to the house. New users get the default password and
+          must change it on first login.
+        </p>
+
         <p className="text-sm text-blue-800 mt-2">
           The <strong>id</strong> column will be ignored (auto-generated).
         </p>

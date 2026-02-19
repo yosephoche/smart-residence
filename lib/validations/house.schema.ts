@@ -10,7 +10,7 @@ export const houseFormSchema = z
       .string()
       .min(1, "Block is required")
       .max(50, "Block name is too long"),
-    houseTypeId: z.string().min(1, "Please select a house type"),
+    houseTypeId: z.string().optional(),
     userId: z.string().optional(),
     isRented: z.boolean().optional().default(false),
     renterName: z.string().optional(),
