@@ -8,32 +8,30 @@ import StatCard from "@/components/ui/StatCard";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Loading";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatCurrency } from "@/lib/utils";
 
-export const dynamic = 'force-dynamic';
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-}
-
-interface House {
-  id: string;
-  houseNumber: string;
-  userId?: string | null;
-  houseType?: { typeName: string; price: number };
-}
-
-interface Payment {
-  id: string;
-  userId: string;
-  houseId: string;
-  amountMonths: number;
-  totalAmount: number;
-  status: string;
-  createdAt: string;
+interface DashboardSummary {
+  totalUsers: number;
+  totalHouses: number;
+  occupiedHouses: number;
+  recentPendingPayments: Array<{
+    id: string;
+    userId: string;
+    houseId: string;
+    amountMonths: number;
+    totalAmount: number;
+    status: string;
+    createdAt: string;
+    user: { name: string };
+    house: { houseNumber: string; block: string };
+  }>;
+  recentUsers: Array<{
+    id: string;
+    name: string;
+    email: string;
+    createdAt: string;
+    houses: Array<{ houseNumber: string }>;
+  }>;
 }
 
 interface PaymentStats {
@@ -44,12 +42,12 @@ interface PaymentStats {
   totalRevenue: number;
 }
 
+export const dynamic = 'force-dynamic';
+
 export default function AdminDashboardPage() {
   const t = useTranslations('dashboard.admin');
   const tCommon = useTranslations('common');
-  const [users, setUsers] = useState<User[]>([]);
-  const [houses, setHouses] = useState<House[]>([]);
-  const [payments, setPayments] = useState<Payment[]>([]);
+  const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [stats, setStats] = useState<PaymentStats | null>(null);
   const [monthlyExpenses, setMonthlyExpenses] = useState(0);
   const [totalExpenses, setTotalExpenses] = useState(0);
@@ -63,18 +61,14 @@ export default function AdminDashboardPage() {
     const currentMonth = now.getMonth() + 1;
 
     Promise.all([
-      fetch("/api/users").then((r) => r.json()),
-      fetch("/api/houses").then((r) => r.json()),
-      fetch("/api/payments").then((r) => r.json()),
+      fetch("/api/admin/dashboard-summary").then((r) => r.json()),
       fetch("/api/payments/stats").then((r) => r.json()),
       fetch(`/api/expenses/monthly?year=${currentYear}&month=${currentMonth}`).then((r) => r.json()),
       fetch("/api/expenses/stats").then((r) => r.json()),
       fetch(`/api/income/monthly?year=${currentYear}&month=${currentMonth}`).then((r) => r.json()),
       fetch("/api/income/stats").then((r) => r.json()),
-    ]).then(([usersData, housesData, paymentsData, statsData, monthlyExpData, expStatsData, monthlyIncData, incStatsData]) => {
-      setUsers(usersData);
-      setHouses(housesData);
-      setPayments(paymentsData);
+    ]).then(([summaryData, statsData, monthlyExpData, expStatsData, monthlyIncData, incStatsData]) => {
+      setSummary(summaryData);
       setStats(statsData);
       setMonthlyExpenses(monthlyExpData.total);
       setTotalExpenses(expStatsData.totalAmount);
@@ -84,10 +78,9 @@ export default function AdminDashboardPage() {
     });
   }, []);
 
-  const totalUsers = users.filter((u) => u.role === "USER").length;
-  const occupiedHouses = houses.filter((h) => h.userId).length;
-  const totalHouses = houses.length;
-  const pendingPayments = payments.filter((p) => p.status === "PENDING");
+  const totalUsers = summary?.totalUsers ?? 0;
+  const occupiedHouses = summary?.occupiedHouses ?? 0;
+  const totalHouses = summary?.totalHouses ?? 0;
   const netRevenue = totalIncome - totalExpenses;
   const monthlyNetRevenue = monthlyIncome - monthlyExpenses;
 
@@ -240,7 +233,7 @@ export default function AdminDashboardPage() {
             {t('pending_payments')}
           </CardHeader>
           <CardContent>
-            {pendingPayments.length === 0 ? (
+            {(summary?.recentPendingPayments ?? []).length === 0 ? (
               <div className="text-center py-8 text-gray-500">
                 <svg className="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -249,29 +242,24 @@ export default function AdminDashboardPage() {
               </div>
             ) : (
               <div className="space-y-3">
-                {pendingPayments.slice(0, 5).map((payment) => {
-                  const user = users.find((u) => u.id === payment.userId);
-                  const house = houses.find((h) => h.id === payment.houseId);
-
-                  return (
-                    <div
-                      key={payment.id}
-                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200 hover:border-gray-300 transition-colors"
-                    >
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate">
-                          {user?.name}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {house?.houseNumber} • {payment.amountMonths} months • {formatCurrency(payment.totalAmount)}
-                        </p>
-                      </div>
-                      <Badge variant="warning" size="sm">
-                        {tCommon('status.pending')}
-                      </Badge>
+                {(summary?.recentPendingPayments ?? []).map((payment) => (
+                  <div
+                    key={payment.id}
+                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200 hover:border-gray-300 transition-colors"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 truncate">
+                        {payment.user.name}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {payment.house.houseNumber} • {payment.amountMonths} months • {formatCurrency(payment.totalAmount)}
+                      </p>
                     </div>
-                  );
-                })}
+                    <Badge variant="warning" size="sm">
+                      {tCommon('status.pending')}
+                    </Badge>
+                  </div>
+                ))}
               </div>
             )}
           </CardContent>
@@ -290,38 +278,31 @@ export default function AdminDashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {users
-                .filter((u) => u.role === "USER")
-                .slice(0, 5)
-                .map((user) => {
-                  const userHouses = houses.filter((h) => h.userId === user.id);
-
-                  return (
-                    <div
-                      key={user.id}
-                      className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200"
-                    >
-                      <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center flex-shrink-0">
-                        <span className="text-primary-700 font-semibold text-sm">
-                          {user.name.charAt(0).toUpperCase()}
-                        </span>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate">
-                          {user.name}
-                        </p>
-                        <p className="text-xs text-gray-500 truncate">
-                          {user.email}
-                        </p>
-                      </div>
-                      {userHouses.length > 0 && (
-                        <Badge variant="info" size="sm">
-                          {userHouses[0].houseNumber}
-                        </Badge>
-                      )}
-                    </div>
-                  );
-                })}
+              {(summary?.recentUsers ?? []).map((user) => (
+                <div
+                  key={user.id}
+                  className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200"
+                >
+                  <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span className="text-primary-700 font-semibold text-sm">
+                      {user.name.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">
+                      {user.name}
+                    </p>
+                    <p className="text-xs text-gray-500 truncate">
+                      {user.email}
+                    </p>
+                  </div>
+                  {user.houses.length > 0 && (
+                    <Badge variant="info" size="sm">
+                      {user.houses[0].houseNumber}
+                    </Badge>
+                  )}
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>

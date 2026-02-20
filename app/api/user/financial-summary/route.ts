@@ -16,37 +16,33 @@ export const GET = auth(async (req) => {
     const currentYear = now.getFullYear();
     const currentMonth = now.getMonth() + 1; // 1-12
 
-    // Calculate last 6 months
-    const monthsData = [];
-
     // Indonesian month abbreviations
     const monthNames = [
       "Jan", "Feb", "Mar", "Apr", "Mei", "Jun",
       "Jul", "Agu", "Sep", "Okt", "Nov", "Des"
     ];
 
+    // Build targets for last 6 months
+    const targets: Array<{ year: number; month: number }> = [];
     for (let i = 5; i >= 0; i--) {
       let targetMonth = currentMonth - i;
       let targetYear = currentYear;
-
-      // Handle year wrap-around
-      while (targetMonth <= 0) {
-        targetMonth += 12;
-        targetYear -= 1;
-      }
-
-      // Fetch income and expense for this month
-      const [income, expense] = await Promise.all([
-        getMonthlyIncomes(targetYear, targetMonth),
-        getMonthlyExpenses(targetYear, targetMonth),
-      ]);
-
-      monthsData.push({
-        month: monthNames[targetMonth - 1],
-        income: Number(income) || 0,
-        expense: Number(expense) || 0,
-      });
+      while (targetMonth <= 0) { targetMonth += 12; targetYear -= 1; }
+      targets.push({ year: targetYear, month: targetMonth });
     }
+
+    // All 12 queries in parallel (not 6 sequential pairs)
+    const results = await Promise.all(
+      targets.map(({ year, month }) =>
+        Promise.all([getMonthlyIncomes(year, month), getMonthlyExpenses(year, month)])
+      )
+    );
+
+    const monthsData = targets.map(({ month }, index) => ({
+      month: monthNames[month - 1],
+      income: Number(results[index][0]) || 0,
+      expense: Number(results[index][1]) || 0,
+    }));
 
     return NextResponse.json(serializePrismaJson(monthsData));
   } catch (error) {

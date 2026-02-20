@@ -113,6 +113,10 @@ export async function bulkImportHouses(
   const userErrors: Array<{ row: number; email: string; errors: string[] }> = [];
   const houseTypeErrors: Array<{ row: number; typeName: string; errors: string[] }> = [];
 
+  // Hash default password once (not per user creation)
+  const defaultPassword = await getCachedDefaultPasswordConfig().then(c => c.defaultPassword);
+  const hashedPassword = await bcrypt.hash(defaultPassword, 10);
+
   // Pre-fetch existing users by email
   const emailsInCsv = rows.map(r => r.email?.toLowerCase()).filter((e): e is string => !!e);
   const existingUsersByEmail = await prisma.user.findMany({
@@ -255,9 +259,6 @@ export async function bulkImportHouses(
       } else {
         // Create new user
         try {
-          const defaultPassword = await getCachedDefaultPasswordConfig().then(c => c.defaultPassword);
-          const hashedPassword = await bcrypt.hash(defaultPassword, 10);
-
           const newUser = await prisma.user.create({
             data: {
               name: row.name,

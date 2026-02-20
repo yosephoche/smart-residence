@@ -81,27 +81,17 @@ export function HomeScreen() {
     const fetchData = async () => {
       if (!user?.id) return;
 
-      try {
-        const [housesRes, paymentsRes, financialRes] = await Promise.all([
-          fetch(`/api/houses?userId=${user.id}`),
-          fetch('/api/payments'),
-          fetch('/api/user/financial-summary'),
-        ]);
+      const [housesResult, paymentsResult, financialResult] = await Promise.allSettled([
+        fetch(`/api/houses?userId=${user.id}`).then(r => r.json()),
+        fetch('/api/payments').then(r => r.json()),
+        fetch('/api/user/financial-summary').then(r => r.json()),
+      ]);
 
-        const [housesData, paymentsData, financialDataRes] = await Promise.all([
-          housesRes.json(),
-          paymentsRes.json(),
-          financialRes.json(),
-        ]);
+      if (housesResult.status === 'fulfilled') setHouse(housesResult.value[0] || null);
+      if (paymentsResult.status === 'fulfilled') setPayments(paymentsResult.value);
+      if (financialResult.status === 'fulfilled') setFinancialData(financialResult.value);
 
-        setHouse(housesData[0] || null);
-        setPayments(paymentsData);
-        setFinancialData(financialDataRes);
-      } catch (error) {
-        console.error('Error fetching dashboard data:', error);
-      } finally {
-        setIsLoading(false);
-      }
+      setIsLoading(false);
     };
 
     fetchData();

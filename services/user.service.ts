@@ -151,15 +151,19 @@ export async function deleteUser(id: string) {
     where: { id },
     include: {
       houses: { select: { id: true, houseNumber: true, block: true } },
-      payments: { select: { id: true } },
-      approvedPayments: { select: { id: true } },
-      expenses: { select: { id: true } },
-      incomes: { select: { id: true } },
-      systemConfigUpdates: { select: { id: true } },
-      attendances: { select: { id: true } },
-      shiftReports: { select: { id: true } },
-      staffSchedules: { select: { id: true } },
-      createdSchedules: { select: { id: true } },
+      _count: {
+        select: {
+          payments: true,
+          approvedPayments: true,
+          expenses: true,
+          incomes: true,
+          systemConfigUpdates: true,
+          attendances: true,
+          shiftReports: true,
+          staffSchedules: true,
+          createdSchedules: true,
+        },
+      },
     },
   });
 
@@ -170,32 +174,32 @@ export async function deleteUser(id: string) {
   // Build list of blocking relations
   const blockingRelations: string[] = [];
 
-  if (user.payments.length > 0) {
-    blockingRelations.push(`${user.payments.length} payment(s)`);
+  if (user._count.payments > 0) {
+    blockingRelations.push(`${user._count.payments} payment(s)`);
   }
-  if (user.approvedPayments.length > 0) {
-    blockingRelations.push(`${user.approvedPayments.length} approved payment(s)`);
+  if (user._count.approvedPayments > 0) {
+    blockingRelations.push(`${user._count.approvedPayments} approved payment(s)`);
   }
-  if (user.expenses.length > 0) {
-    blockingRelations.push(`${user.expenses.length} expense(s)`);
+  if (user._count.expenses > 0) {
+    blockingRelations.push(`${user._count.expenses} expense(s)`);
   }
-  if (user.incomes.length > 0) {
-    blockingRelations.push(`${user.incomes.length} income record(s)`);
+  if (user._count.incomes > 0) {
+    blockingRelations.push(`${user._count.incomes} income record(s)`);
   }
-  if (user.systemConfigUpdates.length > 0) {
-    blockingRelations.push(`${user.systemConfigUpdates.length} system config update(s)`);
+  if (user._count.systemConfigUpdates > 0) {
+    blockingRelations.push(`${user._count.systemConfigUpdates} system config update(s)`);
   }
-  if (user.attendances.length > 0) {
-    blockingRelations.push(`${user.attendances.length} attendance record(s)`);
+  if (user._count.attendances > 0) {
+    blockingRelations.push(`${user._count.attendances} attendance record(s)`);
   }
-  if (user.shiftReports.length > 0) {
-    blockingRelations.push(`${user.shiftReports.length} shift report(s)`);
+  if (user._count.shiftReports > 0) {
+    blockingRelations.push(`${user._count.shiftReports} shift report(s)`);
   }
-  if (user.staffSchedules.length > 0) {
-    blockingRelations.push(`${user.staffSchedules.length} staff schedule(s)`);
+  if (user._count.staffSchedules > 0) {
+    blockingRelations.push(`${user._count.staffSchedules} staff schedule(s)`);
   }
-  if (user.createdSchedules.length > 0) {
-    blockingRelations.push(`${user.createdSchedules.length} schedule(s) they created`);
+  if (user._count.createdSchedules > 0) {
+    blockingRelations.push(`${user._count.createdSchedules} schedule(s) they created`);
   }
 
   // If any blocking relations exist, throw detailed error

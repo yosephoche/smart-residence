@@ -240,8 +240,8 @@ export default function UsersPage() {
               className="w-full px-4 py-2.5 text-sm text-gray-900 bg-white border-2 border-gray-300 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:border-primary-500 focus:ring-primary-100"
             >
               <option value="ALL">{t('all_roles')}</option>
-              <option value="ADMIN">{tCommon('navigation.admin.admin_panel').replace(' Panel', '')}</option>
-              <option value="USER">{tCommon('navigation.user.resident_portal').replace(' Portal', '').replace('Resident', 'User')}</option>
+              <option value="ADMIN">{t('role_admin')}</option>
+              <option value="USER">{t('role_user')}</option>
             </select>
           </div>
         </div>

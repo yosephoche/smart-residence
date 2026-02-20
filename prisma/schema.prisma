@@ -121,6 +121,8 @@ model Payment {
   approver       User?         @relation("ApprovedBy", fields: [approvedBy], references: [id])
   paymentMonths  PaymentMonth[]
   income         Income?
+
+  @@index([houseId, status])
 }
 
 model PaymentMonth {

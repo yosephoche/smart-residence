@@ -26,15 +26,16 @@ export const GET = auth(async (req) => {
       );
     }
 
-    // Get all occupied payment months for this house (all statuses)
-    const payments = await prisma.payment.findMany({
-      where: { houseId: house.id },
-      include: { paymentMonths: true },
+    // Get occupied payment months directly (no need to load full payments)
+    const occupiedMonths = await prisma.paymentMonth.findMany({
+      where: {
+        payment: {
+          houseId: house.id,
+          status: { in: ["PENDING", "APPROVED"] },
+        },
+      },
+      select: { year: true, month: true },
     });
-
-    const occupiedMonths = payments.flatMap((p) =>
-      p.paymentMonths.map((pm) => ({ year: pm.year, month: pm.month }))
-    );
 
     // Find the next available month
     const nextMonth = computeNextStartMonth(occupiedMonths);

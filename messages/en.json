@@ -212,6 +212,8 @@
     "add_user": "Add User",
     "search_placeholder": "Search by name or email...",
     "all_roles": "All Roles",
+    "role_admin": "Admin",
+    "role_user": "User",
     "showing_users": "users",
     "no_users_found": "No users found",
     "delete_user": "Delete User",

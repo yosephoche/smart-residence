@@ -218,7 +218,7 @@ export default function AdminPaymentsPage() {
   const paidCount   = useMemo(() => allHousesWithStatus.filter((h) => h.paymentStatus !== null).length, [allHousesWithStatus]);
   const unpaidCount = useMemo(() => allHousesWithStatus.filter((h) => h.paymentStatus === null).length, [allHousesWithStatus]);
 
-  const stats = {
+  const stats = useMemo(() => ({
     total: payments.length,
     pending: payments.filter((p) => p.status === "PENDING").length,
     approved: payments.filter((p) => p.status === "APPROVED").length,
@@ -226,7 +226,7 @@ export default function AdminPaymentsPage() {
     totalRevenue: payments
       .filter((p) => p.status === "APPROVED")
       .reduce((sum, p) => sum + Number(p.totalAmount), 0),
-  };
+  }), [payments]);
 
   // --- Handlers ---
   const handleStatusFilter = (value: "ALL" | "PENDING" | "APPROVED" | "REJECTED") => {

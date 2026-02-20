@@ -202,58 +202,66 @@ export async function bulkApprovePayments(
   // Use transaction for atomicity with extended timeout for bulk operations
   await prisma.$transaction(
     async (tx) => {
-      for (const paymentId of paymentIds) {
-        try {
-          // Fetch payment to validate status
-          const payment = await tx.payment.findUnique({
-            where: { id: paymentId },
-            include: {
-              user: { select: { name: true, email: true } },
-              house: { select: { houseNumber: true, block: true } },
-            },
-          });
+      // 1. Fetch all payments at once
+      const payments = await tx.payment.findMany({
+        where: { id: { in: paymentIds } },
+        include: {
+          user: { select: { name: true, email: true } },
+          house: { select: { houseNumber: true, block: true } },
+        },
+      });
 
-          if (!payment) {
-            failed.push({ id: paymentId, reason: "Payment not found" });
-            continue;
-          }
-
-          if (payment.status !== "PENDING") {
-            failed.push({ id: paymentId, reason: `Payment already ${payment.status.toLowerCase()}` });
-            continue;
-          }
-
-          // Approve payment
-          const updated = await tx.payment.update({
-            where: { id: paymentId },
-            data: {
-              status: "APPROVED",
-              approvedBy,
-              approvedAt: new Date(),
-            },
-          });
-
-          // Create income (check for duplicates)
-          const existingIncome = await tx.income.findUnique({ where: { paymentId } });
-          if (!existingIncome) {
-            const description = `IPL Payment - ${payment.user.name} - ${payment.house.block} ${payment.house.houseNumber} - ${payment.amountMonths} bulan`;
-            await tx.income.create({
-              data: {
-                date: updated.approvedAt!,
-                category: "MONTHLY_FEES",
-                amount: payment.totalAmount,
-                description,
-                notes: `Auto-generated from payment #${paymentId}`,
-                createdBy: approvedBy,
-                paymentId,
-              },
-            });
-          }
-
-          succeeded.push({ ...updated, user: payment.user, house: payment.house });
-        } catch (error) {
-          failed.push({ id: paymentId, reason: "Update failed" });
+      // 2. Validate in-memory: split into valid (PENDING) vs failed
+      const foundIds = new Set(payments.map(p => p.id));
+      for (const id of paymentIds) {
+        if (!foundIds.has(id)) {
+          failed.push({ id, reason: "Payment not found" });
         }
+      }
+      const validPayments = payments.filter(p => p.status === "PENDING");
+      const invalidPayments = payments.filter(p => p.status !== "PENDING");
+      for (const p of invalidPayments) {
+        failed.push({ id: p.id, reason: `Payment already ${p.status.toLowerCase()}` });
+      }
+
+      if (validPayments.length === 0) return;
+
+      const validIds = validPayments.map(p => p.id);
+      const approvedAt = new Date();
+
+      // 3. Check existing incomes in batch
+      const existingIncomes = await tx.income.findMany({
+        where: { paymentId: { in: validIds } },
+        select: { paymentId: true },
+      });
+      const existingIncomePaymentIds = new Set(existingIncomes.map(i => i.paymentId));
+
+      // 4. Batch update all valid payments
+      await tx.payment.updateMany({
+        where: { id: { in: validIds } },
+        data: { status: "APPROVED", approvedBy, approvedAt },
+      });
+
+      // 5. Batch create income records for payments without existing income
+      const incomeRecords = validPayments
+        .filter(p => !existingIncomePaymentIds.has(p.id))
+        .map(p => ({
+          date: approvedAt,
+          category: "MONTHLY_FEES" as const,
+          amount: p.totalAmount,
+          description: `IPL Payment - ${p.user.name} - ${p.house.block} ${p.house.houseNumber} - ${p.amountMonths} bulan`,
+          notes: `Auto-generated from payment #${p.id}`,
+          createdBy: approvedBy,
+          paymentId: p.id,
+        }));
+
+      if (incomeRecords.length > 0) {
+        await tx.income.createMany({ data: incomeRecords });
+      }
+
+      // Build succeeded list using in-memory payment data
+      for (const p of validPayments) {
+        succeeded.push({ ...p, status: "APPROVED", approvedBy, approvedAt });
       }
     },
     {
