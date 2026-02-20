@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { Download } from "lucide-react";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Table, { Column, Pagination } from "@/components/ui/Table";
@@ -15,6 +16,7 @@ import { House, User } from "@/types";
 import { formatCurrency } from "@/lib/utils";
 import ImportHousesForm from "@/components/forms/ImportHousesForm";
 import { usePagination } from "@/lib/hooks/usePagination";
+import { exportCSV, exportXLSX, mapHousesForExport } from "@/lib/utils/export";
 
 export const dynamic = 'force-dynamic';
 
@@ -33,6 +35,8 @@ export default function HousesPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+  const [showExportDropdown, setShowExportDropdown] = useState(false);
+  const exportDropdownRef = useRef<HTMLDivElement>(null);
 
   const fetchData = async () => {
     try {
@@ -57,6 +61,37 @@ export default function HousesPage() {
   useEffect(() => {
     fetchData();
   }, []);
+
+  // Handle outside click for export dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (exportDropdownRef.current && !exportDropdownRef.current.contains(event.target as Node)) {
+        setShowExportDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Export handler
+  const handleExport = async (format: "csv" | "xlsx") => {
+    setShowExportDropdown(false);
+
+    // Enrich filtered houses with user data
+    const enrichedHouses = filteredHouses.map(house => ({
+      ...house,
+      user: users.find(u => u.id === house.userId) ?? null,
+    }));
+
+    const { headers, rows } = mapHousesForExport(enrichedHouses);
+    const filename = `houses-export-${new Date().toISOString().split('T')[0]}.${format}`;
+
+    if (format === "csv") {
+      exportCSV(filename, headers, rows);
+    } else {
+      await exportXLSX(filename, headers, rows);
+    }
+  };
 
   // Get unique blocks for filter
   const blocks = useMemo(() => {
@@ -291,6 +326,36 @@ export default function HousesPage() {
             </svg>
             {t('import_csv')}
           </Button>
+
+          {/* Export Dropdown */}
+          <div className="relative" ref={exportDropdownRef}>
+            <Button
+              variant="secondary"
+              size="lg"
+              onClick={() => setShowExportDropdown(!showExportDropdown)}
+            >
+              <Download className="w-5 h-5" />
+              Export
+            </Button>
+
+            {showExportDropdown && (
+              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
+                <button
+                  onClick={() => handleExport("csv")}
+                  className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 rounded-t-lg"
+                >
+                  Export as CSV
+                </button>
+                <button
+                  onClick={() => handleExport("xlsx")}
+                  className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 rounded-b-lg"
+                >
+                  Export as Excel
+                </button>
+              </div>
+            )}
+          </div>
+
           <Link href="/admin/houses/create">
             <Button variant="primary" size="lg">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

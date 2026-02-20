@@ -285,3 +285,44 @@ export function mapAttendancesForExport(attendances: Attendance[]): {
 
   return { headers, rows };
 }
+
+interface HouseForExport {
+  houseNumber: string;
+  block: string;
+  houseType?: { typeName: string; price: unknown } | null;
+  userId?: string | null;
+  isRented?: boolean;
+  renterName?: string | null;
+  user?: { name: string; email: string } | null;
+}
+
+export function mapHousesForExport(houses: HouseForExport[]): {
+  headers: string[];
+  rows: string[][];
+} {
+  const headers = [
+    "House Number",
+    "Block",
+    "House Type",
+    "Monthly Rate (Rp)",
+    "Resident Name",
+    "Resident Email",
+    "Status",
+    "Is Rented",
+    "Renter Name",
+  ];
+
+  const rows = houses.map((h) => [
+    h.houseNumber,
+    h.block,
+    h.houseType?.typeName ?? "-",
+    h.houseType?.price != null ? formatCurrency(Number(h.houseType.price)) : "Rp 0",
+    h.user?.name ?? "-",
+    h.user?.email ?? "-",
+    h.userId ? "Occupied" : "Vacant",
+    h.isRented ? "Yes" : "No",
+    h.renterName ?? "-",
+  ]);
+
+  return { headers, rows };
+}
