@@ -141,21 +141,6 @@ export default function LoginPage() {
               {t('sign_in')}
             </Button>
           </form>
-
-          {/* Development Credentials Hint */}
-          <div className="mt-6 p-4 bg-gray-50 rounded-lg border-2 border-gray-200">
-            <p className="text-xs font-medium text-gray-700 mb-2">
-              {t('demo_credentials')}
-            </p>
-            <div className="space-y-1 text-xs text-gray-600">
-              <p>
-                <span className="font-semibold">{t('admin')}:</span> {t('demo_admin')}
-              </p>
-              <p>
-                <span className="font-semibold">{t('user')}:</span> {t('demo_user')}
-              </p>
-            </div>
-          </div>
         </div>
 
         {/* Footer */}
