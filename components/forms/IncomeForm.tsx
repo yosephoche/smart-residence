@@ -97,7 +97,7 @@ export default function IncomeForm({ onSubmit, onCancel, isSubmitting, initialDa
           value={formData.amount}
           onChange={(e) => setFormData({ ...formData, amount: Number(e.target.value) })}
           min="0"
-          step="1000"
+          step="1"
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
         />
         {errors.amount && <p className="text-danger-600 text-xs mt-1">{errors.amount}</p>}
