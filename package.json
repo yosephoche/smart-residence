@@ -14,6 +14,7 @@
     "cleanup-data:dry-run": "npm run cleanup-data -- --dry-run"
   },
   "dependencies": {
+    "@ducanh2912/next-pwa": "^10.2.9",
     "@hookform/resolvers": "^3.9.1",
     "@prisma/client": "^6.2.0",
     "bcryptjs": "^2.4.3",
