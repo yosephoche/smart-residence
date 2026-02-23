@@ -22,13 +22,13 @@ export default function ExpenseCategoryBadge({ category, size = "sm" }: Props) {
   const t = useTranslations('expenses.categories');
 
   const categoryLabels: Record<string, string> = {
-    MAINTENANCE: t('maintenance'),
-    SECURITY: t('security'),
-    UTILITIES: t('utilities'),
-    CLEANING: t('cleaning'),
-    LANDSCAPING: t('landscaping'),
-    ADMINISTRATION: t('administration'),
-    OTHER: t('other'),
+    MAINTENANCE: t('MAINTENANCE'),
+    SECURITY: t('SECURITY'),
+    UTILITIES: t('UTILITIES'),
+    CLEANING: t('CLEANING'),
+    LANDSCAPING: t('LANDSCAPING'),
+    ADMINISTRATION: t('ADMINISTRATION'),
+    OTHER: t('OTHER'),
   };
 
   const variant = categoryVariants[category] || "default";

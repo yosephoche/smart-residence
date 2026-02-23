@@ -135,16 +135,17 @@ model PaymentMonth {
 }
 
 model Expense {
-  id          String          @id @default(cuid())
-  date        DateTime
-  category    ExpenseCategory
-  amount      Decimal
-  description String
-  notes       String?
-  createdBy   String
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
-  creator     User            @relation(fields: [createdBy], references: [id])
+  id              String          @id @default(cuid())
+  date            DateTime
+  category        ExpenseCategory
+  amount          Decimal
+  description     String
+  notes           String?
+  proofImagePath  String?
+  createdBy       String
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  creator         User            @relation(fields: [createdBy], references: [id])
 }
 
 model Income {

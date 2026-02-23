@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { getExpenses, createExpense } from "@/services/expense.service";
 import { ExpenseCategory } from "@prisma/client";
 import { serializePrismaJson } from "@/lib/utils/prisma-serializer";
+import { validateUploadedFile, saveUploadedFile } from "@/lib/utils/file-upload";
 
 // GET /api/expenses - List expenses with optional filters
 export const GET = auth(async (req) => {
@@ -33,8 +34,13 @@ export const POST = auth(async (req) => {
   }
 
   try {
-    const body = await req.json();
-    const { date, category, amount, description, notes } = body;
+    const formData = await req.formData();
+    const date = formData.get("date") as string | null;
+    const category = formData.get("category") as string | null;
+    const amount = formData.get("amount") as string | null;
+    const description = formData.get("description") as string | null;
+    const notes = formData.get("notes") as string | null;
+    const proofImageFile = formData.get("proofImage") as File | null;
 
     // Validation
     if (!date || !category || !amount || !description) {
@@ -52,19 +58,31 @@ export const POST = auth(async (req) => {
       );
     }
 
-    if (amount <= 0) {
+    if (Number(amount) <= 0) {
       return NextResponse.json(
         { error: "Amount must be positive" },
         { status: 400 }
       );
     }
 
+    // Handle optional proof image upload
+    let proofImagePath: string | undefined;
+    if (proofImageFile && proofImageFile.size > 0) {
+      const buffer = Buffer.from(await proofImageFile.arrayBuffer());
+      const validation = await validateUploadedFile(buffer, proofImageFile.type);
+      if (!validation.valid) {
+        return NextResponse.json({ error: validation.error }, { status: 400 });
+      }
+      proofImagePath = await saveUploadedFile(buffer, proofImageFile.name, "smartresidence/expenses");
+    }
+
     const expense = await createExpense({
       date: expenseDate,
-      category,
+      category: category as ExpenseCategory,
       amount: Number(amount),
       description,
       notes: notes || undefined,
+      proofImagePath,
       createdBy: session.user.id,
     });
 

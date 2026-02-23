@@ -44,6 +44,7 @@ export async function createExpense(data: {
   amount: number;
   description: string;
   notes?: string;
+  proofImagePath?: string;
   createdBy: string;
 }) {
   return prisma.expense.create({
@@ -63,6 +64,7 @@ export async function updateExpense(
     amount?: number;
     description?: string;
     notes?: string;
+    proofImagePath?: string | null;
   }
 ) {
   return prisma.expense.update({

@@ -22,6 +22,7 @@ export default function AdminExpensesPage() {
   const [expenses, setExpenses] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [editingExpense, setEditingExpense] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Filters
@@ -95,16 +96,53 @@ export default function AdminExpensesPage() {
   const handleAddExpense = async (data: ExpenseFormData) => {
     setIsSubmitting(true);
     try {
+      const formData = new FormData();
+      formData.append("date", data.date);
+      formData.append("category", data.category);
+      formData.append("amount", String(data.amount));
+      formData.append("description", data.description);
+      if (data.notes) formData.append("notes", data.notes);
+      if (data.proofImage) formData.append("proofImage", data.proofImage);
+
       const res = await fetch("/api/expenses", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: formData,
       });
 
       if (res.ok) {
         await fetchExpenses();
         setShowAddModal(false);
         alert(t('expense_added_success'));
+      } else {
+        const error = await res.json();
+        alert(`Error: ${error.error}`);
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleEditExpense = async (data: ExpenseFormData) => {
+    if (!editingExpense) return;
+    setIsSubmitting(true);
+    try {
+      const formData = new FormData();
+      formData.append("date", data.date);
+      formData.append("category", data.category);
+      formData.append("amount", String(data.amount));
+      formData.append("description", data.description);
+      if (data.notes !== undefined) formData.append("notes", data.notes ?? "");
+      if (data.proofImage) formData.append("proofImage", data.proofImage);
+
+      const res = await fetch(`/api/expenses/${editingExpense.id}`, {
+        method: "PUT",
+        body: formData,
+      });
+
+      if (res.ok) {
+        await fetchExpenses();
+        setEditingExpense(null);
+        alert(t('expense_updated_success'));
       } else {
         const error = await res.json();
         alert(`Error: ${error.error}`);
@@ -256,10 +294,30 @@ export default function AdminExpensesPage() {
               { key: "amount", header: t('amount'), sortable: true, render: (val) => formatCurrency(Number(val)) },
               { key: "creator", header: t('created_by'), render: (val) => val?.name ?? "-" },
               {
+                key: "proofImagePath",
+                header: t('proof_of_payment'),
+                render: (val) =>
+                  val ? (
+                    <a
+                      href={val}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary-600 hover:underline text-sm"
+                    >
+                      {t('view_proof')}
+                    </a>
+                  ) : (
+                    <span className="text-gray-400">—</span>
+                  ),
+              },
+              {
                 key: "id",
                 header: tCommon('table.actions'),
-                render: (val) => (
+                render: (val, row) => (
                   <div className="flex gap-2">
+                    <Button variant="ghost" size="sm" onClick={() => setEditingExpense(row)}>
+                      {tCommon('actions.edit')}
+                    </Button>
                     <Button variant="danger" size="sm" onClick={() => handleDelete(val)}>
                       {tCommon('actions.delete')}
                     </Button>
@@ -295,6 +353,19 @@ export default function AdminExpensesPage() {
           onCancel={() => setShowAddModal(false)}
           isSubmitting={isSubmitting}
         />
+      </Modal>
+
+      {/* Edit Expense Modal */}
+      <Modal isOpen={!!editingExpense} onClose={() => setEditingExpense(null)} title={t('edit_expense_title')}>
+        {editingExpense && (
+          <ExpenseForm
+            onSubmit={handleEditExpense}
+            onCancel={() => setEditingExpense(null)}
+            isSubmitting={isSubmitting}
+            initialData={editingExpense}
+            existingProofUrl={editingExpense.proofImagePath ?? undefined}
+          />
+        )}
       </Modal>
     </div>
   );

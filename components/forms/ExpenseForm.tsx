@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import Button from "@/components/ui/Button";
+import FileUpload from "@/components/ui/FileUpload";
 import { getExpenseCategoryOptions } from "@/lib/calculations";
 
 interface Props {
@@ -10,6 +11,7 @@ interface Props {
   onCancel: () => void;
   isSubmitting: boolean;
   initialData?: any;
+  existingProofUrl?: string;
 }
 
 export interface ExpenseFormData {
@@ -18,12 +20,13 @@ export interface ExpenseFormData {
   amount: number;
   description: string;
   notes?: string;
+  proofImage?: File | null;
 }
 
-export default function ExpenseForm({ onSubmit, onCancel, isSubmitting, initialData }: Props) {
+export default function ExpenseForm({ onSubmit, onCancel, isSubmitting, initialData, existingProofUrl }: Props) {
   const t = useTranslations('expenses');
   const tCommon = useTranslations('common');
-  const [formData, setFormData] = useState<ExpenseFormData>({
+  const [formData, setFormData] = useState({
     date: initialData?.date?.split("T")[0] || new Date().toISOString().split("T")[0],
     category: initialData?.category || "",
     amount: initialData?.amount || 0,
@@ -31,6 +34,7 @@ export default function ExpenseForm({ onSubmit, onCancel, isSubmitting, initialD
     notes: initialData?.notes || "",
   });
 
+  const [proofImage, setProofImage] = useState<File | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const categories = getExpenseCategoryOptions();
 
@@ -52,7 +56,7 @@ export default function ExpenseForm({ onSubmit, onCancel, isSubmitting, initialD
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (validate()) {
-      onSubmit(formData);
+      onSubmit({ ...formData, proofImage });
     }
   };
 
@@ -100,7 +104,7 @@ export default function ExpenseForm({ onSubmit, onCancel, isSubmitting, initialD
           value={formData.amount}
           onChange={(e) => setFormData({ ...formData, amount: Number(e.target.value) })}
           min="0"
-          step="1000"
+          step="1"
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
         />
         {errors.amount && <p className="text-danger-600 text-xs mt-1">{errors.amount}</p>}
@@ -130,6 +134,31 @@ export default function ExpenseForm({ onSubmit, onCancel, isSubmitting, initialD
           maxLength={500}
           rows={3}
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          {t('upload_proof_optional')}
+        </label>
+        {existingProofUrl && !proofImage && (
+          <div className="mb-2 flex items-center gap-2 text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2">
+            <span>{t('current_proof')}:</span>
+            <a
+              href={existingProofUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary-600 hover:underline font-medium"
+            >
+              {t('view_proof')}
+            </a>
+            <span className="text-gray-400">— {t('replace_proof')}</span>
+          </div>
+        )}
+        <FileUpload
+          onChange={setProofImage}
+          value={proofImage}
+          helperText={t('upload_proof_help')}
         />
       </div>
 
