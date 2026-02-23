@@ -67,31 +67,28 @@ export function DateRangePicker({ startDate, endDate, onDateChange }: DateRangeP
 
   return (
     <div className="relative">
-      {/* Trigger Button */}
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 rounded-xl text-sm text-slate-700 hover:bg-slate-100 transition-colors"
-      >
-        <div className="flex items-center gap-2">
+      {/* Trigger + Clear wrapper */}
+      <div className="flex items-center">
+        <button
+          type="button"
+          onClick={() => setIsOpen(!isOpen)}
+          className="flex-1 flex items-center gap-2 px-4 py-3 bg-slate-50 rounded-xl text-sm text-slate-700 hover:bg-slate-100 transition-colors"
+        >
           <Calendar className="w-4 h-4 text-slate-400" />
           <span className={startDate && endDate ? 'text-slate-800 font-medium' : 'text-slate-400'}>
             {formatDateRange()}
           </span>
-        </div>
+        </button>
         {startDate && endDate && (
           <button
             type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleClear();
-            }}
-            className="p-1 hover:bg-slate-200 rounded-full transition-colors"
+            onClick={handleClear}
+            className="ml-1 p-1 hover:bg-slate-200 rounded-full transition-colors"
           >
             <X className="w-3.5 h-3.5 text-slate-500" />
           </button>
         )}
-      </button>
+      </div>
 
       {/* Dropdown Modal */}
       {isOpen && (
