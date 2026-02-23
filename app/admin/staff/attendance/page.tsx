@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import { JobType } from "@prisma/client";
 import Table, { Column, Pagination } from "@/components/ui/Table";
 import Badge from "@/components/ui/Badge";
@@ -103,7 +104,7 @@ export default function AdminAttendancePage() {
       const filename = `attendance_${new Date().toISOString().split("T")[0]}.csv`;
       exportCSV(filename, headers, rows);
     } catch (err: any) {
-      alert("Failed to export CSV: " + err.message);
+      toast.error(t('export_csv_error', { error: err.message }));
     }
   };
 

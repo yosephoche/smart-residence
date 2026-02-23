@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import { Card, CardHeader, CardContent } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import Table, { Pagination } from "@/components/ui/Table";
@@ -112,10 +113,10 @@ export default function AdminExpensesPage() {
       if (res.ok) {
         await fetchExpenses();
         setShowAddModal(false);
-        alert(t('expense_added_success'));
+        toast.success(t('expense_added_success'));
       } else {
         const error = await res.json();
-        alert(`Error: ${error.error}`);
+        toast.error(error.error);
       }
     } finally {
       setIsSubmitting(false);
@@ -142,10 +143,10 @@ export default function AdminExpensesPage() {
       if (res.ok) {
         await fetchExpenses();
         setEditingExpense(null);
-        alert(t('expense_updated_success'));
+        toast.success(t('expense_updated_success'));
       } else {
         const error = await res.json();
-        alert(`Error: ${error.error}`);
+        toast.error(error.error);
       }
     } finally {
       setIsSubmitting(false);
@@ -158,7 +159,7 @@ export default function AdminExpensesPage() {
     const res = await fetch(`/api/expenses/${id}`, { method: "DELETE" });
     if (res.ok) {
       await fetchExpenses();
-      alert(t('expense_deleted_success'));
+      toast.success(t('expense_deleted_success'));
     }
   };
 

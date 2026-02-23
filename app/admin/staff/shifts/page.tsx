@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import { JobType } from "@prisma/client";
 import Table, { Column } from "@/components/ui/Table";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
-import Modal from "@/components/ui/Modal";
+import Modal, { ConfirmModal } from "@/components/ui/Modal";
 import Input from "@/components/ui/Input";
 import { Plus, Edit, Trash2 } from "lucide-react";
 
@@ -33,6 +34,7 @@ export default function ShiftTemplatesPage() {
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<ShiftTemplate | null>(null);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -132,8 +134,6 @@ export default function ShiftTemplatesPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm(t('delete_confirmation'))) return;
-
     try {
       const res = await fetch(`/api/admin/shift-templates/${id}`, {
         method: "DELETE",
@@ -145,7 +145,9 @@ export default function ShiftTemplatesPage() {
 
       await fetchTemplates();
     } catch (err: any) {
-      alert(err.message);
+      toast.error(err.message);
+    } finally {
+      setDeleteTargetId(null);
     }
   };
 
@@ -209,7 +211,7 @@ export default function ShiftTemplatesPage() {
             <Edit className="w-4 h-4" />
           </button>
           <button
-            onClick={() => handleDelete(row.id)}
+            onClick={() => setDeleteTargetId(row.id)}
             className="text-red-600 hover:text-red-700"
             title={tCommon('actions.delete')}
           >
@@ -363,6 +365,18 @@ export default function ShiftTemplatesPage() {
           </div>
         </form>
       </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={!!deleteTargetId}
+        onClose={() => setDeleteTargetId(null)}
+        onConfirm={() => deleteTargetId && handleDelete(deleteTargetId)}
+        title={t('delete_confirmation')}
+        message={t('delete_confirmation')}
+        variant="danger"
+        confirmText={tCommon('actions.delete')}
+        cancelText={tCommon('actions.cancel')}
+      />
     </div>
   );
 }

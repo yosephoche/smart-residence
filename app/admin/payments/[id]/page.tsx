@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Image from "next/image";
+import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import { Card, CardHeader, CardContent } from "@/components/ui/Card";
 import Alert from "@/components/ui/Alert";
 import Loading from "@/components/ui/Loading";
@@ -37,6 +39,7 @@ export default function PaymentDetailPage() {
   const router = useRouter();
   const params = useParams();
   const paymentId = params.id as string;
+  const tPayments = useTranslations('payments.admin');
 
   const [payment, setPayment] = useState<Payment | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -91,7 +94,7 @@ export default function PaymentDetailPage() {
       setTimeout(() => router.push("/admin/payments"), 2000);
     } else {
       const error = await res.json();
-      alert(`Error: ${error.error || "Failed to reject payment"}`);
+      toast.error(error.error || tPayments('reject_error'));
     }
     setIsProcessing(false);
   };

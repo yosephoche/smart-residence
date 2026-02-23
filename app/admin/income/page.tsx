@@ -1,11 +1,13 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import { Card, CardHeader, CardContent } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import Badge from "@/components/ui/Badge";
 import Table, { Pagination } from "@/components/ui/Table";
-import Modal from "@/components/ui/Modal";
+import Modal, { ConfirmModal } from "@/components/ui/Modal";
 import IncomeForm, { IncomeFormData } from "@/components/forms/IncomeForm";
 import IncomeCategoryBadge from "@/components/income/IncomeCategoryBadge";
 import { Skeleton } from "@/components/ui/Loading";
@@ -15,10 +17,13 @@ import { exportCSV, exportXLSX, mapIncomesForExport } from "@/lib/utils/export";
 import { usePagination } from "@/lib/hooks/usePagination";
 
 export default function AdminIncomePage() {
+  const t = useTranslations('income');
+  const tCommon = useTranslations('common');
   const [incomes, setIncomes] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
   // Filters
   const [categoryFilter, setCategoryFilter] = useState<string>("ALL");
@@ -107,10 +112,10 @@ export default function AdminIncomePage() {
       if (res.ok) {
         await fetchIncomes();
         setShowAddModal(false);
-        alert("Pemasukan berhasil ditambahkan!");
+        toast.success(t('income_added'));
       } else {
         const error = await res.json();
-        alert(`Error: ${error.error}`);
+        toast.error(error.error || t('add_error'));
       }
     } finally {
       setIsSubmitting(false);
@@ -118,13 +123,12 @@ export default function AdminIncomePage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Apakah Anda yakin ingin menghapus pemasukan ini?")) return;
-
     const res = await fetch(`/api/income/${id}`, { method: "DELETE" });
     if (res.ok) {
       await fetchIncomes();
-      alert("Pemasukan berhasil dihapus!");
+      toast.success(t('income_deleted'));
     }
+    setDeleteTargetId(null);
   };
 
   const handleClearFilters = () => {
@@ -155,11 +159,11 @@ export default function AdminIncomePage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Manajemen Pemasukan</h1>
-          <p className="text-gray-600 mt-1">Kelola dan pantau pemasukan perumahan</p>
+          <h1 className="text-3xl font-bold text-gray-900">{t('title')}</h1>
+          <p className="text-gray-600 mt-1">{t('subtitle')}</p>
         </div>
         <Button onClick={() => setShowAddModal(true)}>
-          + Tambah Pemasukan
+          + {t('add_income')}
         </Button>
       </div>
 
@@ -167,25 +171,25 @@ export default function AdminIncomePage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardContent>
-            <p className="text-sm text-gray-600">Total Pemasukan (Terfilter)</p>
+            <p className="text-sm text-gray-600">{t('filtered_total')}</p>
             <p className="text-2xl font-bold text-gray-900">{formatCurrency(totalFiltered)}</p>
-            <p className="text-xs text-gray-500 mt-1">{filteredIncomes.length} transaksi</p>
+            <p className="text-xs text-gray-500 mt-1">{t('transactions_count', { count: filteredIncomes.length })}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent>
-            <p className="text-sm text-gray-600">Total Pemasukan (Semua)</p>
+            <p className="text-sm text-gray-600">{t('all_total')}</p>
             <p className="text-2xl font-bold text-gray-900">{formatCurrency(incomes.reduce((sum, i) => sum + Number(i.amount), 0))}</p>
-            <p className="text-xs text-gray-500 mt-1">{incomes.length} transaksi</p>
+            <p className="text-xs text-gray-500 mt-1">{t('transactions_count', { count: incomes.length })}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent>
-            <p className="text-sm text-gray-600">Rata-rata Pemasukan</p>
+            <p className="text-sm text-gray-600">{t('average')}</p>
             <p className="text-2xl font-bold text-gray-900">
               {formatCurrency(filteredIncomes.length > 0 ? totalFiltered / filteredIncomes.length : 0)}
             </p>
-            <p className="text-xs text-gray-500 mt-1">per transaksi</p>
+            <p className="text-xs text-gray-500 mt-1">{t('per_transaction')}</p>
           </CardContent>
         </Card>
       </div>
@@ -199,7 +203,7 @@ export default function AdminIncomePage() {
               onChange={(e) => setCategoryFilter(e.target.value)}
               className="px-3 py-2 border rounded-lg"
             >
-              <option value="ALL">Semua Kategori</option>
+              <option value="ALL">{t('all_categories')}</option>
               {categories.map((cat) => (
                 <option key={cat.value} value={cat.value}>{cat.label}</option>
               ))}
@@ -210,9 +214,9 @@ export default function AdminIncomePage() {
               onChange={(e) => setSourceFilter(e.target.value)}
               className="px-3 py-2 border rounded-lg"
             >
-              <option value="ALL">Semua Sumber</option>
-              <option value="MANUAL">Manual Saja</option>
-              <option value="AUTO">Auto (dari Payment)</option>
+              <option value="ALL">{t('all_sources')}</option>
+              <option value="MANUAL">{t('manual_only')}</option>
+              <option value="AUTO">{t('auto_from_payment')}</option>
             </select>
 
             <select
@@ -220,7 +224,7 @@ export default function AdminIncomePage() {
               onChange={(e) => setFilterYear(Number(e.target.value))}
               className="px-3 py-2 border rounded-lg"
             >
-              <option value={0}>Semua Tahun</option>
+              <option value={0}>{t('all_years')}</option>
               {availableYears.map((year) => (
                 <option key={year} value={year}>{year}</option>
               ))}
@@ -232,7 +236,7 @@ export default function AdminIncomePage() {
               className="px-3 py-2 border rounded-lg"
               disabled={filterYear === 0}
             >
-              <option value={0}>Semua Bulan</option>
+              <option value={0}>{t('all_months')}</option>
               {Array.from({ length: 12 }, (_, i) => (
                 <option key={i + 1} value={i + 1}>
                   {new Date(2000, i).toLocaleDateString("id-ID", { month: "long" })}
@@ -242,16 +246,16 @@ export default function AdminIncomePage() {
 
             {hasActiveFilters && (
               <Button variant="ghost" size="sm" onClick={handleClearFilters}>
-                Bersihkan Filter
+                {t('clear_filters')}
               </Button>
             )}
 
             <div className="ml-auto flex gap-2">
               <Button variant="ghost" size="sm" onClick={() => handleExport("csv")}>
-                Export CSV
+                {tCommon('actions.export')} CSV
               </Button>
               <Button variant="ghost" size="sm" onClick={() => handleExport("xlsx")}>
-                Export Excel
+                {t('export_excel')}
               </Button>
             </div>
           </div>
@@ -260,43 +264,43 @@ export default function AdminIncomePage() {
 
       {/* Table */}
       <Card>
-        <CardHeader>Semua Pemasukan ({filteredIncomes.length})</CardHeader>
+        <CardHeader>{t('all_income_count', { count: filteredIncomes.length })}</CardHeader>
         <CardContent>
           <Table
             columns={[
-              { key: "date", header: "Tanggal", sortable: true, render: (val) => formatDate(val) },
-              { key: "category", header: "Kategori", render: (val) => <IncomeCategoryBadge category={val} /> },
-              { key: "description", header: "Deskripsi" },
-              { key: "amount", header: "Jumlah", sortable: true, render: (val) => formatCurrency(Number(val)) },
+              { key: "date", header: t('date'), sortable: true, render: (val) => formatDate(val) },
+              { key: "category", header: t('category'), render: (val) => <IncomeCategoryBadge category={val} /> },
+              { key: "description", header: t('description') },
+              { key: "amount", header: t('amount'), sortable: true, render: (val) => formatCurrency(Number(val)) },
               {
                 key: "paymentId",
-                header: "Sumber",
+                header: t('source'),
                 render: (val) =>
                   val ? (
                     <Badge variant="info" size="sm">
-                      Auto
+                      {t('auto')}
                     </Badge>
                   ) : (
                     <Badge variant="default" size="sm">
-                      Manual
+                      {t('manual')}
                     </Badge>
                   ),
               },
-              { key: "creator", header: "Dibuat Oleh", render: (val) => val?.name ?? "-" },
+              { key: "creator", header: t('created_by'), render: (val) => val?.name ?? "-" },
               {
                 key: "id",
-                header: "Aksi",
+                header: tCommon('table.actions'),
                 render: (val, row) => {
                   const isAutoGenerated = row.paymentId !== null;
                   return (
                     <div className="flex gap-2">
                       {!isAutoGenerated && (
-                        <Button variant="danger" size="sm" onClick={() => handleDelete(val)}>
-                          Hapus
+                        <Button variant="danger" size="sm" onClick={() => setDeleteTargetId(val)}>
+                          {tCommon('actions.delete')}
                         </Button>
                       )}
                       {isAutoGenerated && (
-                        <span className="text-xs text-gray-500 italic">Read-only</span>
+                        <span className="text-xs text-gray-500 italic">{t('read_only')}</span>
                       )}
                     </div>
                   );
@@ -305,7 +309,7 @@ export default function AdminIncomePage() {
             ]}
             data={paginatedData}
             keyExtractor={(row) => row.id}
-            emptyMessage="Tidak ada pemasukan"
+            emptyMessage={t('no_income')}
           />
 
           {/* Pagination */}
@@ -325,13 +329,25 @@ export default function AdminIncomePage() {
       </Card>
 
       {/* Add Income Modal */}
-      <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)} title="Tambah Pemasukan Baru">
+      <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)} title={t('add_income_title')}>
         <IncomeForm
           onSubmit={handleAddIncome}
           onCancel={() => setShowAddModal(false)}
           isSubmitting={isSubmitting}
         />
       </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={!!deleteTargetId}
+        onClose={() => setDeleteTargetId(null)}
+        onConfirm={() => deleteTargetId && handleDelete(deleteTargetId)}
+        title={tCommon('actions.delete')}
+        message={t('delete_confirmation')}
+        variant="danger"
+        confirmText={tCommon('actions.delete')}
+        cancelText={tCommon('actions.cancel')}
+      />
     </div>
   );
 }

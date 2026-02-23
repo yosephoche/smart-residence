@@ -84,7 +84,8 @@
       "no_duplicates": "Jadwal yang sudah ada akan dilewati (tidak ada duplikat)."
     },
     "unknown": "Tidak diketahui",
-    "copyright": "© 2026 SmartResidence. Hak cipta dilindungi."
+    "copyright": "© 2026 SmartResidence. Hak cipta dilindungi.",
+    "date_range_max_2_years": "Rentang waktu maksimal adalah 2 tahun"
   },
   "navigation": {
     "admin": {
@@ -427,7 +428,8 @@
       "approved": "Disetujui",
       "rejected": "Ditolak",
       "month": "bulan",
-      "months": "bulan"
+      "months": "bulan",
+      "reject_error": "Gagal menolak pembayaran"
     },
     "form": {
       "payment_for": "Pembayaran Untuk",
@@ -527,8 +529,29 @@
     "auto": "Otomatis",
     "no_income": "Belum ada pemasukan",
     "income_added": "Pemasukan berhasil ditambahkan!",
+    "add_error": "Gagal menambahkan pemasukan",
     "delete_confirmation": "Apakah Anda yakin ingin menghapus pemasukan ini?",
     "income_deleted": "Pemasukan berhasil dihapus!",
+    "filtered_total": "Total Pemasukan (Terfilter)",
+    "all_total": "Total Pemasukan (Semua)",
+    "average": "Rata-rata Pemasukan",
+    "per_transaction": "per transaksi",
+    "transactions_count": "{count} transaksi",
+    "all_years": "Semua Tahun",
+    "all_months": "Semua Bulan",
+    "manual_only": "Manual Saja",
+    "auto_from_payment": "Auto (dari Payment)",
+    "clear_filters": "Bersihkan Filter",
+    "export_excel": "Export Excel",
+    "date": "Tanggal",
+    "category": "Kategori",
+    "description": "Deskripsi",
+    "amount": "Jumlah",
+    "source": "Sumber",
+    "created_by": "Dibuat Oleh",
+    "all_income_count": "Semua Pemasukan ({count})",
+    "read_only": "Hanya baca",
+    "add_income_title": "Tambah Pemasukan Baru",
     "categories": {
       "MONTHLY_FEES": "Iuran Bulanan",
       "LATE_FEES": "Denda Keterlambatan",
@@ -538,6 +561,26 @@
       "REGISTRATION_FEE": "Biaya Pendaftaran",
       "OTHER": "Lainnya"
     }
+  },
+  "user_settings": {
+    "title": "Pengaturan",
+    "subtitle": "Kelola preferensi akun Anda",
+    "profile": "Profil",
+    "name": "Nama",
+    "email": "Email",
+    "house": "Rumah",
+    "preferences": "Preferensi",
+    "language": "Bahasa",
+    "language_hint": "Pilih bahasa yang Anda inginkan",
+    "security": "Keamanan",
+    "password": "Kata Sandi",
+    "change_password": "Ubah kata sandi Anda",
+    "change": "Ubah",
+    "logout_section": "Keluar",
+    "logout_description": "Keluar dari akun Anda",
+    "load_error": "Gagal memuat data pengguna",
+    "logout_error": "Gagal keluar",
+    "logout_confirm": "Apakah Anda yakin ingin keluar?"
   },
   "settings": {
     "title": "Pengaturan Sistem",
@@ -582,6 +625,7 @@
       "no_attendance": "Tidak ada catatan kehadiran ditemukan",
       "attendance_photo": "Foto Kehadiran",
       "export_failed": "Gagal mengekspor CSV: ",
+      "export_csv_error": "Gagal mengekspor CSV: {error}",
       "geolocation_not_supported": "Geolokasi tidak didukung oleh browser Anda",
       "permission_denied": "Izin lokasi ditolak. Silakan izinkan akses lokasi di pengaturan browser Anda."
     },
@@ -694,7 +738,18 @@
       "generating": "Membuat...",
       "generate": "Buat",
       "delete_confirmation": "Apakah Anda yakin ingin menghapus jadwal ini?",
-      "auto_generate_success": "Berhasil! Dibuat {created} jadwal, dilewati {skipped} yang sudah ada."
+      "auto_generate_success": "Berhasil! Dibuat {created} jadwal, dilewati {skipped} yang sudah ada.",
+      "no_schedules": "Tidak ada jadwal ditemukan untuk periode yang dipilih",
+      "staff_required": "Staff wajib dipilih",
+      "schedule_deleted": "Jadwal berhasil dihapus!",
+      "schedule_saved": "Jadwal berhasil ditambahkan!",
+      "schedules_generated": "Jadwal berhasil dibuat! {created} dibuat, {skipped} dilewati",
+      "no_shifts_available": "Tidak ada template shift aktif untuk jenis pekerjaan ini",
+      "date_required": "Tanggal wajib diisi",
+      "shift_required": "Shift wajib dipilih",
+      "clear_filters": "Bersihkan Filter",
+      "end_date_after_start": "Tanggal akhir harus setelah atau sama dengan tanggal mulai",
+      "showing_count": "Menampilkan {filtered} dari {total} jadwal"
     }
   },
   "validation": {

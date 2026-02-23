@@ -83,7 +83,8 @@
       "skipped": "skipped",
       "no_duplicates": "Existing schedules will be skipped (no duplicates)."
     },
-    "copyright": "© 2026 SmartResidence. All rights reserved."
+    "copyright": "© 2026 SmartResidence. All rights reserved.",
+    "date_range_max_2_years": "Maximum date range is 2 years"
   },
   "navigation": {
     "admin": {
@@ -426,7 +427,8 @@
       "approved": "Approved",
       "rejected": "Rejected",
       "month": "month",
-      "months": "months"
+      "months": "months",
+      "reject_error": "Failed to reject payment"
     },
     "form": {
       "payment_for": "Payment For",
@@ -526,8 +528,29 @@
     "auto": "Auto",
     "no_income": "No income yet",
     "income_added": "Income added successfully!",
+    "add_error": "Failed to add income",
     "delete_confirmation": "Are you sure you want to delete this income?",
     "income_deleted": "Income deleted successfully!",
+    "filtered_total": "Total Income (Filtered)",
+    "all_total": "Total Income (All)",
+    "average": "Average Income",
+    "per_transaction": "per transaction",
+    "transactions_count": "{count} transactions",
+    "all_years": "All Years",
+    "all_months": "All Months",
+    "manual_only": "Manual Only",
+    "auto_from_payment": "Auto (from Payment)",
+    "clear_filters": "Clear Filters",
+    "export_excel": "Export Excel",
+    "date": "Date",
+    "category": "Category",
+    "description": "Description",
+    "amount": "Amount",
+    "source": "Source",
+    "created_by": "Created By",
+    "all_income_count": "All Income ({count})",
+    "read_only": "Read-only",
+    "add_income_title": "Add New Income",
     "categories": {
       "MONTHLY_FEES": "Monthly Fees",
       "LATE_FEES": "Late Fees",
@@ -572,7 +595,8 @@
       "open_maps": "Open in Google Maps",
       "showing_count": "Showing {filtered} of {total} attendance records",
       "geolocation_not_supported": "Geolocation is not supported by your browser",
-      "permission_denied": "Location permission denied. Please allow location access in your browser settings."
+      "permission_denied": "Location permission denied. Please allow location access in your browser settings.",
+      "export_csv_error": "Failed to export CSV: {error}"
     },
     "shifts": {
       "title": "Shift Templates",
@@ -649,7 +673,9 @@
       "delete_confirmation": "Are you sure you want to delete this schedule?",
       "schedule_deleted": "Schedule deleted successfully!",
       "schedule_saved": "Schedule assigned successfully!",
-      "schedules_generated": "Schedules generated successfully!",
+      "schedules_generated": "Schedules generated! {created} created, {skipped} skipped",
+      "creating": "Creating...",
+      "assign": "Assign",
       "assign_shift": "Assign Shift",
       "staff_label": "Staff Member",
       "select_staff": "Select staff member...",
@@ -673,6 +699,26 @@
       "generate": "Generate Schedules",
       "showing_count": "Showing {filtered} of {total} schedules"
     }
+  },
+  "user_settings": {
+    "title": "Settings",
+    "subtitle": "Manage your account preferences",
+    "profile": "Profile",
+    "name": "Name",
+    "email": "Email",
+    "house": "House",
+    "preferences": "Preferences",
+    "language": "Language",
+    "language_hint": "Choose your preferred language",
+    "security": "Security",
+    "password": "Password",
+    "change_password": "Change your password",
+    "change": "Change",
+    "logout_section": "Logout",
+    "logout_description": "Sign out of your account",
+    "load_error": "Failed to load user data",
+    "logout_error": "Failed to sign out",
+    "logout_confirm": "Are you sure you want to sign out?"
   },
   "settings": {
     "title": "System Settings",

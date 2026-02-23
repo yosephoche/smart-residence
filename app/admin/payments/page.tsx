@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import Table, { Column, Pagination } from "@/components/ui/Table";
 import PaymentStatusBadge from "@/components/payments/PaymentStatusBadge";
 import { Skeleton } from "@/components/ui/Loading";
@@ -252,7 +253,7 @@ export default function AdminPaymentsPage() {
       });
       if (!res.ok) {
         const err = await res.json();
-        alert(err.error || t('create_payment_error'));
+        toast.error(err.error || t('create_payment_error'));
         setIsCreating(false);
         return;
       }
@@ -262,7 +263,7 @@ export default function AdminPaymentsPage() {
       refetchPayments();
     } catch {
       setIsCreating(false);
-      alert(t('generic_error'));
+      toast.error(t('generic_error'));
     }
   };
 
@@ -312,10 +313,10 @@ export default function AdminPaymentsPage() {
       }
 
       if (result.failed.length > 0) {
-        alert(t('bulk_approve_partial_error', { count: result.failed.length }));
+        toast.error(t('bulk_approve_partial_error', { count: result.failed.length }));
       }
     } catch (error) {
-      alert(t('bulk_approve_error'));
+      toast.error(t('bulk_approve_error'));
     } finally {
       setIsBulkProcessing(false);
       setBulkApproveModalOpen(false);

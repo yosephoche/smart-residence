@@ -5,6 +5,8 @@ import { DayPicker, DateRange } from 'react-day-picker';
 import { format, subDays, subMonths, startOfDay, endOfDay } from 'date-fns';
 import { id as indonesianLocale } from 'date-fns/locale';
 import { Calendar, X } from 'lucide-react';
+import { useTranslations } from 'next-intl';
+import { toast } from 'sonner';
 import 'react-day-picker/style.css';
 
 interface DateRangePickerProps {
@@ -14,6 +16,7 @@ interface DateRangePickerProps {
 }
 
 export function DateRangePicker({ startDate, endDate, onDateChange }: DateRangePickerProps) {
+  const tCommon = useTranslations('common');
   const [isOpen, setIsOpen] = useState(false);
   const [range, setRange] = useState<DateRange | undefined>({
     from: startDate,
@@ -43,7 +46,7 @@ export function DateRangePicker({ startDate, endDate, onDateChange }: DateRangeP
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
       if (diffDays > 730) {
-        alert('Rentang waktu maksimal adalah 2 tahun');
+        toast.error(tCommon('date_range_max_2_years'));
         return;
       }
 

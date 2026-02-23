@@ -2,8 +2,11 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
+import { toast } from 'sonner';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
+import { ConfirmModal } from '@/components/ui/Modal';
 import LanguageSwitcher from '@/components/i18n/LanguageSwitcher';
 import { User, Home, Mail, KeyRound, LogOut } from 'lucide-react';
 
@@ -24,9 +27,11 @@ interface HouseData {
 
 const SettingsPage = () => {
   const router = useRouter();
+  const t = useTranslations('user_settings');
   const [user, setUser] = useState<UserData | null>(null);
   const [house, setHouse] = useState<HouseData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   useEffect(() => {
     fetchUserData();
@@ -48,15 +53,13 @@ const SettingsPage = () => {
       }
     } catch (error) {
       console.error('Error fetching user data:', error);
-      alert('Gagal memuat data pengguna');
+      toast.error(t('load_error'));
     } finally {
       setLoading(false);
     }
   };
 
   const handleLogout = async () => {
-    if (!confirm('Apakah Anda yakin ingin keluar?')) return;
-
     try {
       const res = await fetch('/api/auth/logout', {
         method: 'POST'
@@ -69,7 +72,7 @@ const SettingsPage = () => {
       }
     } catch (error) {
       console.error('Logout error:', error);
-      alert('Gagal keluar');
+      toast.error(t('logout_error'));
     }
   };
 
@@ -86,17 +89,17 @@ const SettingsPage = () => {
       {/* Header */}
       <div>
         <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
-          Pengaturan
+          {t('title')}
         </h1>
         <p className="text-gray-600 dark:text-gray-400 mt-2">
-          Kelola preferensi akun Anda
+          {t('subtitle')}
         </p>
       </div>
 
       {/* Profile Section */}
       <div>
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
-          Profil
+          {t('profile')}
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Name Card */}
@@ -106,7 +109,7 @@ const SettingsPage = () => {
                 <User className="w-5 h-5 text-blue-600 dark:text-blue-400" />
               </div>
               <div>
-                <p className="text-xs text-gray-600 dark:text-gray-400">Nama</p>
+                <p className="text-xs text-gray-600 dark:text-gray-400">{t('name')}</p>
                 <p className="text-sm font-semibold text-gray-900 dark:text-white">
                   {user?.name || '-'}
                 </p>
@@ -121,7 +124,7 @@ const SettingsPage = () => {
                 <Mail className="w-5 h-5 text-green-600 dark:text-green-400" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs text-gray-600 dark:text-gray-400">Email</p>
+                <p className="text-xs text-gray-600 dark:text-gray-400">{t('email')}</p>
                 <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
                   {user?.email || '-'}
                 </p>
@@ -137,7 +140,7 @@ const SettingsPage = () => {
                   <Home className="w-5 h-5 text-purple-600 dark:text-purple-400" />
                 </div>
                 <div>
-                  <p className="text-xs text-gray-600 dark:text-gray-400">Rumah</p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">{t('house')}</p>
                   <p className="text-sm font-semibold text-gray-900 dark:text-white">
                     {house.houseNumber} - Blok {house.block} ({house.houseType.typeName})
                   </p>
@@ -151,16 +154,16 @@ const SettingsPage = () => {
       {/* Preferences Section */}
       <div>
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
-          Preferensi
+          {t('preferences')}
         </h2>
         <Card className="p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-900 dark:text-white">
-                Bahasa
+                {t('language')}
               </p>
               <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                Pilih bahasa yang Anda inginkan
+                {t('language_hint')}
               </p>
             </div>
             <LanguageSwitcher />
@@ -171,7 +174,7 @@ const SettingsPage = () => {
       {/* Security Section */}
       <div>
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
-          Keamanan
+          {t('security')}
         </h2>
         <Card className="p-4">
           <div className="flex items-center justify-between">
@@ -181,10 +184,10 @@ const SettingsPage = () => {
               </div>
               <div>
                 <p className="text-sm font-medium text-gray-900 dark:text-white">
-                  Kata Sandi
+                  {t('password')}
                 </p>
                 <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                  Ubah kata sandi Anda
+                  {t('change_password')}
                 </p>
               </div>
             </div>
@@ -193,7 +196,7 @@ const SettingsPage = () => {
               size="sm"
               onClick={() => router.push('/change-password')}
             >
-              Ubah
+              {t('change')}
             </Button>
           </div>
         </Card>
@@ -209,23 +212,33 @@ const SettingsPage = () => {
               </div>
               <div>
                 <p className="text-sm font-medium text-gray-900 dark:text-white">
-                  Keluar
+                  {t('logout_section')}
                 </p>
                 <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                  Keluar dari akun Anda
+                  {t('logout_description')}
                 </p>
               </div>
             </div>
             <Button
               variant="danger"
               size="sm"
-              onClick={handleLogout}
+              onClick={() => setShowLogoutConfirm(true)}
             >
-              Keluar
+              {t('logout_section')}
             </Button>
           </div>
         </Card>
       </div>
+
+      {/* Logout Confirmation Modal */}
+      <ConfirmModal
+        isOpen={showLogoutConfirm}
+        onClose={() => setShowLogoutConfirm(false)}
+        onConfirm={handleLogout}
+        title={t('logout_section')}
+        message={t('logout_confirm')}
+        variant="danger"
+      />
     </div>
   );
 };

@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import { JobType } from "@prisma/client";
 import Table, { Column, Pagination } from "@/components/ui/Table";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
-import Modal from "@/components/ui/Modal";
+import Modal, { ConfirmModal } from "@/components/ui/Modal";
 import Input from "@/components/ui/Input";
 import { Plus, Sparkles, Trash2, Calendar } from "lucide-react";
 import { usePagination } from "@/lib/hooks/usePagination";
@@ -68,6 +69,7 @@ export default function SchedulePage() {
   // Modals
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isAutoGenModalOpen, setIsAutoGenModalOpen] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
   // Create form
   const [createForm, setCreateForm] = useState({
@@ -220,9 +222,7 @@ export default function SchedulePage() {
 
       if (!res.ok) throw new Error(data.error || "Failed to generate schedules");
 
-      alert(
-        t('schedules_generated') + ` ${data.result.created} ${tCommon('messages.created')}, ${data.result.skipped} ${tCommon('messages.skipped')}`
-      );
+      toast.success(t('schedules_generated', { created: data.result.created, skipped: data.result.skipped }));
       await fetchSchedules();
       setIsAutoGenModalOpen(false);
       setAutoGenForm({
@@ -238,8 +238,6 @@ export default function SchedulePage() {
   };
 
   const handleDeleteSchedule = async (id: string) => {
-    if (!confirm(t('delete_confirmation'))) return;
-
     try {
       const res = await fetch(`/api/admin/schedules/${id}`, {
         method: "DELETE",
@@ -251,7 +249,9 @@ export default function SchedulePage() {
 
       await fetchSchedules();
     } catch (err: any) {
-      alert(err.message);
+      toast.error(err.message);
+    } finally {
+      setDeleteTargetId(null);
     }
   };
 
@@ -313,7 +313,7 @@ export default function SchedulePage() {
       header: tCommon('table.actions'),
       render: (_, row) => (
         <button
-          onClick={() => handleDeleteSchedule(row.id)}
+          onClick={() => setDeleteTargetId(row.id)}
           className="text-red-600 hover:text-red-700"
           title={tCommon('actions.delete')}
         >
@@ -525,7 +525,7 @@ export default function SchedulePage() {
               {tCommon('actions.cancel')}
             </Button>
             <Button type="submit" disabled={creating}>
-              {creating ? tCommon('actions.creating') : tCommon('actions.assign')}
+              {creating ? t('creating') : t('assign')}
             </Button>
           </div>
         </form>
@@ -612,6 +612,18 @@ export default function SchedulePage() {
           </div>
         </form>
       </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={!!deleteTargetId}
+        onClose={() => setDeleteTargetId(null)}
+        onConfirm={() => deleteTargetId && handleDeleteSchedule(deleteTargetId)}
+        title={t('delete_confirmation')}
+        message={t('delete_confirmation')}
+        variant="danger"
+        confirmText={tCommon('actions.delete')}
+        cancelText={tCommon('actions.cancel')}
+      />
     </div>
   );
 }

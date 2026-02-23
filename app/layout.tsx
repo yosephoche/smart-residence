@@ -4,6 +4,7 @@ import "./globals.css";
 import SessionWrapper from "@/components/layouts/SessionWrapper";
 import { NextIntlClientProvider } from 'next-intl';
 import { getUserLocale } from '@/services/locale.service';
+import { Toaster } from 'sonner';
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -25,6 +26,7 @@ export default async function RootLayout({
       <body className={inter.className}>
         <NextIntlClientProvider locale={locale} messages={messages}>
           <SessionWrapper>{children}</SessionWrapper>
+          <Toaster richColors position="top-right" />
         </NextIntlClientProvider>
       </body>
     </html>
