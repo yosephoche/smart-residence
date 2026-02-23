@@ -361,6 +361,31 @@ export async function getAllAttendanceEnhanced(filters?: {
 }
 
 /**
+ * Get all staff currently on duty (clocked in, not yet clocked out)
+ * Optionally filter by job type (e.g. SECURITY)
+ */
+export async function getOnDutyStaff(jobType?: JobType) {
+  return prisma.attendance.findMany({
+    where: {
+      clockOutAt: null,
+      staff: {
+        role: "STAFF",
+        ...(jobType ? { staffJobType: jobType } : {}),
+      },
+    },
+    orderBy: { clockInAt: "asc" },
+    include: {
+      staff: { select: { id: true, name: true, staffJobType: true } },
+      schedule: {
+        include: {
+          shiftTemplate: { select: { shiftName: true, startTime: true, endTime: true } },
+        },
+      },
+    },
+  });
+}
+
+/**
  * Get attendance statistics for a date range
  */
 export async function getAttendanceStats(

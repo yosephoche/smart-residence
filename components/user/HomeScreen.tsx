@@ -12,7 +12,9 @@ import {
   ChevronRight,
   TrendingUp,
   TrendingDown,
-  Wallet
+  Wallet,
+  Shield,
+  User as UserIcon,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-client';
 import { Card } from '@/components/ui/Card';
@@ -46,6 +48,16 @@ interface FinancialData {
   expense: number;
 }
 
+interface OnDutyStaff {
+  id: string;
+  clockInAt: string;
+  staff: {
+    id: string;
+    name: string;
+    staffJobType: string | null;
+  };
+}
+
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
@@ -75,21 +87,26 @@ export function HomeScreen() {
   const [house, setHouse] = useState<House | null>(null);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [financialData, setFinancialData] = useState<FinancialData[]>([]);
+  const [onDutyStaff, setOnDutyStaff] = useState<OnDutyStaff[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       if (!user?.id) return;
 
-      const [housesResult, paymentsResult, financialResult] = await Promise.allSettled([
+      const [housesResult, paymentsResult, financialResult, onDutyResult] = await Promise.allSettled([
         fetch(`/api/houses?userId=${user.id}`).then(r => r.json()),
         fetch('/api/payments').then(r => r.json()),
         fetch('/api/user/financial-summary').then(r => r.json()),
+        fetch('/api/attendance/on-duty').then(r => r.json()),
       ]);
 
       if (housesResult.status === 'fulfilled') setHouse(housesResult.value[0] || null);
       if (paymentsResult.status === 'fulfilled') setPayments(paymentsResult.value);
       if (financialResult.status === 'fulfilled') setFinancialData(financialResult.value);
+      if (onDutyResult.status === 'fulfilled' && Array.isArray(onDutyResult.value)) {
+        setOnDutyStaff(onDutyResult.value);
+      }
 
       setIsLoading(false);
     };
@@ -165,6 +182,7 @@ export function HomeScreen() {
         <div className="animate-pulse space-y-4">
           <div className="h-20 bg-gray-200 rounded-2xl" />
           <div className="h-32 bg-gray-200 rounded-2xl" />
+          <div className="h-24 bg-gray-200 rounded-2xl" />
           <div className="h-32 bg-gray-200 rounded-2xl" />
         </div>
       </div>
@@ -240,6 +258,58 @@ export function HomeScreen() {
             {currentStatus.badge}
           </span>
         </div>
+      </motion.div>
+
+      {/* On-Duty Security Staff */}
+      <motion.div
+        variants={itemVariants}
+        className="bg-white rounded-2xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)]"
+      >
+        <div className="flex items-center gap-2 mb-3">
+          <Shield className="w-4 h-4 text-slate-400" />
+          <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">
+            Petugas Keamanan Bertugas
+          </p>
+          {onDutyStaff.length > 0 && (
+            <span className="ml-auto text-[10px] font-semibold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-600">
+              {onDutyStaff.length} aktif
+            </span>
+          )}
+        </div>
+
+        {onDutyStaff.length === 0 ? (
+          <p className="text-sm text-slate-400 text-center py-2">
+            Tidak ada petugas yang bertugas saat ini
+          </p>
+        ) : (
+          <div className="space-y-0">
+            {onDutyStaff.map((item, index) => {
+              const clockInTime = new Date(item.clockInAt).toLocaleTimeString('id-ID', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false,
+              });
+              return (
+                <div key={item.id}>
+                  <div className="flex items-center gap-3 py-3">
+                    <div className="relative w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
+                      <UserIcon className="w-4 h-4 text-blue-600" />
+                      <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-400 rounded-full border-2 border-white" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-slate-800 truncate">{item.staff.name}</p>
+                      <p className="text-[11px] text-slate-400 mt-0.5">Bertugas sejak {clockInTime}</p>
+                    </div>
+                    <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 flex-shrink-0">
+                      Keamanan
+                    </span>
+                  </div>
+                  {index < onDutyStaff.length - 1 && <div className="border-b border-slate-50" />}
+                </div>
+              );
+            })}
+          </div>
+        )}
       </motion.div>
 
       {/* Financial Summary */}
