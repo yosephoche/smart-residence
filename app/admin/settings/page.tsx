@@ -6,7 +6,8 @@ import { UploadWindowConfigForm } from "@/components/forms/UploadWindowConfigFor
 import { DefaultPasswordConfigForm } from "@/components/forms/DefaultPasswordConfigForm";
 import { GeofenceConfigForm } from "@/components/forms/GeofenceConfigForm";
 import BankDetailsConfigForm from "@/components/forms/BankDetailsConfigForm";
-import { Settings, AlertCircle, CheckCircle, Key, MapPin, CreditCard } from "lucide-react";
+import ResidenceInfoConfigForm from "@/components/forms/ResidenceInfoConfigForm";
+import { Settings, AlertCircle, CheckCircle, Key, MapPin, CreditCard, Building2 } from "lucide-react";
 
 export const dynamic = 'force-dynamic';
 
@@ -156,8 +157,44 @@ export default function SettingsPage() {
         </div>
       )}
 
-      {/* Upload Window Configuration */}
+      {/* Residence Info Configuration */}
       <div className="bg-white rounded-lg shadow border border-gray-200">
+        <div className="p-6 border-b border-gray-200">
+          <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+            <Building2 className="w-5 h-5" />
+            Informasi Perumahan
+          </h2>
+          <p className="text-sm text-gray-600 mt-1">
+            Atur nama dan alamat perumahan yang ditampilkan di profil penghuni
+          </p>
+        </div>
+
+        <div className="p-6">
+          {loading ? (
+            <div className="animate-pulse space-y-4">
+              <div className="h-12 bg-gray-200 rounded"></div>
+              <div className="h-12 bg-gray-200 rounded"></div>
+            </div>
+          ) : (
+            <ResidenceInfoConfigForm />
+          )}
+        </div>
+
+        <div className="p-6 bg-sky-50 border-t border-sky-200">
+          <h3 className="font-medium text-sky-900 mb-2 flex items-center gap-2">
+            <AlertCircle className="w-4 h-4" />
+            Informasi
+          </h3>
+          <ul className="text-sm text-sky-800 space-y-1 ml-6 list-disc">
+            <li>Nama perumahan akan ditampilkan di halaman profil penghuni</li>
+            <li>Alamat bersifat opsional dan akan muncul jika diisi</li>
+            <li>Perubahan langsung terlihat setelah disimpan</li>
+          </ul>
+        </div>
+      </div>
+
+      {/* Upload Window Configuration */}
+      <div className="bg-white rounded-lg shadow border border-gray-200 mt-6">
         <div className="p-6 border-b border-gray-200">
           <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
             <Settings className="w-5 h-5" />

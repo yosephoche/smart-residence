@@ -219,3 +219,53 @@ export async function setBankDetailsConfig(
   const { invalidateBankDetailsCache } = await import("@/lib/cache/bank-details");
   invalidateBankDetailsCache();
 }
+
+// Default residence info configuration values
+const DEFAULT_RESIDENCE_INFO = {
+  residenceName: "Perumahan Melati Indah",
+  residenceAddress: "",
+};
+
+export interface ResidenceInfoConfig {
+  residenceName: string;
+  residenceAddress: string;
+}
+
+/**
+ * Get the residence info configuration from the database
+ * Falls back to default if no config exists
+ */
+export async function getResidenceInfoConfig(): Promise<ResidenceInfoConfig> {
+  try {
+    const config = await prisma.systemConfig.findUnique({
+      where: { key: "residence_info" },
+    });
+
+    if (!config) {
+      return DEFAULT_RESIDENCE_INFO;
+    }
+
+    const value = config.value as unknown as ResidenceInfoConfig;
+    return {
+      residenceName: value.residenceName ?? DEFAULT_RESIDENCE_INFO.residenceName,
+      residenceAddress: value.residenceAddress ?? DEFAULT_RESIDENCE_INFO.residenceAddress,
+    };
+  } catch (error) {
+    console.error("Error fetching residence info config:", error);
+    return DEFAULT_RESIDENCE_INFO;
+  }
+}
+
+/**
+ * Set residence info configuration
+ */
+export async function setResidenceInfoConfig(
+  config: ResidenceInfoConfig,
+  updatedBy: string
+): Promise<void> {
+  await setConfig("residence_info", config, updatedBy);
+
+  // Invalidate cache
+  const { invalidateResidenceInfoCache } = await import("@/lib/cache/residence-info");
+  invalidateResidenceInfoCache();
+}

@@ -1,11 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import {
   User as UserIcon,
   Home as HomeIcon,
+  MapPin,
   Phone,
   Mail,
   Bell,
@@ -13,6 +14,9 @@ import {
   HelpCircle,
   LogOut,
   ChevronRight,
+  Pencil,
+  Check,
+  X,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-client';
 import { toast } from 'sonner';
@@ -33,6 +37,11 @@ interface UserProfile {
   phone?: string;
   address?: string;
   houses: House[];
+}
+
+interface ResidenceInfoConfig {
+  residenceName: string;
+  residenceAddress: string;
 }
 
 const containerVariants = {
@@ -85,14 +94,32 @@ export default function ProfileScreen() {
   const { user, logout } = useAuth();
   const router = useRouter();
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [residenceInfo, setResidenceInfo] = useState<ResidenceInfoConfig>({
+    residenceName: 'Perumahan Melati Indah',
+    residenceAddress: '',
+  });
   const [isLoading, setIsLoading] = useState(true);
 
+  // Phone editing state
+  const [isEditingPhone, setIsEditingPhone] = useState(false);
+  const [phoneValue, setPhoneValue] = useState('');
+  const [isSavingPhone, setIsSavingPhone] = useState(false);
+
   useEffect(() => {
-    const fetchProfile = async () => {
+    const fetchData = async () => {
       try {
-        const response = await fetch('/api/users/profile');
-        const data = await response.json();
-        setProfile(data);
+        const [profileResponse, residenceResponse] = await Promise.all([
+          fetch('/api/users/profile'),
+          fetch('/api/system-config/residence-info'),
+        ]);
+        const profileData = await profileResponse.json();
+        setProfile(profileData);
+        setPhoneValue(profileData.phone || '');
+
+        if (residenceResponse.ok) {
+          const residenceData = await residenceResponse.json();
+          setResidenceInfo(residenceData);
+        }
       } catch (error) {
         console.error('Error fetching profile:', error);
         toast.error('Gagal memuat profil');
@@ -101,7 +128,7 @@ export default function ProfileScreen() {
       }
     };
 
-    fetchProfile();
+    fetchData();
   }, []);
 
   const getInitials = (name: string) => {
@@ -121,6 +148,37 @@ export default function ProfileScreen() {
       console.error('Logout error:', error);
       toast.error('Gagal logout');
     }
+  };
+
+  const handleSavePhone = async () => {
+    setIsSavingPhone(true);
+    try {
+      const response = await fetch('/api/users/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: phoneValue }),
+      });
+
+      if (response.ok) {
+        const updated = await response.json();
+        setProfile((prev) => prev ? { ...prev, phone: updated.phone } : prev);
+        setIsEditingPhone(false);
+        toast.success('Nomor telepon berhasil diperbarui');
+      } else {
+        const err = await response.json();
+        toast.error(err.error || 'Gagal menyimpan nomor telepon');
+      }
+    } catch (error) {
+      console.error('Error saving phone:', error);
+      toast.error('Terjadi kesalahan saat menyimpan');
+    } finally {
+      setIsSavingPhone(false);
+    }
+  };
+
+  const handleCancelPhone = () => {
+    setPhoneValue(profile?.phone || '');
+    setIsEditingPhone(false);
   };
 
   if (isLoading) {
@@ -171,28 +229,99 @@ export default function ProfileScreen() {
       >
         <p className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-3">Detail Hunian</p>
         <div className="space-y-3">
+          {/* Residence Name Row */}
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-slate-50 flex items-center justify-center">
               <HomeIcon className="w-4 h-4 text-slate-400" />
             </div>
             <div className="flex-1">
-              <p className="text-[11px] text-slate-400">Alamat</p>
+              <p className="text-[11px] text-slate-400">Perumahan</p>
               <p className="text-sm font-medium text-slate-700">
-                {house
-                  ? `Perumahan Melati Indah, Blok ${house.block} No. ${house.houseNumber}`
-                  : 'Belum ada rumah yang ditetapkan'}
+                {residenceInfo.residenceName}
+                {residenceInfo.residenceAddress ? ` — ${residenceInfo.residenceAddress}` : ''}
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-slate-50 flex items-center justify-center">
+
+          {/* House Block/Number Row */}
+          {house && (
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-slate-50 flex items-center justify-center">
+                <MapPin className="w-4 h-4 text-slate-400" />
+              </div>
+              <div className="flex-1">
+                <p className="text-[11px] text-slate-400">Unit Hunian</p>
+                <p className="text-sm font-medium text-slate-700">
+                  Blok {house.block} No. {house.houseNumber}
+                  {house.houseType ? ` · ${house.houseType.typeName}` : ''}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Phone Row with inline editing */}
+          <div className="flex items-start gap-3">
+            <div className="w-9 h-9 rounded-lg bg-slate-50 flex items-center justify-center flex-shrink-0 mt-0.5">
               <Phone className="w-4 h-4 text-slate-400" />
             </div>
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <p className="text-[11px] text-slate-400">No. Telepon</p>
-              <p className="text-sm font-medium text-slate-700">{profile?.phone || '-'}</p>
+              <AnimatePresence mode="wait">
+                {isEditingPhone ? (
+                  <motion.div
+                    key="edit"
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    transition={{ duration: 0.15 }}
+                    className="flex items-center gap-2 mt-1"
+                  >
+                    <input
+                      type="tel"
+                      value={phoneValue}
+                      onChange={(e) => setPhoneValue(e.target.value)}
+                      placeholder="08xxxxxxxxxx"
+                      className="flex-1 text-sm border border-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      autoFocus
+                    />
+                    <button
+                      onClick={handleSavePhone}
+                      disabled={isSavingPhone}
+                      className="w-7 h-7 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600 hover:bg-emerald-100 transition-colors disabled:opacity-50"
+                    >
+                      <Check className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={handleCancelPhone}
+                      disabled={isSavingPhone}
+                      className="w-7 h-7 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-slate-100 transition-colors disabled:opacity-50"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="display"
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 4 }}
+                    transition={{ duration: 0.15 }}
+                    className="flex items-center gap-2"
+                  >
+                    <p className="text-sm font-medium text-slate-700">{profile?.phone || '-'}</p>
+                    <button
+                      onClick={() => setIsEditingPhone(true)}
+                      className="w-6 h-6 rounded-md bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+                    >
+                      <Pencil className="w-3 h-3" />
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </div>
+
+          {/* Email Row */}
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-slate-50 flex items-center justify-center">
               <Mail className="w-4 h-4 text-slate-400" />
@@ -219,8 +348,8 @@ export default function ProfileScreen() {
         <MenuItem
           icon={<Shield className="w-4 h-4" />}
           label="Keamanan"
-          subtitle="Password & verifikasi"
-          onClick={() => toast.info('Fitur akan segera hadir')}
+          subtitle="Ubah password akun"
+          onClick={() => router.push('/change-password')}
         />
         <MenuItem
           icon={<HelpCircle className="w-4 h-4" />}

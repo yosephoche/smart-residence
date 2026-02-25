@@ -22,13 +22,13 @@ export default function IncomeCategoryBadge({ category, size = "sm" }: Props) {
   const t = useTranslations('income.categories');
 
   const categoryLabels: Record<string, string> = {
-    MONTHLY_FEES: t('monthly_fees'),
-    LATE_FEES: t('late_fees'),
-    GUEST_PARKING: t('guest_parking'),
-    FACILITY_RENTAL: t('facility_rental'),
-    MAINTENANCE_CHARGE: t('maintenance_charge'),
-    REGISTRATION_FEE: t('registration_fee'),
-    OTHER: t('other'),
+    MONTHLY_FEES: t('MONTHLY_FEES'),
+    LATE_FEES: t('LATE_FEES'),
+    GUEST_PARKING: t('GUEST_PARKING'),
+    FACILITY_RENTAL: t('FACILITY_RENTAL'),
+    MAINTENANCE_CHARGE: t('MAINTENANCE_CHARGE'),
+    REGISTRATION_FEE: t('REGISTRATION_FEE'),
+    OTHER: t('OTHER'),
   };
 
   const variant = categoryVariants[category] || "default";
