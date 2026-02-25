@@ -55,6 +55,7 @@ interface OnDutyStaff {
     id: string;
     name: string;
     staffJobType: string | null;
+    phone: string | null;
   };
 }
 
