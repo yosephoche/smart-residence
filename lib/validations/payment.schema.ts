@@ -9,7 +9,7 @@ export const paymentUploadSchema = z.object({
   proofImage: z
     .instanceof(File, { message: "Please upload payment proof" })
     .refine((file) => file.size <= MAX_FILE_SIZE, {
-      message: "File size must be less than 2MB",
+      message: "File size must be less than 10MB",
     })
     .refine((file) => ALLOWED_IMAGE_TYPES.includes(file.type), {
       message: "Only JPG, JPEG, and PNG files are allowed",

@@ -22,7 +22,7 @@ export default function FileUpload({
   error,
   helperText,
   accept = "image/jpeg,image/png,image/jpg",
-  maxSize = 2 * 1024 * 1024, // 2MB default
+  maxSize = 10 * 1024 * 1024, // 10MB default
   onChange,
   value,
   preview = true,

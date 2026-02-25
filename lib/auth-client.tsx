@@ -4,7 +4,7 @@ import { useSession, signIn, signOut } from "next-auth/react";
 import { useMemo } from "react";
 
 export function useAuth() {
-  const { data: session, status } = useSession();
+  const { data: session, status, update } = useSession();
 
   const isLoading = status === "loading";
 
@@ -62,15 +62,8 @@ export function useAuth() {
       return { success: false, error: data.error || "Failed to change password" };
     }
 
-    // Re-sign in to get a fresh JWT with isFirstLogin: false
-    // The old JWT in the cookie still has isFirstLogin: true
-    const email = session?.user?.email;
-    await signOut({ redirect: false });
-    await signIn("credentials", {
-      email,
-      password: newPassword,
-      redirect: false,
-    });
+    // Fast JWT patch — no signOut/signIn round-trip needed
+    await update({ isFirstLogin: false });
 
     return { success: true };
   };

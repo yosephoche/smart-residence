@@ -42,7 +42,12 @@ function ChangePasswordContent() {
     const result = await changePassword(data.oldPassword, data.newPassword);
 
     if (result.success) {
-      router.refresh();
+      const role = user?.role;
+      const dest =
+        role === "ADMIN" ? "/admin/dashboard" :
+        role === "STAFF" ? "/staff/dashboard" :
+        "/user/dashboard";
+      router.push(dest);
     } else {
       setError(result.error || "Failed to change password");
       setIsSubmitting(false);

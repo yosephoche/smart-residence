@@ -375,7 +375,7 @@ export async function getOnDutyStaff(jobType?: JobType) {
     },
     orderBy: { clockInAt: "asc" },
     include: {
-      staff: { select: { id: true, name: true, staffJobType: true } },
+      staff: { select: { id: true, name: true, staffJobType: true, phone: true } },
       schedule: {
         include: {
           shiftTemplate: { select: { shiftName: true, startTime: true, endTime: true } },

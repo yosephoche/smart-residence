@@ -32,7 +32,7 @@ export async function validateUploadedFile(
 ): Promise<{ valid: boolean; error?: string }> {
   // Size check
   if (buffer.byteLength > MAX_FILE_SIZE) {
-    return { valid: false, error: "File size must not exceed 2MB" };
+    return { valid: false, error: "File size must not exceed 10MB" };
   }
 
   // MIME type check

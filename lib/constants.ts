@@ -22,7 +22,7 @@ export const PAYMENT_STATUS = {
 export type PaymentStatus = (typeof PAYMENT_STATUS)[keyof typeof PAYMENT_STATUS];
 
 // File Upload
-export const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
+export const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 export const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/jpg"];
 export const ALLOWED_IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png"];
 

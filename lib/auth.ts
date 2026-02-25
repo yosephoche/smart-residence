@@ -49,7 +49,11 @@ export const {
   ],
   callbacks: {
     ...authConfig.callbacks,
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
+      // Handle session.update() call — patch JWT in-place without re-auth
+      if (trigger === "update" && session?.isFirstLogin !== undefined) {
+        token.isFirstLogin = session.isFirstLogin;
+      }
       if (user) {
         // Initial sign-in: populate token from user
         token.id = user.id;
@@ -57,8 +61,6 @@ export const {
         token.staffJobType = user.staffJobType ?? undefined;
         token.isFirstLogin = user.isFirstLogin;
       }
-      // DB query removed - password change flow already forces re-login (auth-client.tsx:56-64)
-      // which creates a fresh JWT token with updated isFirstLogin
       return token;
     },
   },
