@@ -44,6 +44,9 @@ export default function UserForm({
           email: user.email,
           role: user.role,
           phone: user.phone ?? "",
+          staffJobType: (user.staffJobType || undefined) as
+            | "SECURITY" | "CLEANING" | "GARDENING" | "MAINTENANCE" | "OTHER"
+            | undefined,
         }
       : {
           role: "USER",
@@ -118,7 +121,7 @@ export default function UserForm({
         )}
       </div>
 
-      {!isEditMode && role === "STAFF" && (
+      {role === "STAFF" && (
         <div className="flex flex-col gap-1.5">
           <label className="text-sm font-medium text-gray-700 tracking-tight">
             {t('job_type')} <span className="text-danger-500 ml-1">*</span>
