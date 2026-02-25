@@ -9,6 +9,8 @@ export interface User {
   email: string;
   password: string;
   role: Role;
+  staffJobType?: string | null;
+  phone?: string | null;
   isFirstLogin: boolean;
   createdAt: string;
   updatedAt: string;

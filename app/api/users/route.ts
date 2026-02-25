@@ -20,7 +20,7 @@ export const POST = auth(async (req) => {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const { name, email, role, houseId, staffJobType } = await req.json();
+  const { name, email, role, houseId, staffJobType, phone } = await req.json();
 
   if (!name || !email || !role) {
     return NextResponse.json(
@@ -30,7 +30,7 @@ export const POST = auth(async (req) => {
   }
 
   try {
-    const user = await createUser(name, email, role, undefined, houseId, staffJobType);
+    const user = await createUser(name, email, role, undefined, houseId, staffJobType, phone);
     return NextResponse.json(user, { status: 201 });
   } catch (err: any) {
     return NextResponse.json(

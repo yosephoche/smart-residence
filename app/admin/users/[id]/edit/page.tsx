@@ -55,7 +55,7 @@ export default function EditUserPage() {
     const res = await fetch(`/api/users/${user.id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: data.name, role: data.role }),
+      body: JSON.stringify({ name: data.name, role: data.role, phone: data.phone || null }),
     });
 
     if (!res.ok) {

@@ -9,6 +9,7 @@ export const userFormSchema = z
     }),
     staffJobType: z.enum(["SECURITY", "CLEANING", "GARDENING", "MAINTENANCE", "OTHER"]).optional(),
     houseId: z.string().optional(), // Optional house assignment during user creation
+    phone: z.string().max(20).optional(),
   })
   .refine(
     (data) => {

@@ -30,6 +30,7 @@ export default function CreateUserPage() {
         role: data.role,
         houseId: data.houseId,
         staffJobType: data.staffJobType,
+        phone: data.phone || null,
       }),
     });
 

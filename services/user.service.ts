@@ -18,6 +18,7 @@ export async function getAllUsers(filters?: { role?: "ADMIN" | "USER" | "STAFF" 
       email: true,
       role: true,
       staffJobType: true,
+      phone: true,
       isFirstLogin: true,
       createdAt: true,
       updatedAt: true,
@@ -35,6 +36,7 @@ export async function getUserById(id: string) {
       email: true,
       role: true,
       staffJobType: true,
+      phone: true,
       isFirstLogin: true,
       createdAt: true,
       updatedAt: true,
@@ -49,7 +51,8 @@ export async function createUser(
   role: "ADMIN" | "USER" | "STAFF",
   password?: string, // Optional - fetch from config if not provided
   houseId?: string, // Optional house assignment
-  staffJobType?: "SECURITY" | "CLEANING" | "GARDENING" | "MAINTENANCE" | "OTHER" // Required for STAFF role
+  staffJobType?: "SECURITY" | "CLEANING" | "GARDENING" | "MAINTENANCE" | "OTHER", // Required for STAFF role
+  phone?: string
 ) {
   // Validate role and staffJobType combination
   if (role === "STAFF" && !staffJobType) {
@@ -93,6 +96,7 @@ export async function createUser(
         password: hashedPassword,
         role,
         staffJobType,
+        phone: phone || null,
         isFirstLogin: true,
       },
       select: {
@@ -101,6 +105,7 @@ export async function createUser(
         email: true,
         role: true,
         staffJobType: true,
+        phone: true,
         isFirstLogin: true,
         createdAt: true,
         updatedAt: true,
@@ -126,6 +131,7 @@ export async function updateUser(
     email: string;
     role: "ADMIN" | "USER" | "STAFF";
     staffJobType: "SECURITY" | "CLEANING" | "GARDENING" | "MAINTENANCE" | "OTHER" | null;
+    phone: string | null;
   }>
 ) {
   const user = await prisma.user.update({
@@ -137,6 +143,7 @@ export async function updateUser(
       email: true,
       role: true,
       staffJobType: true,
+      phone: true,
       isFirstLogin: true,
       createdAt: true,
       updatedAt: true,

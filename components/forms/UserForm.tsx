@@ -43,10 +43,12 @@ export default function UserForm({
           name: user.name,
           email: user.email,
           role: user.role,
+          phone: user.phone ?? "",
         }
       : {
           role: "USER",
           houseId: "",
+          phone: "",
         },
   });
 
@@ -87,6 +89,16 @@ export default function UserForm({
         fullWidth
         required
         disabled={isEditMode}
+      />
+
+      <Input
+        label="Nomor HP"
+        type="tel"
+        placeholder="Contoh: 08123456789"
+        error={errors.phone?.message}
+        helperText="Opsional — digunakan untuk tombol WhatsApp"
+        {...register("phone")}
+        fullWidth
       />
 
       <div className="flex flex-col gap-1.5">
