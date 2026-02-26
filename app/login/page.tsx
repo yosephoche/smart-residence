@@ -10,6 +10,7 @@ import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Alert from "@/components/ui/Alert";
 import { useTranslations } from "next-intl";
+import { Eye, EyeOff } from "lucide-react";
 
 export const dynamic = 'force-dynamic';
 
@@ -18,6 +19,7 @@ export default function LoginPage() {
   const { login } = useAuth();
   const [error, setError] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const t = useTranslations('auth');
   const tCommon = useTranslations('common');
 
@@ -108,7 +110,7 @@ export default function LoginPage() {
 
             <Input
               label={t('password')}
-              type="password"
+              type={showPassword ? "text" : "password"}
               placeholder={t('password_placeholder')}
               error={errors.password?.message}
               {...register("password")}
@@ -128,6 +130,17 @@ export default function LoginPage() {
                     d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
                   />
                 </svg>
+              }
+              rightIcon={
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="text-gray-400 hover:text-gray-600 focus:outline-none"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
               }
             />
 
