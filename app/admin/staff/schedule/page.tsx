@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { JobType } from "@prisma/client";
@@ -9,8 +9,9 @@ import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import Modal, { ConfirmModal } from "@/components/ui/Modal";
 import Input from "@/components/ui/Input";
-import { Plus, Sparkles, Trash2, Calendar } from "lucide-react";
+import { Plus, Sparkles, Trash2, List, CalendarDays } from "lucide-react";
 import { usePagination } from "@/lib/hooks/usePagination";
+import ScheduleCalendar, { toDateKey } from "@/components/staff/ScheduleCalendar";
 
 export const dynamic = 'force-dynamic';
 
@@ -54,6 +55,14 @@ export default function SchedulePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  // View mode
+  const now = new Date();
+  const [viewMode, setViewMode] = useState<"table" | "calendar">("table");
+  const [calendarMonth, setCalendarMonth] = useState({
+    year: now.getFullYear(),
+    month: now.getMonth(),
+  });
+
   // Filters
   const [startDate, setStartDate] = useState(() => {
     const today = new Date();
@@ -91,6 +100,17 @@ export default function SchedulePage() {
   });
   const [autoGenError, setAutoGenError] = useState("");
   const [generating, setGenerating] = useState(false);
+
+  // Derived: schedules grouped by date key for calendar view
+  const schedulesByDate = useMemo(() => {
+    const map = new Map<string, Schedule[]>();
+    for (const schedule of schedules) {
+      const key = toDateKey(new Date(schedule.date));
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(schedule);
+    }
+    return map;
+  }, [schedules]);
 
   // Pagination
   const {
@@ -153,6 +173,21 @@ export default function SchedulePage() {
     } catch (err) {
       console.error("Failed to fetch templates:", err);
     }
+  };
+
+  // Calendar month navigation — syncs startDate/endDate so useEffect re-fetches
+  const handleCalendarMonthChange = (year: number, month: number) => {
+    setCalendarMonth({ year, month });
+    const first = new Date(year, month, 1);
+    const last = new Date(year, month + 1, 0);
+    setStartDate(first.toISOString().split("T")[0]);
+    setEndDate(last.toISOString().split("T")[0]);
+  };
+
+  // Clicking a calendar date opens the Create modal with that date pre-filled
+  const handleCalendarDateClick = (dateKey: string) => {
+    setCreateForm((prev) => ({ ...prev, date: dateKey, endDate: "", isBulk: false }));
+    setIsCreateModalOpen(true);
   };
 
   const handleCreateSchedule = async (e: React.FormEvent) => {
@@ -323,14 +358,6 @@ export default function SchedulePage() {
     },
   ];
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -339,7 +366,36 @@ export default function SchedulePage() {
           <h1 className="text-3xl font-bold text-gray-900">{t('title')}</h1>
           <p className="text-gray-500 mt-1">{t('subtitle')}</p>
         </div>
-        <div className="flex gap-3">
+
+        <div className="flex items-center gap-3">
+          {/* View toggle pill */}
+          <div className="flex items-center bg-gray-100 rounded-lg p-1">
+            <button
+              type="button"
+              onClick={() => setViewMode("table")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                viewMode === "table"
+                  ? "bg-white text-gray-900 shadow-sm"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              <List className="w-4 h-4" />
+              {t("view_table")}
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode("calendar")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                viewMode === "calendar"
+                  ? "bg-white text-gray-900 shadow-sm"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              <CalendarDays className="w-4 h-4" />
+              {t("view_calendar")}
+            </button>
+          </div>
+
           <Button onClick={() => setIsAutoGenModalOpen(true)} variant="secondary">
             <Sparkles className="w-4 h-4 mr-2" />
             {t('auto_generate')}
@@ -351,24 +407,26 @@ export default function SchedulePage() {
         </div>
       </div>
 
-      {/* Date Range Filter */}
-      <div className="bg-white p-4 rounded-lg border border-gray-200 space-y-4">
-        <h3 className="font-semibold text-gray-900">{t('date_range')}</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Input
-            label={t('start_date')}
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-          />
-          <Input
-            label={t('end_date')}
-            type="date"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-          />
+      {/* Date Range Filter — table view only */}
+      {viewMode === "table" && (
+        <div className="bg-white p-4 rounded-lg border border-gray-200 space-y-4">
+          <h3 className="font-semibold text-gray-900">{t('date_range')}</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input
+              label={t('start_date')}
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+            />
+            <Input
+              label={t('end_date')}
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+            />
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Error */}
       {error && (
@@ -377,23 +435,44 @@ export default function SchedulePage() {
         </div>
       )}
 
-      {/* Table */}
-      <Table
-        columns={columns}
-        data={paginatedData}
-        keyExtractor={(row) => row.id}
-        emptyMessage={t('no_schedules')}
-      />
+      {/* Table view */}
+      {viewMode === "table" && (
+        loading ? (
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600" />
+          </div>
+        ) : (
+          <>
+            <Table
+              columns={columns}
+              data={paginatedData}
+              keyExtractor={(row) => row.id}
+              emptyMessage={t('no_schedules')}
+            />
+            {paginatedData.length > 0 && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                pageSize={pageSize}
+                onPageSizeChange={handlePageSizeChange}
+                totalItems={totalItems}
+              />
+            )}
+          </>
+        )
+      )}
 
-      {/* Pagination */}
-      {paginatedData.length > 0 && (
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={handlePageChange}
-          pageSize={pageSize}
-          onPageSizeChange={handlePageSizeChange}
-          totalItems={totalItems}
+      {/* Calendar view */}
+      {viewMode === "calendar" && (
+        <ScheduleCalendar
+          year={calendarMonth.year}
+          month={calendarMonth.month}
+          schedulesByDate={schedulesByDate}
+          loading={loading}
+          onMonthChange={handleCalendarMonthChange}
+          onDateClick={handleCalendarDateClick}
+          onDeleteClick={(id) => setDeleteTargetId(id)}
         />
       )}
 

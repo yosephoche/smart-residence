@@ -698,7 +698,11 @@
       "other_help": "Non-security staff will be assigned 1 shift per day",
       "generating": "Generating...",
       "generate": "Generate Schedules",
-      "showing_count": "Showing {filtered} of {total} schedules"
+      "showing_count": "Showing {filtered} of {total} schedules",
+      "view_table": "Table",
+      "view_calendar": "Calendar",
+      "calendar_legend_morning": "Morning (before 12:00)",
+      "calendar_legend_afternoon": "Afternoon / Night"
     }
   },
   "user_settings": {

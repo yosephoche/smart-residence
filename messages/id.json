@@ -750,7 +750,11 @@
       "shift_required": "Shift wajib dipilih",
       "clear_filters": "Bersihkan Filter",
       "end_date_after_start": "Tanggal akhir harus setelah atau sama dengan tanggal mulai",
-      "showing_count": "Menampilkan {filtered} dari {total} jadwal"
+      "showing_count": "Menampilkan {filtered} dari {total} jadwal",
+      "view_table": "Tabel",
+      "view_calendar": "Kalender",
+      "calendar_legend_morning": "Pagi (sebelum 12:00)",
+      "calendar_legend_afternoon": "Siang / Malam"
     }
   },
   "validation": {
