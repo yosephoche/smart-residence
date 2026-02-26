@@ -23,7 +23,8 @@ import {
   Clock,
   FileText,
   CalendarDays,
-  ClipboardList
+  ClipboardList,
+  Phone
 } from "lucide-react";
 import LanguageSwitcher from "@/components/i18n/LanguageSwitcher";
 
@@ -130,6 +131,12 @@ export default function AdminSidebar() {
           icon: <CalendarDays className="w-4 h-4" />,
         },
       ],
+    },
+    {
+      type: "item",
+      name: t('navigation.admin.urgent_contacts'),
+      href: "/admin/urgent-contacts",
+      icon: <Phone className="w-5 h-5" />,
     },
     {
       type: "item",

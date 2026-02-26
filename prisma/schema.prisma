@@ -81,6 +81,7 @@ model User {
   shiftReports   ShiftReport[]
   staffSchedules       StaffSchedule[]
   createdSchedules     StaffSchedule[] @relation("ScheduleCreator")
+  urgentContacts       UrgentContact[]
 }
 
 model HouseType {
@@ -256,4 +257,19 @@ model StaffSchedule {
   @@unique([staffId, shiftTemplateId, date])
   @@index([date, shiftTemplateId])
   @@index([staffId, date])
+}
+
+model UrgentContact {
+  id          String   @id @default(cuid())
+  name        String
+  serviceType String
+  phone       String
+  order       Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   String
+  creator     User     @relation(fields: [createdBy], references: [id])
+
+  @@index([isActive, order])
 }

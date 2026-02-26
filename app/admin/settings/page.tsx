@@ -7,7 +7,8 @@ import { DefaultPasswordConfigForm } from "@/components/forms/DefaultPasswordCon
 import { GeofenceConfigForm } from "@/components/forms/GeofenceConfigForm";
 import BankDetailsConfigForm from "@/components/forms/BankDetailsConfigForm";
 import ResidenceInfoConfigForm from "@/components/forms/ResidenceInfoConfigForm";
-import { Settings, AlertCircle, CheckCircle, Key, MapPin, CreditCard, Building2 } from "lucide-react";
+import WhatsAppTemplateConfigForm from "@/components/forms/WhatsAppTemplateConfigForm";
+import { Settings, AlertCircle, CheckCircle, Key, MapPin, CreditCard, Building2, MessageSquare } from "lucide-react";
 
 export const dynamic = 'force-dynamic';
 
@@ -36,6 +37,9 @@ export default function SettingsPage() {
   const [geofenceConfig, setGeofenceConfig] = useState<GeofenceConfig | null>(
     null
   );
+  const [whatsappTemplateConfig, setWhatsappTemplateConfig] = useState<{
+    template: string;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
   const [alert, setAlert] = useState<{
     type: "success" | "error";
@@ -48,11 +52,12 @@ export default function SettingsPage() {
 
   const fetchConfigs = async () => {
     try {
-      const [uploadResponse, passwordResponse, geofenceResponse] =
+      const [uploadResponse, passwordResponse, geofenceResponse, waTemplateResponse] =
         await Promise.all([
           fetch("/api/system-config/upload-window"),
           fetch("/api/system-config/default-password"),
           fetch("/api/system-config/geofence"),
+          fetch("/api/system-config/whatsapp-template"),
         ]);
 
       if (!uploadResponse.ok || !passwordResponse.ok || !geofenceResponse.ok) {
@@ -68,6 +73,11 @@ export default function SettingsPage() {
       setUploadWindowConfig(uploadData);
       setDefaultPasswordConfig(passwordData);
       setGeofenceConfig(geofenceData);
+
+      if (waTemplateResponse.ok) {
+        const waData = await waTemplateResponse.json();
+        setWhatsappTemplateConfig(waData);
+      }
     } catch (error) {
       console.error("Error fetching configs:", error);
       setAlert({
@@ -109,6 +119,15 @@ export default function SettingsPage() {
     });
 
     // Auto-dismiss success message after 5 seconds
+    setTimeout(() => setAlert(null), 5000);
+  };
+
+  const handleWhatsAppTemplateSaveSuccess = (config: { template: string }) => {
+    setWhatsappTemplateConfig(config);
+    setAlert({
+      type: "success",
+      message: "Template pesan WhatsApp berhasil disimpan",
+    });
     setTimeout(() => setAlert(null), 5000);
   };
 
@@ -351,6 +370,60 @@ export default function SettingsPage() {
             <li>
               Radius yang direkomendasikan: 50-200 meter tergantung ukuran area
             </li>
+          </ul>
+        </div>
+      </div>
+
+      {/* WhatsApp Message Template Configuration */}
+      <div className="bg-white rounded-lg shadow border border-gray-200 mt-6">
+        <div className="p-6 border-b border-gray-200">
+          <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+            <MessageSquare className="w-5 h-5" />
+            Template Pesan WhatsApp
+          </h2>
+          <p className="text-sm text-gray-600 mt-1">
+            Atur template pesan yang otomatis terisi saat penghuni menekan tombol WhatsApp kontak darurat
+          </p>
+        </div>
+
+        <div className="p-6">
+          {loading ? (
+            <div className="animate-pulse space-y-4">
+              <div className="h-24 bg-gray-200 rounded"></div>
+              <div className="h-12 bg-gray-200 rounded"></div>
+            </div>
+          ) : whatsappTemplateConfig ? (
+            <WhatsAppTemplateConfigForm
+              initialConfig={whatsappTemplateConfig}
+              onSaveSuccess={handleWhatsAppTemplateSaveSuccess}
+              onSaveError={handleSaveError}
+            />
+          ) : (
+            <WhatsAppTemplateConfigForm
+              initialConfig={{
+                template:
+                  "Halo, saya warga Sakura Village blok {block} no {number}, saya ingin minta bantuannya",
+              }}
+              onSaveSuccess={handleWhatsAppTemplateSaveSuccess}
+              onSaveError={handleSaveError}
+            />
+          )}
+        </div>
+
+        <div className="p-6 bg-green-50 border-t border-green-200">
+          <h3 className="font-medium text-green-900 mb-2 flex items-center gap-2">
+            <AlertCircle className="w-4 h-4" />
+            Informasi Placeholder
+          </h3>
+          <ul className="text-sm text-green-800 space-y-1 ml-6 list-disc">
+            <li>
+              <code className="bg-green-100 px-1 rounded font-mono">{"{block}"}</code> — diganti dengan blok rumah penghuni
+            </li>
+            <li>
+              <code className="bg-green-100 px-1 rounded font-mono">{"{number}"}</code> — diganti dengan nomor rumah penghuni
+            </li>
+            <li>Template ini juga berlaku untuk tombol WhatsApp petugas keamanan bertugas</li>
+            <li>Perubahan langsung berlaku tanpa perlu reload halaman penghuni</li>
           </ul>
         </div>
       </div>

@@ -269,3 +269,51 @@ export async function setResidenceInfoConfig(
   const { invalidateResidenceInfoCache } = await import("@/lib/cache/residence-info");
   invalidateResidenceInfoCache();
 }
+
+// Default WhatsApp message template
+const DEFAULT_WHATSAPP_TEMPLATE = {
+  template:
+    "Halo, saya warga Sakura Village blok {block} no {number}, saya ingin minta bantuannya",
+};
+
+export interface WhatsAppTemplateConfig {
+  template: string;
+}
+
+/**
+ * Get the WhatsApp message template configuration from the database
+ * Falls back to default if no config exists
+ */
+export async function getWhatsAppTemplateConfig(): Promise<WhatsAppTemplateConfig> {
+  try {
+    const config = await prisma.systemConfig.findUnique({
+      where: { key: "whatsapp_template" },
+    });
+
+    if (!config) {
+      return DEFAULT_WHATSAPP_TEMPLATE;
+    }
+
+    const value = config.value as unknown as WhatsAppTemplateConfig;
+    return {
+      template: value.template ?? DEFAULT_WHATSAPP_TEMPLATE.template,
+    };
+  } catch (error) {
+    console.error("Error fetching WhatsApp template config:", error);
+    return DEFAULT_WHATSAPP_TEMPLATE;
+  }
+}
+
+/**
+ * Set WhatsApp message template configuration
+ */
+export async function setWhatsAppTemplateConfig(
+  config: WhatsAppTemplateConfig,
+  updatedBy: string
+): Promise<void> {
+  await setConfig("whatsapp_template", config, updatedBy);
+
+  // Invalidate cache
+  const { invalidateWhatsAppTemplateCache } = await import("@/lib/cache/whatsapp-template");
+  invalidateWhatsAppTemplateCache();
+}
