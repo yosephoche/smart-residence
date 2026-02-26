@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Search, Home, User, DollarSign, AlertCircle, CheckCircle } from "lucide-react";
+import { usePagination } from "@/lib/hooks/usePagination";
+import { Pagination } from "@/components/ui/Table";
 
 interface HouseWithStatus {
   id: string;
@@ -49,6 +51,7 @@ export default function UnpaidResidentsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"unpaid" | "paid">("unpaid");
 
   useEffect(() => {
     fetchHouseStatus();
@@ -96,6 +99,21 @@ export default function UnpaidResidentsPage() {
       minimumFractionDigits: 0,
     }).format(amount);
   };
+
+  const activeList = activeTab === "unpaid" ? filteredUnpaid : filteredPaid;
+
+  const {
+    paginatedData,
+    currentPage,
+    totalPages,
+    pageSize,
+    totalItems,
+    handlePageChange,
+    handlePageSizeChange,
+  } = usePagination(activeList, {
+    initialPageSize: 10,
+    resetDeps: [searchQuery, activeTab],
+  });
 
   if (loading) {
     return (
@@ -155,86 +173,168 @@ export default function UnpaidResidentsPage() {
         />
       </motion.div>
 
-      {/* Stats */}
+      {/* Tab Bar */}
       <motion.div
         variants={itemVariants}
-        className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)] p-3"
+        className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)] overflow-hidden"
       >
-        <div className="flex items-center justify-around">
-          <div className="flex items-center gap-2">
-            <AlertCircle className="w-5 h-5 text-amber-500" />
-            <div>
-              <p className="text-sm font-semibold text-slate-900">{filteredUnpaid.length}</p>
-              <p className="text-xs text-amber-600">Belum Bayar</p>
+        <div className="flex">
+          {/* Belum Bayar Tab */}
+          <button
+            onClick={() => setActiveTab("unpaid")}
+            className={`flex-1 flex items-center justify-center gap-2 py-3 transition-colors border-b-2 ${
+              activeTab === "unpaid"
+                ? "border-amber-500 bg-amber-50"
+                : "border-transparent"
+            }`}
+          >
+            <AlertCircle
+              className={`w-4 h-4 ${
+                activeTab === "unpaid" ? "text-amber-500" : "text-slate-400"
+              }`}
+            />
+            <div className="text-left">
+              <p
+                className={`text-sm font-semibold ${
+                  activeTab === "unpaid" ? "text-amber-700" : "text-slate-500"
+                }`}
+              >
+                {filteredUnpaid.length}
+              </p>
+              <p
+                className={`text-xs ${
+                  activeTab === "unpaid" ? "text-amber-600" : "text-slate-400"
+                }`}
+              >
+                Belum Bayar
+              </p>
             </div>
-          </div>
-          <div className="w-px h-8 bg-slate-100" />
-          <div className="flex items-center gap-2">
-            <CheckCircle className="w-5 h-5 text-emerald-500" />
-            <div>
-              <p className="text-sm font-semibold text-slate-900">{filteredPaid.length}</p>
-              <p className="text-xs text-emerald-600">Sudah Bayar</p>
+          </button>
+
+          <div className="w-px bg-slate-100 my-2" />
+
+          {/* Sudah Bayar Tab */}
+          <button
+            onClick={() => setActiveTab("paid")}
+            className={`flex-1 flex items-center justify-center gap-2 py-3 transition-colors border-b-2 ${
+              activeTab === "paid"
+                ? "border-emerald-500 bg-emerald-50"
+                : "border-transparent"
+            }`}
+          >
+            <CheckCircle
+              className={`w-4 h-4 ${
+                activeTab === "paid" ? "text-emerald-500" : "text-slate-400"
+              }`}
+            />
+            <div className="text-left">
+              <p
+                className={`text-sm font-semibold ${
+                  activeTab === "paid" ? "text-emerald-700" : "text-slate-500"
+                }`}
+              >
+                {filteredPaid.length}
+              </p>
+              <p
+                className={`text-xs ${
+                  activeTab === "paid" ? "text-emerald-600" : "text-slate-400"
+                }`}
+              >
+                Sudah Bayar
+              </p>
             </div>
-          </div>
+          </button>
         </div>
       </motion.div>
 
-      {/* Belum Bayar Section */}
+      {/* List Section */}
       <motion.div variants={itemVariants}>
+        {/* Section label */}
         <div className="flex items-center gap-2 mb-3">
-          <AlertCircle className="w-4 h-4 text-amber-500" />
+          {activeTab === "unpaid" ? (
+            <AlertCircle className="w-4 h-4 text-amber-500" />
+          ) : (
+            <CheckCircle className="w-4 h-4 text-emerald-500" />
+          )}
           <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">
-            Belum Bayar
+            {activeTab === "unpaid" ? "Belum Bayar" : "Sudah Bayar"}
           </p>
+          <span className="ml-auto text-xs text-slate-400">{totalItems} penghuni</span>
         </div>
 
-        {filteredUnpaid.length > 0 ? (
+        {/* Cards */}
+        {paginatedData.length > 0 ? (
           <div className="space-y-3">
-            {filteredUnpaid.map((item, index) => (
-              <motion.div
-                key={item.id}
-                initial={{ opacity: 0, x: -8 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.1 + index * 0.04 }}
-                className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)] border border-amber-100 p-4"
-              >
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center">
-                      <Home className="w-5 h-5 text-amber-600" />
+            {paginatedData.map((item, index) => {
+              const isUnpaid = activeTab === "unpaid";
+              return (
+                <motion.div
+                  key={item.id}
+                  initial={{ opacity: 0, x: -8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.1 + index * 0.04 }}
+                  className={`bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)] border p-4 ${
+                    isUnpaid ? "border-amber-100" : "border-emerald-100"
+                  }`}
+                >
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                          isUnpaid ? "bg-amber-50" : "bg-emerald-50"
+                        }`}
+                      >
+                        <Home
+                          className={`w-5 h-5 ${
+                            isUnpaid ? "text-amber-600" : "text-emerald-600"
+                          }`}
+                        />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-slate-900">
+                          Rumah {item.houseNumber}
+                        </p>
+                        <p className="text-sm text-slate-400">Blok {item.block}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-semibold text-slate-900">
-                        Rumah {item.houseNumber}
-                      </p>
-                      <p className="text-sm text-slate-400">Blok {item.block}</p>
-                    </div>
+                    <span
+                      className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${
+                        isUnpaid
+                          ? "bg-amber-50 text-amber-600"
+                          : "bg-emerald-50 text-emerald-600"
+                      }`}
+                    >
+                      {isUnpaid
+                        ? item.paymentStatus === "PENDING"
+                          ? "Menunggu"
+                          : "Belum Bayar"
+                        : "Sudah Bayar"}
+                    </span>
                   </div>
-                  <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-amber-50 text-amber-600">
-                    {item.paymentStatus === "PENDING" ? "Menunggu" : "Belum Bayar"}
-                  </span>
-                </div>
 
-                <div className="grid grid-cols-1 gap-2 pl-13">
-                  <div className="flex items-center gap-2">
-                    <User className="w-4 h-4 text-slate-400" />
-                    <div>
-                      <p className="text-sm font-medium text-slate-800">{item.user.name}</p>
-                      <p className="text-xs text-slate-400">{item.user.email}</p>
+                  <div className="grid grid-cols-1 gap-2 pl-13">
+                    <div className="flex items-center gap-2">
+                      <User className="w-4 h-4 text-slate-400" />
+                      <div>
+                        <p className="text-sm font-medium text-slate-800">
+                          {item.user.name}
+                        </p>
+                        <p className="text-xs text-slate-400">{item.user.email}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <DollarSign className="w-4 h-4 text-slate-400" />
+                      <div>
+                        <p className="text-sm text-slate-700">{item.houseType.typeName}</p>
+                        <p className="text-xs font-medium text-slate-800">
+                          {formatCurrency(item.houseType.price)}/bulan
+                        </p>
+                      </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <DollarSign className="w-4 h-4 text-slate-400" />
-                    <div>
-                      <p className="text-sm text-slate-700">{item.houseType.typeName}</p>
-                      <p className="text-xs font-medium text-slate-800">
-                        {formatCurrency(item.houseType.price)}/bulan
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
+                </motion.div>
+              );
+            })}
           </div>
         ) : (
           <div className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)] p-8 text-center">
@@ -244,93 +344,45 @@ export default function UnpaidResidentsPage() {
                 <p className="text-slate-600 font-medium mb-1">Tidak ada hasil</p>
                 <p className="text-sm text-slate-400">Coba kata kunci lain</p>
               </>
-            ) : (
+            ) : activeTab === "unpaid" ? (
               <>
                 <div className="w-14 h-14 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-3">
                   <CheckCircle className="w-7 h-7 text-emerald-500" />
                 </div>
-                <p className="text-slate-900 font-medium mb-1">Semua penghuni sudah bayar!</p>
-                <p className="text-sm text-slate-400">Tidak ada tagihan yang belum dibayar</p>
-              </>
-            )}
-          </div>
-        )}
-      </motion.div>
-
-      {/* Sudah Bayar Section */}
-      <motion.div variants={itemVariants}>
-        <div className="flex items-center gap-2 mb-3">
-          <CheckCircle className="w-4 h-4 text-emerald-500" />
-          <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">
-            Sudah Bayar
-          </p>
-        </div>
-
-        {filteredPaid.length > 0 ? (
-          <div className="space-y-3">
-            {filteredPaid.map((item, index) => (
-              <motion.div
-                key={item.id}
-                initial={{ opacity: 0, x: -8 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.1 + index * 0.04 }}
-                className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)] border border-emerald-100 p-4"
-              >
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center">
-                      <Home className="w-5 h-5 text-emerald-600" />
-                    </div>
-                    <div>
-                      <p className="font-semibold text-slate-900">
-                        Rumah {item.houseNumber}
-                      </p>
-                      <p className="text-sm text-slate-400">Blok {item.block}</p>
-                    </div>
-                  </div>
-                  <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-600">
-                    Sudah Bayar
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 gap-2 pl-13">
-                  <div className="flex items-center gap-2">
-                    <User className="w-4 h-4 text-slate-400" />
-                    <div>
-                      <p className="text-sm font-medium text-slate-800">{item.user.name}</p>
-                      <p className="text-xs text-slate-400">{item.user.email}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <DollarSign className="w-4 h-4 text-slate-400" />
-                    <div>
-                      <p className="text-sm text-slate-700">{item.houseType.typeName}</p>
-                      <p className="text-xs font-medium text-slate-800">
-                        {formatCurrency(item.houseType.price)}/bulan
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        ) : (
-          <div className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)] p-8 text-center">
-            {searchQuery ? (
-              <>
-                <Search className="w-10 h-10 text-slate-300 mx-auto mb-2" />
-                <p className="text-slate-600 font-medium mb-1">Tidak ada hasil</p>
-                <p className="text-sm text-slate-400">Coba kata kunci lain</p>
+                <p className="text-slate-900 font-medium mb-1">
+                  Semua penghuni sudah bayar!
+                </p>
+                <p className="text-sm text-slate-400">
+                  Tidak ada tagihan yang belum dibayar
+                </p>
               </>
             ) : (
               <>
                 <div className="w-14 h-14 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3">
                   <AlertCircle className="w-7 h-7 text-slate-300" />
                 </div>
-                <p className="text-slate-600 font-medium mb-1">Belum ada yang membayar bulan ini</p>
-                <p className="text-sm text-slate-400">Data akan muncul setelah ada pembayaran yang disetujui</p>
+                <p className="text-slate-600 font-medium mb-1">
+                  Belum ada yang membayar bulan ini
+                </p>
+                <p className="text-sm text-slate-400">
+                  Data akan muncul setelah ada pembayaran yang disetujui
+                </p>
               </>
             )}
+          </div>
+        )}
+
+        {/* Pagination */}
+        {paginatedData.length > 0 && (
+          <div className="mt-4">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+              pageSize={pageSize}
+              onPageSizeChange={handlePageSizeChange}
+              totalItems={totalItems}
+            />
           </div>
         )}
       </motion.div>
