@@ -147,7 +147,6 @@ export interface ScheduleCalendarProps {
   year: number;
   month: number;
   // Accepts any schedule shape that has id/staff/shiftTemplate fields
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   schedulesByDate: Map<string, any[]>;
   loading: boolean;
   onMonthChange: (year: number, month: number) => void;
