@@ -4,32 +4,32 @@ import { useState, useEffect, useMemo } from "react";
 import { useTranslations } from "next-intl";
 import Button from "@/components/ui/Button";
 import FileUpload from "@/components/ui/FileUpload";
+import SearchableSelect from "@/components/ui/SearchableSelect";
 import { formatCurrency } from "@/lib/utils";
 import { calculateTotalPayment, getMonthOptions } from "@/lib/calculations";
 
-interface User {
+interface HouseUser {
   id: string;
   name: string;
   email: string;
-  role: string;
 }
 
-interface House {
+interface HouseWithUser {
   id: string;
   houseNumber: string;
   block: string;
+  userId: string | null;
   houseType?: { typeName: string; price: unknown };
+  user?: HouseUser | null;
 }
 
 interface AdminCreatePaymentFormProps {
-  users: User[];
   onSubmit: (formData: FormData) => void;
   onCancel: () => void;
   isSubmitting: boolean;
 }
 
 export default function AdminCreatePaymentForm({
-  users,
   onSubmit,
   onCancel,
   isSubmitting,
@@ -37,42 +37,57 @@ export default function AdminCreatePaymentForm({
   const t = useTranslations('payments.form');
   const tAdmin = useTranslations('payments.admin');
   const tCommon = useTranslations('common');
-  const [selectedUserId, setSelectedUserId] = useState("");
-  const [houses, setHouses] = useState<House[]>([]);
+
+  const [allHouses, setAllHouses] = useState<HouseWithUser[]>([]);
+  const [isLoadingHouses, setIsLoadingHouses] = useState(true);
+  const [blockFilter, setBlockFilter] = useState("");
   const [selectedHouseId, setSelectedHouseId] = useState("");
   const [amountMonths, setAmountMonths] = useState(1);
   const [proofImage, setProofImage] = useState<File | null>(null);
-  const [isLoadingHouses, setIsLoadingHouses] = useState(false);
 
-  const nonAdminUsers = useMemo(
-    () => users.filter((u) => u.role !== "ADMIN"),
-    [users]
-  );
-
-  // Fetch houses when user changes
+  // Fetch all occupied houses with user info on mount
   useEffect(() => {
-    if (!selectedUserId) {
-      setHouses([]);
-      setSelectedHouseId("");
-      return;
-    }
     setIsLoadingHouses(true);
-    setSelectedHouseId("");
-    fetch(`/api/houses?userId=${selectedUserId}`)
+    fetch("/api/houses?includeUser=true")
       .then((r) => r.json())
-      .then((data) => {
-        setHouses(data);
+      .then((data: HouseWithUser[]) => {
+        // Only keep houses that have an assigned resident
+        setAllHouses(data.filter((h) => h.userId !== null));
         setIsLoadingHouses(false);
       })
       .catch(() => {
-        setHouses([]);
+        setAllHouses([]);
         setIsLoadingHouses(false);
       });
-  }, [selectedUserId]);
+  }, []);
 
+  // Unique sorted blocks derived from allHouses
+  const uniqueBlocks = useMemo(() => {
+    const blocks = new Set(allHouses.map((h) => h.block));
+    return Array.from(blocks).sort();
+  }, [allHouses]);
+
+  // Houses filtered by block selection
+  const filteredHouses = useMemo(() => {
+    if (!blockFilter) return allHouses;
+    return allHouses.filter((h) => h.block === blockFilter);
+  }, [allHouses, blockFilter]);
+
+  // SearchableSelect options
+  const houseOptions = useMemo(
+    () =>
+      filteredHouses.map((h) => ({
+        value: h.id,
+        label: `No. ${h.houseNumber} – Blok ${h.block} (${h.houseType?.typeName ?? "-"})`,
+        searchText: `${h.houseNumber} ${h.block}`,
+      })),
+    [filteredHouses]
+  );
+
+  // Selected house object
   const selectedHouse = useMemo(
-    () => houses.find((h) => h.id === selectedHouseId) ?? null,
-    [houses, selectedHouseId]
+    () => allHouses.find((h) => h.id === selectedHouseId) ?? null,
+    [allHouses, selectedHouseId]
   );
 
   const monthlyRate = selectedHouse?.houseType?.price != null
@@ -84,14 +99,21 @@ export default function AdminCreatePaymentForm({
     : 0;
 
   const monthOptions = getMonthOptions();
-  const isValid = selectedUserId && selectedHouseId && amountMonths >= 1 && proofImage;
+
+  // Reset house selection when block filter changes
+  const handleBlockChange = (block: string) => {
+    setBlockFilter(block);
+    setSelectedHouseId("");
+  };
+
+  const isValid = selectedHouseId && selectedHouse?.userId && amountMonths >= 1 && proofImage;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!isValid) return;
 
     const fd = new FormData();
-    fd.append("userId", selectedUserId);
+    fd.append("userId", selectedHouse!.user!.id);
     fd.append("houseId", selectedHouseId);
     fd.append("amountMonths", String(amountMonths));
     fd.append("proofImage", proofImage!);
@@ -100,46 +122,58 @@ export default function AdminCreatePaymentForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-      {/* User select */}
+      {/* Block filter */}
       <div className="flex flex-col gap-1.5">
         <label className="text-sm font-medium text-gray-700 tracking-tight">
-          {t('resident')} <span className="text-danger-500">*</span>
+          {t('filter_block')}
         </label>
         <select
-          value={selectedUserId}
-          onChange={(e) => setSelectedUserId(e.target.value)}
-          disabled={isSubmitting}
+          value={blockFilter}
+          onChange={(e) => handleBlockChange(e.target.value)}
+          disabled={isLoadingHouses || isSubmitting}
           className="w-full px-4 py-3 text-sm text-gray-900 bg-white border-2 border-gray-300 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:border-primary-500 focus:ring-primary-100 disabled:opacity-50"
         >
-          <option value="">{t('select_resident')}</option>
-          {nonAdminUsers.map((u) => (
-            <option key={u.id} value={u.id}>
-              {u.name} ({u.email})
+          <option value="">{t('all_blocks')}</option>
+          {uniqueBlocks.map((block) => (
+            <option key={block} value={block}>
+              Blok {block}
             </option>
           ))}
         </select>
       </div>
 
-      {/* House select */}
+      {/* House searchable select */}
       <div className="flex flex-col gap-1.5">
         <label className="text-sm font-medium text-gray-700 tracking-tight">
           {t('house')} <span className="text-danger-500">*</span>
         </label>
-        <select
+        <SearchableSelect
+          options={houseOptions}
           value={selectedHouseId}
-          onChange={(e) => setSelectedHouseId(e.target.value)}
-          disabled={!selectedUserId || isLoadingHouses || isSubmitting}
-          className="w-full px-4 py-3 text-sm text-gray-900 bg-white border-2 border-gray-300 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:border-primary-500 focus:ring-primary-100 disabled:opacity-50"
-        >
-          <option value="">
-            {isLoadingHouses ? tCommon('actions.loading') : !selectedUserId ? t('select_resident_first') : houses.length === 0 ? t('no_houses_assigned') : t('select_house')}
-          </option>
-          {houses.map((h) => (
-            <option key={h.id} value={h.id}>
-              {h.houseNumber} – {t('house')} {h.block} ({h.houseType?.typeName})
-            </option>
-          ))}
-        </select>
+          onChange={setSelectedHouseId}
+          placeholder={isLoadingHouses ? tCommon('actions.loading') : t('select_house')}
+          emptyMessage={t('no_occupied_houses')}
+          disabled={isLoadingHouses || isSubmitting}
+        />
+      </div>
+
+      {/* Resident info (auto-filled) */}
+      <div className="flex flex-col gap-1.5">
+        <label className="text-sm font-medium text-gray-700 tracking-tight">
+          {t('resident_info')}
+        </label>
+        {selectedHouse?.user ? (
+          <div className="px-4 py-3 bg-blue-50 border-2 border-blue-200 rounded-lg">
+            <p className="text-sm font-semibold text-blue-900">{selectedHouse.user.name}</p>
+            <p className="text-xs text-blue-600 mt-0.5">{selectedHouse.user.email}</p>
+          </div>
+        ) : (
+          <div className="px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-lg">
+            <p className="text-sm text-gray-400 italic">
+              {selectedHouseId ? t('no_resident') : t('select_house')}
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Amount months select */}

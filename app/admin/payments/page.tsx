@@ -898,7 +898,6 @@ export default function AdminPaymentsPage() {
         size="lg"
       >
         <AdminCreatePaymentForm
-          users={users}
           onSubmit={handleCreatePayment}
           onCancel={() => setCreateModalOpen(false)}
           isSubmitting={isCreating}

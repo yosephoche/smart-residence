@@ -6,10 +6,13 @@ import { getCachedDefaultPasswordConfig } from "@/lib/cache/default-password";
 import { createHouseType } from "./houseType.service";
 import { validateEmail } from "@/lib/utils/import";
 
-export async function getAllHouses(userId?: string) {
+export async function getAllHouses(userId?: string, includeUser = false) {
   return prisma.house.findMany({
     where: userId ? { userId } : undefined,
-    include: { houseType: true },
+    include: {
+      houseType: true,
+      ...(includeUser && { user: { select: { id: true, name: true, email: true } } }),
+    },
     orderBy: { houseNumber: "asc" },
   });
 }

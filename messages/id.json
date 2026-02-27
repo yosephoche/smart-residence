@@ -457,7 +457,12 @@
       "select_resident_first": "Pilih penghuni terlebih dahulu",
       "no_houses_assigned": "Tidak ada rumah yang ditugaskan",
       "select_house": "Pilih rumah...",
-      "proof_image": "Gambar Bukti"
+      "proof_image": "Gambar Bukti",
+      "filter_block": "Filter Blok",
+      "all_blocks": "Semua Blok",
+      "no_occupied_houses": "Tidak ada rumah berpenghuni",
+      "resident_info": "Info Penghuni",
+      "no_resident": "Tidak ada penghuni"
     }
   },
   "expenses": {

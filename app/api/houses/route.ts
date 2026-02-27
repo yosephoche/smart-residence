@@ -6,7 +6,8 @@ import { serializePrismaJson } from "@/lib/utils/prisma-serializer";
 export const GET = auth(async (req) => {
   const url = new URL(req.url);
   const userId = url.searchParams.get("userId") ?? undefined;
-  const houses = await getAllHouses(userId);
+  const includeUser = url.searchParams.get("includeUser") === "true";
+  const houses = await getAllHouses(userId, includeUser);
   return NextResponse.json(serializePrismaJson(houses));
 });
 

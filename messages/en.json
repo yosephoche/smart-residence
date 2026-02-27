@@ -456,7 +456,12 @@
       "select_resident_first": "Select a resident first",
       "no_houses_assigned": "No houses assigned",
       "select_house": "Select a house...",
-      "proof_image": "Proof Image"
+      "proof_image": "Proof Image",
+      "filter_block": "Filter Block",
+      "all_blocks": "All Blocks",
+      "no_occupied_houses": "No occupied houses found",
+      "resident_info": "Resident Info",
+      "no_resident": "No resident assigned"
     }
   },
   "expenses": {

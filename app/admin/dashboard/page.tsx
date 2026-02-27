@@ -165,7 +165,7 @@ export default function AdminDashboardPage() {
                 />
                 <YAxis hide />
                 <Tooltip
-                  formatter={(value: number) => currencyFormatter(value)}
+                  formatter={(value: number | undefined) => currencyFormatter(value ?? 0)}
                   labelStyle={{ fontWeight: 600, color: "#0F172A" }}
                   contentStyle={{
                     borderRadius: 8,
@@ -214,7 +214,7 @@ export default function AdminDashboardPage() {
                     width={96}
                   />
                   <Tooltip
-                    formatter={(value: number) => currencyFormatter(value)}
+                    formatter={(value: number | undefined) => currencyFormatter(value ?? 0)}
                     labelStyle={{ fontWeight: 600, color: "#0F172A" }}
                     contentStyle={{
                       borderRadius: 8,
