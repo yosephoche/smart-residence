@@ -104,6 +104,17 @@ export async function getTotalExpenses() {
   return Number(result._sum.amount ?? 0);
 }
 
+// Get monthly expense breakdown for a given year (12-element array)
+export async function getMonthlyBreakdownByYear(year: number): Promise<{ month: number; total: number }[]> {
+  const records = await prisma.expense.findMany({
+    where: { date: { gte: new Date(year, 0, 1), lte: new Date(year, 11, 31, 23, 59, 59) } },
+    select: { date: true, amount: true },
+  });
+  const monthly = Array.from({ length: 12 }, (_, i) => ({ month: i + 1, total: 0 }));
+  for (const r of records) monthly[r.date.getMonth()].total += Number(r.amount);
+  return monthly;
+}
+
 // Get expense statistics with category breakdown
 export async function getExpenseStats({
   startDate,
