@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { FileText, Image as ImageIcon, CheckCircle, Clock, AlertCircle } from "lucide-react";
 import { useTranslations } from 'next-intl';
 import Button from "@/components/ui/Button";
+import { MAX_FILE_SIZE } from "@/lib/constants";
 
 interface ShiftReport {
   id: string;
@@ -94,6 +95,12 @@ export default function ShiftReportsPage() {
       return;
     }
 
+    if (photo && photo.size > MAX_FILE_SIZE) {
+      const maxMB = Math.round(MAX_FILE_SIZE / 1024 / 1024);
+      setError(`Ukuran foto tidak boleh melebihi ${maxMB}MB`);
+      return;
+    }
+
     try {
       setSubmitting(true);
 
@@ -109,7 +116,13 @@ export default function ShiftReportsPage() {
         body: formData,
       });
 
-      const data = await res.json();
+      let data: any = {};
+      const contentType = res.headers.get("content-type") ?? "";
+      if (contentType.includes("application/json")) {
+        data = await res.json();
+      } else if (!res.ok) {
+        throw new Error(`Gagal mengirim laporan (${res.status})`);
+      }
 
       if (!res.ok) {
         throw new Error(data.error || "Failed to submit report");
