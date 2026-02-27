@@ -67,18 +67,23 @@ export default function SchedulePage() {
   const [startDate, setStartDate] = useState(() => {
     const today = new Date();
     today.setDate(1); // First day of month
-    return today.toISOString().split("T")[0];
+    return toDateKey(today);
   });
   const [endDate, setEndDate] = useState(() => {
     const today = new Date();
     const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-    return lastDay.toISOString().split("T")[0];
+    return toDateKey(lastDay);
   });
 
   // Modals
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isAutoGenModalOpen, setIsAutoGenModalOpen] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+
+  // Bulk delete
+  const [selectedScheduleIds, setSelectedScheduleIds] = useState<string[]>([]);
+  const [isBulkDeleteModalOpen, setIsBulkDeleteModalOpen] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
 
   // Calendar quick-assign modal
   const [isCalendarAssignModalOpen, setIsCalendarAssignModalOpen] = useState(false);
@@ -136,13 +141,18 @@ export default function SchedulePage() {
     resetDeps: [startDate, endDate],
   });
 
+  // Reset selection when filters or page changes
+  useEffect(() => {
+    setSelectedScheduleIds([]);
+  }, [startDate, endDate, currentPage]);
+
   // Fix 3: When switching to calendar view, sync dates to displayed calendar month
   useEffect(() => {
     if (viewMode === "calendar") {
       const first = new Date(calendarMonth.year, calendarMonth.month, 1);
       const last = new Date(calendarMonth.year, calendarMonth.month + 1, 0);
-      setStartDate(first.toISOString().split("T")[0]);
-      setEndDate(last.toISOString().split("T")[0]);
+      setStartDate(toDateKey(first));
+      setEndDate(toDateKey(last));
     }
   }, [viewMode]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -200,8 +210,8 @@ export default function SchedulePage() {
     setCalendarMonth({ year, month });
     const first = new Date(year, month, 1);
     const last = new Date(year, month + 1, 0);
-    setStartDate(first.toISOString().split("T")[0]);
-    setEndDate(last.toISOString().split("T")[0]);
+    setStartDate(toDateKey(first));
+    setEndDate(toDateKey(last));
   };
 
   // Clicking a calendar date opens the simplified quick-assign modal
@@ -351,12 +361,89 @@ export default function SchedulePage() {
     }
   };
 
+  const handleBulkDelete = async () => {
+    setBulkDeleting(true);
+    try {
+      const res = await fetch("/api/admin/schedules/bulk-delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ scheduleIds: selectedScheduleIds }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Gagal menghapus jadwal");
+
+      const { succeeded, failed } = data as {
+        succeeded: string[];
+        failed: { id: string; reason: string }[];
+      };
+
+      if (succeeded.length > 0) {
+        toast.success(`${succeeded.length} jadwal berhasil dihapus`);
+      }
+      if (failed.length > 0) {
+        toast.error(`${failed.length} jadwal tidak dapat dihapus (ada absensi)`);
+      }
+
+      await fetchSchedules();
+      setSelectedScheduleIds([]);
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setBulkDeleting(false);
+      setIsBulkDeleteModalOpen(false);
+    }
+  };
+
   const selectedStaff = staff.find((s) => s.id === createForm.staffId);
   const availableTemplates = selectedStaff
     ? shiftTemplates.filter((t) => t.jobType === selectedStaff.staffJobType)
     : [];
 
+  const allPageSelected =
+    paginatedData.length > 0 &&
+    paginatedData.every((row) => selectedScheduleIds.includes(row.id));
+
+  const toggleSelectAll = () => {
+    if (allPageSelected) {
+      setSelectedScheduleIds((prev) =>
+        prev.filter((id) => !paginatedData.some((row) => row.id === id))
+      );
+    } else {
+      setSelectedScheduleIds((prev) => [
+        ...prev,
+        ...paginatedData.map((row) => row.id).filter((id) => !prev.includes(id)),
+      ]);
+    }
+  };
+
   const columns: Column<Schedule>[] = [
+    {
+      key: "select" as any,
+      header: (
+        <input
+          type="checkbox"
+          checked={allPageSelected}
+          onChange={toggleSelectAll}
+          className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+          aria-label="Select all on page"
+        />
+      ) as any,
+      render: (_, row) => (
+        <input
+          type="checkbox"
+          checked={selectedScheduleIds.includes(row.id)}
+          onChange={(e) => {
+            if (e.target.checked) {
+              setSelectedScheduleIds((prev) => [...prev, row.id]);
+            } else {
+              setSelectedScheduleIds((prev) => prev.filter((id) => id !== row.id));
+            }
+          }}
+          className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+          aria-label={`Select schedule ${row.id}`}
+        />
+      ),
+    },
     {
       key: "date",
       header: t('date'),
@@ -493,6 +580,23 @@ export default function SchedulePage() {
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
           {error}
+        </div>
+      )}
+
+      {/* Bulk action bar */}
+      {viewMode === "table" && selectedScheduleIds.length > 0 && (
+        <div className="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-lg px-4 py-2.5">
+          <span className="text-sm font-medium text-blue-700">
+            {selectedScheduleIds.length} jadwal dipilih
+          </span>
+          <button
+            type="button"
+            onClick={() => setIsBulkDeleteModalOpen(true)}
+            className="flex items-center gap-1.5 text-sm font-medium text-red-600 hover:text-red-700 bg-white border border-red-200 rounded-lg px-3 py-1.5 transition-colors"
+          >
+            <Trash2 className="w-4 h-4" />
+            Hapus Pilihan
+          </button>
         </div>
       )}
 
@@ -855,6 +959,18 @@ export default function SchedulePage() {
         message={t('delete_confirmation')}
         variant="danger"
         confirmText={tCommon('actions.delete')}
+        cancelText={tCommon('actions.cancel')}
+      />
+
+      {/* Bulk Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={isBulkDeleteModalOpen}
+        onClose={() => setIsBulkDeleteModalOpen(false)}
+        onConfirm={handleBulkDelete}
+        title="Hapus Jadwal Terpilih"
+        message={`Hapus ${selectedScheduleIds.length} jadwal yang dipilih? Jadwal yang memiliki data absensi akan dilewati.`}
+        variant="danger"
+        confirmText={bulkDeleting ? "Menghapus..." : "Hapus"}
         cancelText={tCommon('actions.cancel')}
       />
     </div>

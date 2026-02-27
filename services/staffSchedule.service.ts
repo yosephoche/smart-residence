@@ -543,6 +543,42 @@ export async function updateSchedule(
 }
 
 /**
+ * Bulk delete schedules
+ * Skips any schedule that has attendance records
+ * Returns { succeeded: string[], failed: { id: string, reason: string }[] }
+ */
+export async function bulkDeleteSchedules(ids: string[]) {
+  const succeeded: string[] = [];
+  const failed: { id: string; reason: string }[] = [];
+
+  // Check attendance for all IDs in one query
+  const withAttendance = await prisma.attendance.findMany({
+    where: { scheduleId: { in: ids } },
+    select: { scheduleId: true },
+  });
+
+  const blockedIds = new Set(withAttendance.map((a) => a.scheduleId));
+
+  const safeIds: string[] = [];
+  for (const id of ids) {
+    if (blockedIds.has(id)) {
+      failed.push({ id, reason: "Cannot delete schedule. Attendance record exists." });
+    } else {
+      safeIds.push(id);
+    }
+  }
+
+  if (safeIds.length > 0) {
+    await prisma.staffSchedule.deleteMany({
+      where: { id: { in: safeIds } },
+    });
+    succeeded.push(...safeIds);
+  }
+
+  return { succeeded, failed };
+}
+
+/**
  * Delete a schedule
  * Prevents deletion if attendance exists
  */
