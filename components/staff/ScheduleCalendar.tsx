@@ -71,7 +71,7 @@ function CalendarLoadingSkeleton() {
   );
 }
 
-const MAX_CHIPS = 3;
+const MAX_CHIPS = 4;
 const DOW_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 interface CalendarCellProps {

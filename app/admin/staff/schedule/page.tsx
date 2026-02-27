@@ -80,6 +80,16 @@ export default function SchedulePage() {
   const [isAutoGenModalOpen, setIsAutoGenModalOpen] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
+  // Calendar quick-assign modal
+  const [isCalendarAssignModalOpen, setIsCalendarAssignModalOpen] = useState(false);
+  const [calendarAssignForm, setCalendarAssignForm] = useState({
+    date: "",
+    selectedStaffIds: [] as string[],
+    shiftTemplateId: "",
+  });
+  const [calendarAssignError, setCalendarAssignError] = useState("");
+  const [calendarAssigning, setCalendarAssigning] = useState(false);
+
   // Create form
   const [createForm, setCreateForm] = useState({
     staffId: "",
@@ -125,6 +135,16 @@ export default function SchedulePage() {
     initialPageSize: 25,
     resetDeps: [startDate, endDate],
   });
+
+  // Fix 3: When switching to calendar view, sync dates to displayed calendar month
+  useEffect(() => {
+    if (viewMode === "calendar") {
+      const first = new Date(calendarMonth.year, calendarMonth.month, 1);
+      const last = new Date(calendarMonth.year, calendarMonth.month + 1, 0);
+      setStartDate(first.toISOString().split("T")[0]);
+      setEndDate(last.toISOString().split("T")[0]);
+    }
+  }, [viewMode]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     fetchSchedules();
@@ -184,10 +204,51 @@ export default function SchedulePage() {
     setEndDate(last.toISOString().split("T")[0]);
   };
 
-  // Clicking a calendar date opens the Create modal with that date pre-filled
+  // Clicking a calendar date opens the simplified quick-assign modal
   const handleCalendarDateClick = (dateKey: string) => {
-    setCreateForm((prev) => ({ ...prev, date: dateKey, endDate: "", isBulk: false }));
-    setIsCreateModalOpen(true);
+    setCalendarAssignForm({ date: dateKey, selectedStaffIds: [], shiftTemplateId: "" });
+    setCalendarAssignError("");
+    setIsCalendarAssignModalOpen(true);
+  };
+
+  const toggleStaffSelection = (staffId: string) => {
+    setCalendarAssignForm((prev) => ({
+      ...prev,
+      selectedStaffIds: prev.selectedStaffIds.includes(staffId)
+        ? prev.selectedStaffIds.filter((id) => id !== staffId)
+        : [...prev.selectedStaffIds, staffId],
+    }));
+  };
+
+  const handleCalendarAssign = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (calendarAssignForm.selectedStaffIds.length === 0) {
+      setCalendarAssignError("Pilih minimal satu staf");
+      return;
+    }
+    setCalendarAssignError("");
+    setCalendarAssigning(true);
+    try {
+      for (const staffId of calendarAssignForm.selectedStaffIds) {
+        const res = await fetch("/api/admin/schedules", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            staffId,
+            shiftTemplateId: calendarAssignForm.shiftTemplateId,
+            date: new Date(calendarAssignForm.date).toISOString(),
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Gagal membuat jadwal");
+      }
+      await fetchSchedules();
+      setIsCalendarAssignModalOpen(false);
+    } catch (err: any) {
+      setCalendarAssignError(err.message);
+    } finally {
+      setCalendarAssigning(false);
+    }
   };
 
   const handleCreateSchedule = async (e: React.FormEvent) => {
@@ -605,6 +666,99 @@ export default function SchedulePage() {
             </Button>
             <Button type="submit" disabled={creating}>
               {creating ? t('creating') : t('assign')}
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Calendar Quick-Assign Modal */}
+      <Modal
+        isOpen={isCalendarAssignModalOpen}
+        onClose={() => setIsCalendarAssignModalOpen(false)}
+        title={
+          calendarAssignForm.date
+            ? `Tugaskan Staf — ${new Date(calendarAssignForm.date + "T00:00:00").toLocaleDateString("id-ID", { weekday: "long", day: "2-digit", month: "long", year: "numeric" })}`
+            : "Tugaskan Staf"
+        }
+      >
+        <form onSubmit={handleCalendarAssign} className="space-y-4">
+          {/* Staff multi-select checklist */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              {t('staff_label')} *
+            </label>
+            <div className="max-h-52 overflow-y-auto border border-gray-200 rounded-lg divide-y divide-gray-100">
+              {staff.map((s) => {
+                const checked = calendarAssignForm.selectedStaffIds.includes(s.id);
+                return (
+                  <label
+                    key={s.id}
+                    className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-colors ${
+                      checked ? "bg-blue-50" : "hover:bg-gray-50"
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => toggleStaffSelection(s.id)}
+                      className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+                    />
+                    <div>
+                      <p className="text-sm font-medium text-gray-800">{s.name}</p>
+                      <p className="text-xs text-gray-500">{tCommon(`job_types.${s.staffJobType}`)}</p>
+                    </div>
+                  </label>
+                );
+              })}
+              {staff.length === 0 && (
+                <p className="text-sm text-gray-400 px-3 py-4 text-center">{t('select_staff')}</p>
+              )}
+            </div>
+            {calendarAssignForm.selectedStaffIds.length > 0 && (
+              <p className="text-xs text-blue-600 mt-1">
+                {calendarAssignForm.selectedStaffIds.length} staf dipilih
+              </p>
+            )}
+          </div>
+
+          {/* Shift Template */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              {t('shift_label')} *
+            </label>
+            <select
+              value={calendarAssignForm.shiftTemplateId}
+              onChange={(e) =>
+                setCalendarAssignForm((prev) => ({ ...prev, shiftTemplateId: e.target.value }))
+              }
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            >
+              <option value="">{t('select_shift')}</option>
+              {shiftTemplates.map((template) => (
+                <option key={template.id} value={template.id}>
+                  {template.shiftName} ({template.startTime} - {template.endTime}) — {tCommon(`job_types.${template.jobType}`)}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Error */}
+          {calendarAssignError && (
+            <div className="text-red-600 text-sm">{calendarAssignError}</div>
+          )}
+
+          {/* Actions */}
+          <div className="flex gap-3 justify-end">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setIsCalendarAssignModalOpen(false)}
+            >
+              {tCommon('actions.cancel')}
+            </Button>
+            <Button type="submit" disabled={calendarAssigning}>
+              {calendarAssigning ? t('creating') : t('assign')}
             </Button>
           </div>
         </form>
