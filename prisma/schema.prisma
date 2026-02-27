@@ -111,7 +111,7 @@ model Payment {
   houseId        String
   amountMonths   Int
   totalAmount    Decimal
-  proofImagePath String
+  proofImagePath String?
   status         PaymentStatus @default(PENDING)
   rejectionNote  String?
   approvedBy     String?

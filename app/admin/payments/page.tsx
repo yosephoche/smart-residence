@@ -15,6 +15,7 @@ import Modal, { ConfirmModal } from "@/components/ui/Modal";
 import Alert from "@/components/ui/Alert";
 import Badge from "@/components/ui/Badge";
 import AdminCreatePaymentForm from "@/components/forms/AdminCreatePaymentForm";
+import BulkCreatePaymentForm from "@/components/forms/BulkCreatePaymentForm";
 import { exportCSV, exportXLSX, mapPaymentsForExport, mapHousesWithStatusForExport } from "@/lib/utils/export";
 import { usePagination } from "@/lib/hooks/usePagination";
 import { ImageModal } from "@/components/ui/ImageModal";
@@ -27,7 +28,7 @@ interface Payment {
   houseId: string;
   amountMonths: number;
   totalAmount: number;
-  proofImagePath: string;
+  proofImagePath: string | null;
   status: string;
   createdAt: string;
   user?: { id: string; name: string; email: string };
@@ -73,6 +74,13 @@ export default function AdminPaymentsPage() {
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  // Bulk create modal
+  const [bulkCreateModalOpen, setBulkCreateModalOpen] = useState(false);
+  const [bulkCreateResult, setBulkCreateResult] = useState<{
+    succeeded: any[];
+    failed: { houseId: string; reason: string }[];
+  } | null>(null);
 
   // Export dropdown
   const [showExportDropdown, setShowExportDropdown] = useState(false);
@@ -267,6 +275,19 @@ export default function AdminPaymentsPage() {
     }
   };
 
+  const handleBulkCreateSuccess = (result: { succeeded: any[]; failed: { houseId: string; reason: string }[] }) => {
+    setBulkCreateModalOpen(false);
+    setBulkCreateResult(result);
+    if (result.succeeded.length > 0) {
+      setSuccessMessage(
+        `${result.succeeded.length} pembayaran berhasil dibuat sebagai Disetujui.${
+          result.failed.length > 0 ? ` ${result.failed.length} gagal.` : ""
+        }`
+      );
+      refetchPayments();
+    }
+  };
+
   const handleExport = async (format: "csv" | "xlsx") => {
     setShowExportDropdown(false);
     if (housesViewMode !== null) {
@@ -457,27 +478,34 @@ export default function AdminPaymentsPage() {
     {
       key: "proofImagePath",
       header: t('proof'),
-      render: (_, payment) => (
-        <button
-          onClick={() => handleImageClick(payment.proofImagePath)}
-          className="relative w-16 h-16 rounded-lg overflow-hidden border-2 border-gray-200 hover:border-primary-400 transition-all group"
-        >
-          <Image
-            src={payment.proofImagePath}
-            alt={t('payment_proof_thumbnail')}
-            fill
-            className="object-cover group-hover:scale-105 transition-transform"
-            onError={(e) => {
-              (e.target as HTMLImageElement).style.display = "none";
-            }}
-          />
-          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-            <svg className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
-            </svg>
-          </div>
-        </button>
-      ),
+      render: (_, payment) => {
+        if (!payment.proofImagePath) {
+          return (
+            <span className="text-xs text-gray-400 italic">—</span>
+          );
+        }
+        return (
+          <button
+            onClick={() => handleImageClick(payment.proofImagePath!)}
+            className="relative w-16 h-16 rounded-lg overflow-hidden border-2 border-gray-200 hover:border-primary-400 transition-all group"
+          >
+            <Image
+              src={payment.proofImagePath}
+              alt={t('payment_proof_thumbnail')}
+              fill
+              className="object-cover group-hover:scale-105 transition-transform"
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.display = "none";
+              }}
+            />
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+              <svg className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+              </svg>
+            </div>
+          </button>
+        );
+      },
     },
     {
       key: "id",
@@ -589,12 +617,20 @@ export default function AdminPaymentsPage() {
           <h1 className="text-3xl font-bold text-gray-900 tracking-tight">{t('title')}</h1>
           <p className="text-gray-600 mt-1">{t('subtitle')}</p>
         </div>
-        <Button variant="primary" size="lg" onClick={() => setCreateModalOpen(true)}>
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          {t('create_payment')}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="secondary" size="lg" onClick={() => setBulkCreateModalOpen(true)}>
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+            Bulk Create
+          </Button>
+          <Button variant="primary" size="lg" onClick={() => setCreateModalOpen(true)}>
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            {t('create_payment')}
+          </Button>
+        </div>
       </div>
 
       {/* Stats cards */}
@@ -876,6 +912,60 @@ export default function AdminPaymentsPage() {
         imageSrc={selectedImage}
         altText={t('payment_proof')}
       />
+
+      {/* Bulk Create Payment Modal */}
+      <Modal
+        isOpen={bulkCreateModalOpen}
+        onClose={() => setBulkCreateModalOpen(false)}
+        title="Bulk Create Pembayaran"
+        size="lg"
+      >
+        <BulkCreatePaymentForm
+          users={users}
+          onSuccess={handleBulkCreateSuccess}
+          onCancel={() => setBulkCreateModalOpen(false)}
+        />
+      </Modal>
+
+      {/* Bulk Create Result Modal */}
+      {bulkCreateResult && (
+        <Modal
+          isOpen={!!bulkCreateResult}
+          onClose={() => setBulkCreateResult(null)}
+          title="Hasil Bulk Create"
+          size="md"
+        >
+          <div className="space-y-4">
+            {bulkCreateResult.succeeded.length > 0 && (
+              <div className="bg-success-50 border border-success-200 rounded-lg p-4">
+                <p className="text-sm font-semibold text-success-800">
+                  ✓ {bulkCreateResult.succeeded.length} pembayaran berhasil dibuat
+                </p>
+              </div>
+            )}
+            {bulkCreateResult.failed.length > 0 && (
+              <div className="bg-danger-50 border border-danger-200 rounded-lg p-4">
+                <p className="text-sm font-semibold text-danger-800 mb-2">
+                  ✗ {bulkCreateResult.failed.length} gagal:
+                </p>
+                <ul className="space-y-1 text-xs text-danger-700 list-disc list-inside">
+                  {bulkCreateResult.failed.map((f, i) => (
+                    <li key={i}>{f.reason}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            <Button
+              variant="primary"
+              size="lg"
+              fullWidth
+              onClick={() => setBulkCreateResult(null)}
+            >
+              Tutup
+            </Button>
+          </div>
+        </Modal>
+      )}
 
       {/* Bulk Approve Confirmation Modal */}
       <ConfirmModal

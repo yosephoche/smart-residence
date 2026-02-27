@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { computeNextStartMonth, computeCoveredMonths, formatPaymentMonth } from "@/lib/calculations";
+import { getCachedExcludedIncomePeriods } from "@/lib/cache/excluded-income-periods";
 
 const paymentMonthsInclude = {
   orderBy: [{ year: "asc" as const }, { month: "asc" as const }],
@@ -144,6 +145,9 @@ export async function approvePayment(paymentId: string, approvedBy: string) {
     throw new Error("Approver not found. Please log in again.");
   }
 
+  // Fetch excluded periods outside transaction (cache layer)
+  const excludedPeriods = await getCachedExcludedIncomePeriods();
+
   // Use transaction to ensure atomicity
   return await prisma.$transaction(async (tx) => {
     // 1. Approve the payment
@@ -157,6 +161,7 @@ export async function approvePayment(paymentId: string, approvedBy: string) {
       include: {
         user: { select: { name: true } },
         house: { select: { houseNumber: true, block: true } },
+        paymentMonths: { select: { year: true, month: true } },
       },
     });
 
@@ -166,20 +171,30 @@ export async function approvePayment(paymentId: string, approvedBy: string) {
     });
 
     if (!existingIncome) {
-      // 3. Create income record
-      const description = `IPL Payment - ${payment.user.name} - ${payment.house.block} ${payment.house.houseNumber} - ${payment.amountMonths} bulan`;
+      // 3. Filter out excluded months
+      const nonExcludedMonths = payment.paymentMonths.filter(
+        (pm) => !excludedPeriods.some((ep) => ep.year === pm.year && ep.month === pm.month)
+      );
 
-      await tx.income.create({
-        data: {
-          date: payment.approvedAt!,
-          category: "MONTHLY_FEES",
-          amount: payment.totalAmount,
-          description,
-          notes: `Auto-generated from payment #${payment.id}`,
-          createdBy: approvedBy,
-          paymentId: payment.id,
-        },
-      });
+      if (nonExcludedMonths.length > 0) {
+        // Prorate income for non-excluded months only
+        const pricePerMonth = Number(payment.totalAmount) / payment.amountMonths;
+        const incomeAmount = pricePerMonth * nonExcludedMonths.length;
+        const description = `IPL Payment - ${payment.user.name} - ${payment.house.block} ${payment.house.houseNumber} - ${payment.amountMonths} bulan`;
+
+        await tx.income.create({
+          data: {
+            date: payment.approvedAt!,
+            category: "MONTHLY_FEES",
+            amount: incomeAmount,
+            description,
+            notes: `Auto-generated from payment #${payment.id}`,
+            createdBy: approvedBy,
+            paymentId: payment.id,
+          },
+        });
+      }
+      // If all months excluded, skip income creation entirely
     }
 
     return payment;
@@ -196,6 +211,9 @@ export async function bulkApprovePayments(
     throw new Error("Approver not found. Please log in again.");
   }
 
+  // Fetch excluded periods outside transaction (cache layer)
+  const excludedPeriods = await getCachedExcludedIncomePeriods();
+
   const succeeded: any[] = [];
   const failed: { id: string; reason: string }[] = [];
 
@@ -208,6 +226,7 @@ export async function bulkApprovePayments(
         include: {
           user: { select: { name: true, email: true } },
           house: { select: { houseNumber: true, block: true } },
+          paymentMonths: { select: { year: true, month: true } },
         },
       });
 
@@ -242,18 +261,29 @@ export async function bulkApprovePayments(
         data: { status: "APPROVED", approvedBy, approvedAt },
       });
 
-      // 5. Batch create income records for payments without existing income
+      // 5. Batch create income records (prorated for excluded periods)
       const incomeRecords = validPayments
         .filter(p => !existingIncomePaymentIds.has(p.id))
-        .map(p => ({
-          date: approvedAt,
-          category: "MONTHLY_FEES" as const,
-          amount: p.totalAmount,
-          description: `IPL Payment - ${p.user.name} - ${p.house.block} ${p.house.houseNumber} - ${p.amountMonths} bulan`,
-          notes: `Auto-generated from payment #${p.id}`,
-          createdBy: approvedBy,
-          paymentId: p.id,
-        }));
+        .map(p => {
+          const nonExcludedMonths = p.paymentMonths.filter(
+            (pm) => !excludedPeriods.some((ep) => ep.year === pm.year && ep.month === pm.month)
+          );
+          if (nonExcludedMonths.length === 0) return null; // All months excluded — skip
+
+          const pricePerMonth = Number(p.totalAmount) / p.amountMonths;
+          const incomeAmount = pricePerMonth * nonExcludedMonths.length;
+
+          return {
+            date: approvedAt,
+            category: "MONTHLY_FEES" as const,
+            amount: incomeAmount,
+            description: `IPL Payment - ${p.user.name} - ${p.house.block} ${p.house.houseNumber} - ${p.amountMonths} bulan`,
+            notes: `Auto-generated from payment #${p.id}`,
+            createdBy: approvedBy,
+            paymentId: p.id,
+          };
+        })
+        .filter((r): r is NonNullable<typeof r> => r !== null);
 
       if (incomeRecords.length > 0) {
         await tx.income.createMany({ data: incomeRecords });
@@ -327,6 +357,104 @@ export async function getUnpaidHousesThisMonth() {
 
   // Filter out houses that already have payment this month
   return occupiedHouses.filter((h) => !paidHouseIds.has(h.id));
+}
+
+export async function bulkCreatePayments(
+  houseIds: string[],
+  months: { year: number; month: number }[],
+  createdBy: string
+): Promise<{ succeeded: any[]; failed: { houseId: string; reason: string }[] }> {
+  const succeeded: any[] = [];
+  const failed: { houseId: string; reason: string }[] = [];
+
+  await prisma.$transaction(
+    async (tx) => {
+      for (const houseId of houseIds) {
+        try {
+          // Fetch house + house type + resident
+          const house = await tx.house.findUnique({
+            where: { id: houseId },
+            include: { houseType: true },
+          });
+
+          if (!house?.houseType) {
+            failed.push({ houseId, reason: "Rumah atau tipe rumah tidak ditemukan" });
+            continue;
+          }
+
+          if (!house.userId) {
+            failed.push({ houseId, reason: "Rumah belum ditempati oleh penghuni" });
+            continue;
+          }
+
+          const totalAmount = Number(house.houseType.price) * months.length;
+
+          // Check for conflicts: any selected month already has PENDING/APPROVED payment
+          const conflicts = await tx.paymentMonth.findMany({
+            where: {
+              payment: {
+                houseId,
+                status: { in: ["PENDING", "APPROVED"] },
+              },
+              OR: months.map(({ year, month }) => ({ year, month })),
+            },
+            select: { year: true, month: true },
+          });
+
+          if (conflicts.length > 0) {
+            const seen = new Set<string>();
+            const unique = conflicts.filter(({ year, month }) => {
+              const key = `${year}-${month}`;
+              if (seen.has(key)) return false;
+              seen.add(key);
+              return true;
+            });
+            const monthLabels = unique.map((m) => formatPaymentMonth(m)).join(", ");
+            failed.push({
+              houseId,
+              reason: `Sudah ada pembayaran untuk bulan: ${monthLabels}`,
+            });
+            continue;
+          }
+
+          const now = new Date();
+
+          // Create payment directly as APPROVED (no proof image, no income creation)
+          const payment = await tx.payment.create({
+            data: {
+              userId: house.userId,
+              houseId,
+              amountMonths: months.length,
+              totalAmount,
+              proofImagePath: null,
+              status: "APPROVED",
+              approvedBy: createdBy,
+              approvedAt: now,
+            },
+          });
+
+          // Create PaymentMonth records
+          await tx.paymentMonth.createMany({
+            data: months.map(({ year, month }) => ({
+              paymentId: payment.id,
+              year,
+              month,
+            })),
+          });
+
+          succeeded.push(payment);
+        } catch (err: any) {
+          failed.push({ houseId, reason: err.message || "Terjadi kesalahan" });
+        }
+      }
+    },
+    {
+      timeout: 60000,
+      maxWait: 5000,
+    }
+  );
+
+  return { succeeded, failed };
 }
 
 export async function getHousePaymentStatusForMonth(year: number, month: number) {

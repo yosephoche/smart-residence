@@ -304,6 +304,44 @@ export async function getWhatsAppTemplateConfig(): Promise<WhatsAppTemplateConfi
   }
 }
 
+// Default excluded income periods configuration
+export interface ExcludedIncomePeriod {
+  year: number;
+  month: number;
+}
+
+export interface ExcludedIncomePeriodsConfig {
+  periods: ExcludedIncomePeriod[];
+}
+
+const DEFAULT_EXCLUDED_PERIODS: ExcludedIncomePeriodsConfig = {
+  periods: [],
+};
+
+/**
+ * Get excluded income periods configuration from the database
+ * Falls back to empty list if no config exists
+ */
+export async function getExcludedIncomePeriodsConfig(): Promise<ExcludedIncomePeriodsConfig> {
+  try {
+    const config = await prisma.systemConfig.findUnique({
+      where: { key: "excluded_income_periods" },
+    });
+
+    if (!config) {
+      return DEFAULT_EXCLUDED_PERIODS;
+    }
+
+    const value = config.value as unknown as ExcludedIncomePeriodsConfig;
+    return {
+      periods: Array.isArray(value.periods) ? value.periods : [],
+    };
+  } catch (error) {
+    console.error("Error fetching excluded income periods config:", error);
+    return DEFAULT_EXCLUDED_PERIODS;
+  }
+}
+
 /**
  * Set WhatsApp message template configuration
  */

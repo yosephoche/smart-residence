@@ -8,7 +8,8 @@ import { GeofenceConfigForm } from "@/components/forms/GeofenceConfigForm";
 import BankDetailsConfigForm from "@/components/forms/BankDetailsConfigForm";
 import ResidenceInfoConfigForm from "@/components/forms/ResidenceInfoConfigForm";
 import WhatsAppTemplateConfigForm from "@/components/forms/WhatsAppTemplateConfigForm";
-import { Settings, AlertCircle, CheckCircle, Key, MapPin, CreditCard, Building2, MessageSquare } from "lucide-react";
+import ExcludedIncomePeriodsForm from "@/components/forms/ExcludedIncomePeriodsForm";
+import { Settings, AlertCircle, CheckCircle, Key, MapPin, CreditCard, Building2, MessageSquare, CalendarX } from "lucide-react";
 
 export const dynamic = 'force-dynamic';
 
@@ -40,6 +41,9 @@ export default function SettingsPage() {
   const [whatsappTemplateConfig, setWhatsappTemplateConfig] = useState<{
     template: string;
   } | null>(null);
+  const [excludedIncomePeriodsConfig, setExcludedIncomePeriodsConfig] = useState<{
+    periods: { year: number; month: number }[];
+  } | null>(null);
   const [loading, setLoading] = useState(true);
   const [alert, setAlert] = useState<{
     type: "success" | "error";
@@ -52,12 +56,13 @@ export default function SettingsPage() {
 
   const fetchConfigs = async () => {
     try {
-      const [uploadResponse, passwordResponse, geofenceResponse, waTemplateResponse] =
+      const [uploadResponse, passwordResponse, geofenceResponse, waTemplateResponse, excludedPeriodsResponse] =
         await Promise.all([
           fetch("/api/system-config/upload-window"),
           fetch("/api/system-config/default-password"),
           fetch("/api/system-config/geofence"),
           fetch("/api/system-config/whatsapp-template"),
+          fetch("/api/system-config/excluded-income-periods"),
         ]);
 
       if (!uploadResponse.ok || !passwordResponse.ok || !geofenceResponse.ok) {
@@ -77,6 +82,11 @@ export default function SettingsPage() {
       if (waTemplateResponse.ok) {
         const waData = await waTemplateResponse.json();
         setWhatsappTemplateConfig(waData);
+      }
+
+      if (excludedPeriodsResponse.ok) {
+        const epData = await excludedPeriodsResponse.json();
+        setExcludedIncomePeriodsConfig(epData);
       }
     } catch (error) {
       console.error("Error fetching configs:", error);
@@ -127,6 +137,15 @@ export default function SettingsPage() {
     setAlert({
       type: "success",
       message: "Template pesan WhatsApp berhasil disimpan",
+    });
+    setTimeout(() => setAlert(null), 5000);
+  };
+
+  const handleExcludedPeriodsSaveSuccess = (config: { periods: { year: number; month: number }[] }) => {
+    setExcludedIncomePeriodsConfig(config);
+    setAlert({
+      type: "success",
+      message: "Periode pengecualian pemasukan berhasil disimpan",
     });
     setTimeout(() => setAlert(null), 5000);
   };
@@ -424,6 +443,47 @@ export default function SettingsPage() {
             </li>
             <li>Template ini juga berlaku untuk tombol WhatsApp petugas keamanan bertugas</li>
             <li>Perubahan langsung berlaku tanpa perlu reload halaman penghuni</li>
+          </ul>
+        </div>
+      </div>
+
+      {/* Excluded Income Periods Configuration */}
+      <div className="bg-white rounded-lg shadow border border-gray-200 mt-6">
+        <div className="p-6 border-b border-gray-200">
+          <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+            <CalendarX className="w-5 h-5" />
+            Periode Pengecualian Pemasukan (Pre-launch)
+          </h2>
+          <p className="text-sm text-gray-600 mt-1">
+            Pembayaran yang disetujui untuk periode ini tidak akan mencatat pemasukan otomatis
+          </p>
+        </div>
+
+        <div className="p-6">
+          {loading ? (
+            <div className="animate-pulse space-y-4">
+              <div className="h-12 bg-gray-200 rounded"></div>
+              <div className="h-12 bg-gray-200 rounded w-1/2"></div>
+            </div>
+          ) : (
+            <ExcludedIncomePeriodsForm
+              initialConfig={excludedIncomePeriodsConfig ?? { periods: [] }}
+              onSaveSuccess={handleExcludedPeriodsSaveSuccess}
+              onSaveError={handleSaveError}
+            />
+          )}
+        </div>
+
+        <div className="p-6 bg-amber-50 border-t border-amber-200">
+          <h3 className="font-medium text-amber-900 mb-2 flex items-center gap-2">
+            <AlertCircle className="w-4 h-4" />
+            Informasi Penting
+          </h3>
+          <ul className="text-sm text-amber-800 space-y-1 ml-6 list-disc">
+            <li>Gunakan fitur ini untuk periode sebelum sistem diluncurkan (misalnya Jan–Feb 2026)</li>
+            <li>Pembayaran yang di-approve untuk bulan yang dikecualikan tidak akan membuat catatan pemasukan</li>
+            <li>Jika sebagian bulan dikecualikan, pemasukan akan dihitung proporsional</li>
+            <li>Gunakan Bulk Create di halaman Pembayaran untuk memasukkan data historis</li>
           </ul>
         </div>
       </div>
