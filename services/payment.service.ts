@@ -367,92 +367,83 @@ export async function bulkCreatePayments(
   const succeeded: any[] = [];
   const failed: { houseId: string; reason: string }[] = [];
 
-  await prisma.$transaction(
-    async (tx) => {
-      for (const houseId of houseIds) {
-        try {
-          // Fetch house + house type + resident
-          const house = await tx.house.findUnique({
-            where: { id: houseId },
-            include: { houseType: true },
-          });
+  // Use one short-lived transaction per house to avoid Supabase pgbouncer
+  // "transaction not found" errors that occur with a single long-running
+  // interactive transaction spanning many async round-trips.
+  for (const houseId of houseIds) {
+    try {
+      const payment = await prisma.$transaction(async (tx) => {
+        // Fetch house + house type + resident
+        const house = await tx.house.findUnique({
+          where: { id: houseId },
+          include: { houseType: true },
+        });
 
-          if (!house?.houseType) {
-            failed.push({ houseId, reason: "Rumah atau tipe rumah tidak ditemukan" });
-            continue;
-          }
-
-          if (!house.userId) {
-            failed.push({ houseId, reason: "Rumah belum ditempati oleh penghuni" });
-            continue;
-          }
-
-          const totalAmount = Number(house.houseType.price) * months.length;
-
-          // Check for conflicts: any selected month already has PENDING/APPROVED payment
-          const conflicts = await tx.paymentMonth.findMany({
-            where: {
-              payment: {
-                houseId,
-                status: { in: ["PENDING", "APPROVED"] },
-              },
-              OR: months.map(({ year, month }) => ({ year, month })),
-            },
-            select: { year: true, month: true },
-          });
-
-          if (conflicts.length > 0) {
-            const seen = new Set<string>();
-            const unique = conflicts.filter(({ year, month }) => {
-              const key = `${year}-${month}`;
-              if (seen.has(key)) return false;
-              seen.add(key);
-              return true;
-            });
-            const monthLabels = unique.map((m) => formatPaymentMonth(m)).join(", ");
-            failed.push({
-              houseId,
-              reason: `Sudah ada pembayaran untuk bulan: ${monthLabels}`,
-            });
-            continue;
-          }
-
-          const now = new Date();
-
-          // Create payment directly as APPROVED (no proof image, no income creation)
-          const payment = await tx.payment.create({
-            data: {
-              userId: house.userId,
-              houseId,
-              amountMonths: months.length,
-              totalAmount,
-              proofImagePath: null,
-              status: "APPROVED",
-              approvedBy: createdBy,
-              approvedAt: now,
-            },
-          });
-
-          // Create PaymentMonth records
-          await tx.paymentMonth.createMany({
-            data: months.map(({ year, month }) => ({
-              paymentId: payment.id,
-              year,
-              month,
-            })),
-          });
-
-          succeeded.push(payment);
-        } catch (err: any) {
-          failed.push({ houseId, reason: err.message || "Terjadi kesalahan" });
+        if (!house?.houseType) {
+          throw new Error("Rumah atau tipe rumah tidak ditemukan");
         }
-      }
-    },
-    {
-      timeout: 60000,
-      maxWait: 5000,
+
+        if (!house.userId) {
+          throw new Error("Rumah belum ditempati oleh penghuni");
+        }
+
+        const totalAmount = Number(house.houseType.price) * months.length;
+
+        // Check for conflicts: any selected month already has PENDING/APPROVED payment
+        const conflicts = await tx.paymentMonth.findMany({
+          where: {
+            payment: {
+              houseId,
+              status: { in: ["PENDING", "APPROVED"] },
+            },
+            OR: months.map(({ year, month }) => ({ year, month })),
+          },
+          select: { year: true, month: true },
+        });
+
+        if (conflicts.length > 0) {
+          const seen = new Set<string>();
+          const unique = conflicts.filter(({ year, month }) => {
+            const key = `${year}-${month}`;
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+          });
+          const monthLabels = unique.map((m) => formatPaymentMonth(m)).join(", ");
+          throw new Error(`Sudah ada pembayaran untuk bulan: ${monthLabels}`);
+        }
+
+        // Create payment directly as APPROVED (no proof image, no income creation)
+        const created = await tx.payment.create({
+          data: {
+            userId: house.userId,
+            houseId,
+            amountMonths: months.length,
+            totalAmount,
+            proofImagePath: null,
+            status: "APPROVED",
+            approvedBy: createdBy,
+            approvedAt: new Date(),
+          },
+        });
+
+        // Create PaymentMonth records
+        await tx.paymentMonth.createMany({
+          data: months.map(({ year, month }) => ({
+            paymentId: created.id,
+            year,
+            month,
+          })),
+        });
+
+        return created;
+      });
+
+      succeeded.push(payment);
+    } catch (err: any) {
+      failed.push({ houseId, reason: err.message || "Terjadi kesalahan" });
     }
-  );
+  }
 
   return { succeeded, failed };
 }
