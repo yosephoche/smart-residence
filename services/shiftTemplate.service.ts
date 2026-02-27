@@ -10,34 +10,34 @@ function isValidTimeFormat(time: string): boolean {
 }
 
 /**
- * Calculate lateness in minutes based on scheduled start time and clock-in time
- * Returns null if on time (within tolerance), or minutes late as positive integer
+ * Calculate lateness in minutes based on scheduled start time and clock-in time.
+ * Shift times are WIB (UTC+8) wall-clock values; server runs UTC, so we convert
+ * clock-in to WIB to get the correct calendar date before building the comparison.
+ * Returns null if on time (within tolerance), or minutes late as a positive integer.
  */
 export function calculateLateMinutes(
-  scheduledStartTime: string, // HH:mm format
+  scheduledStartTime: string, // HH:mm format, WIB wall-clock
   toleranceMinutes: number,
-  clockInAt: Date
+  clockInAt: Date             // UTC Date from server
 ): number | null {
-  // Parse scheduled start time
   const [hours, minutes] = scheduledStartTime.split(":").map(Number);
 
-  // Get clock-in date components
-  const clockInDate = new Date(clockInAt);
+  // Shift clock-in forward 8h to read the WIB calendar date
+  const TZ_OFFSET_MS = 8 * 60 * 60 * 1000;
+  const clockInWIB = new Date(clockInAt.getTime() + TZ_OFFSET_MS);
+  const wibYear  = clockInWIB.getUTCFullYear();
+  const wibMonth = clockInWIB.getUTCMonth();
+  const wibDay   = clockInWIB.getUTCDate();
 
-  // Create scheduled start datetime (same date as clock-in, with scheduled time)
-  const scheduledStart = new Date(clockInDate);
-  scheduledStart.setHours(hours, minutes, 0, 0);
+  // Build "HH:mm on this WIB calendar day" as a real UTC timestamp
+  const scheduledStartUTC = new Date(
+    Date.UTC(wibYear, wibMonth, wibDay, hours, minutes) - TZ_OFFSET_MS
+  );
 
-  // Calculate difference in milliseconds
-  const diffMs = clockInDate.getTime() - scheduledStart.getTime();
+  const diffMs      = clockInAt.getTime() - scheduledStartUTC.getTime();
   const diffMinutes = Math.floor(diffMs / 1000 / 60);
 
-  // If clocked in before scheduled time or within tolerance, not late
-  if (diffMinutes <= toleranceMinutes) {
-    return null;
-  }
-
-  // Return minutes late (subtract tolerance)
+  if (diffMinutes <= toleranceMinutes) return null;
   return diffMinutes - toleranceMinutes;
 }
 

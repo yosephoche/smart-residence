@@ -395,23 +395,52 @@ export async function autoGenerateSchedules(
     current.setDate(current.getDate() + 1);
   }
 
-  // Get existing schedules to skip duplicates
+  // Get existing schedules to skip duplicates (with 2-day lookback for consecutive-day constraint)
+  const lookbackStart = new Date(normalizedStart);
+  lookbackStart.setDate(lookbackStart.getDate() - 2);
+
   const existingSchedules = await prisma.staffSchedule.findMany({
     where: {
       staffId: { in: staff.map((s) => s.id) },
       date: {
-        gte: normalizedStart,
+        gte: lookbackStart,
         lte: normalizedEnd,
       },
     },
     select: { staffId: true, shiftTemplateId: true, date: true },
   });
 
-  const existingKeys = new Set(
-    existingSchedules.map(
-      (s) => `${s.staffId}_${s.shiftTemplateId}_${s.date.toISOString()}`
-    )
-  );
+  const existingKeys = new Set<string>();
+  // staffId -> shiftTemplateId -> Set<dateString "YYYY-MM-DD">
+  const staffShiftDates = new Map<string, Map<string, Set<string>>>();
+
+  existingSchedules.forEach((s) => {
+    const dateStr = s.date.toISOString().split("T")[0];
+    // Only mark as duplicate-skip if within the actual generation range
+    if (s.date >= normalizedStart && s.date <= normalizedEnd) {
+      existingKeys.add(`${s.staffId}_${s.shiftTemplateId}_${s.date.toISOString()}`);
+    }
+    // Track for consecutive-day checks (includes lookback days)
+    if (!staffShiftDates.has(s.staffId)) staffShiftDates.set(s.staffId, new Map());
+    if (!staffShiftDates.get(s.staffId)!.has(s.shiftTemplateId))
+      staffShiftDates.get(s.staffId)!.set(s.shiftTemplateId, new Set());
+    staffShiftDates.get(s.staffId)!.get(s.shiftTemplateId)!.add(dateStr);
+  });
+
+  // Returns true if this staff has worked this same shift on BOTH
+  // the day before and two days before `date` (i.e., 2 consecutive days already)
+  function hasWorkedShiftTwoDaysBefore(staffId: string, shiftId: string, date: Date): boolean {
+    const shiftDates = staffShiftDates.get(staffId)?.get(shiftId);
+    if (!shiftDates || shiftDates.size < 2) return false;
+    const yesterday = new Date(date);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const dayBefore = new Date(date);
+    dayBefore.setDate(dayBefore.getDate() - 2);
+    return (
+      shiftDates.has(yesterday.toISOString().split("T")[0]) &&
+      shiftDates.has(dayBefore.toISOString().split("T")[0])
+    );
+  }
 
   const schedulesToCreate: any[] = [];
 
@@ -420,14 +449,14 @@ export async function autoGenerateSchedules(
     // Track which staff are already assigned for this date
     const assignedStaffForDate = new Set<string>();
 
-    // Start rotation offset per date for fairness
-    let rotationIndex = dateIndex * totalRequiredPerDay;
+    // Advance by 1 per day for true rotation through all staff
+    let rotationIndex = dateIndex;
 
     shiftTemplates.forEach((shift) => {
       // Assign N staff to this shift based on requiredStaffCount
       let assignedCount = 0;
       let attempts = 0;
-      const maxAttempts = staff.length * 2; // Prevent infinite loop
+      const maxAttempts = staff.length * 3; // extra headroom for consecutive-day skips
 
       while (assignedCount < shift.requiredStaffCount && attempts < maxAttempts) {
         const staffMember = staff[rotationIndex % staff.length];
@@ -447,6 +476,12 @@ export async function autoGenerateSchedules(
           continue;
         }
 
+        // Skip if staff has already worked this shift for 2 consecutive days
+        if (hasWorkedShiftTwoDaysBefore(staffMember.id, shift.id, date)) {
+          rotationIndex++;
+          continue;
+        }
+
         // Assign this staff to this shift
         schedulesToCreate.push({
           staffId: staffMember.id,
@@ -454,6 +489,13 @@ export async function autoGenerateSchedules(
           date,
           createdBy,
         });
+
+        // Track for consecutive-day constraint
+        const dateStr = date.toISOString().split("T")[0];
+        if (!staffShiftDates.has(staffMember.id)) staffShiftDates.set(staffMember.id, new Map());
+        if (!staffShiftDates.get(staffMember.id)!.has(shift.id))
+          staffShiftDates.get(staffMember.id)!.set(shift.id, new Set());
+        staffShiftDates.get(staffMember.id)!.get(shift.id)!.add(dateStr);
 
         assignedStaffForDate.add(staffMember.id);
         assignedCount++;
