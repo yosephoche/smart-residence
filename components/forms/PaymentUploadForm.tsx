@@ -9,6 +9,8 @@ import FileUpload from "@/components/ui/FileUpload";
 import { formatCurrency } from "@/lib/utils";
 import { calculateTotalPayment, getMonthOptions, computeNextStartMonth, computeCoveredMonths, formatPaymentMonth } from "@/lib/calculations";
 import { useTranslations } from "next-intl";
+import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
 
 interface PaymentUploadFormProps {
   monthlyRate: number;
@@ -30,6 +32,7 @@ export default function PaymentUploadForm({
   isOutsideUploadWindow,
 }: PaymentUploadFormProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [showQris, setShowQris] = useState(false);
   const t = useTranslations('payments.form');
   const tCommon = useTranslations('common');
 
@@ -167,6 +170,18 @@ export default function PaymentUploadForm({
         )}
       </div>
 
+      {/* Show QRIS Button */}
+      <button
+        type="button"
+        onClick={() => setShowQris(true)}
+        className="w-full flex items-center justify-center gap-2.5 py-3.5 rounded-2xl border-2 border-blue-200 bg-blue-50 text-blue-700 font-semibold text-sm hover:bg-blue-100 active:scale-[0.98] transition-all duration-150"
+      >
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+        </svg>
+        Lihat QRIS
+      </button>
+
       {/* File Upload */}
       <Controller
         name="proofImage"
@@ -227,6 +242,81 @@ export default function PaymentUploadForm({
           {t('submit_payment')}
         </Button>
       </div>
+      {/* QRIS Modal */}
+      <AnimatePresence>
+        {showQris && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4"
+          >
+            {/* Backdrop */}
+            <motion.div
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              onClick={() => setShowQris(false)}
+            />
+
+            {/* Modal card */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 40 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 40 }}
+              transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
+              className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between px-5 pt-5 pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
+                    <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                    </svg>
+                  </div>
+                  <p className="font-bold text-slate-900 text-base">Pembayaran QRIS</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowQris(false)}
+                  className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-colors text-sm"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* QRIS Image */}
+              <div className="px-4 pb-2">
+                <div className="relative w-full aspect-[3/4] rounded-xl overflow-hidden">
+                  <Image
+                    src="/images/qris.jpeg"
+                    alt="QRIS Sakura Village"
+                    fill
+                    className="object-contain"
+                    priority
+                  />
+                </div>
+              </div>
+
+              {/* Footer hint */}
+              <p className="text-xs text-center text-slate-400 px-4 pb-2">
+                Scan menggunakan aplikasi dompet digital / mobile banking
+              </p>
+
+              {/* Close button */}
+              <div className="px-4 pb-5">
+                <button
+                  type="button"
+                  onClick={() => setShowQris(false)}
+                  className="w-full py-3.5 bg-blue-600 text-white rounded-2xl font-semibold text-sm active:scale-[0.98] transition-transform duration-150"
+                >
+                  Tutup
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </form>
   );
 }
