@@ -14,7 +14,9 @@ import {
   Plus,
   CheckCircle2,
   AlertCircle,
+  QrCode,
 } from 'lucide-react';
+import Image from 'next/image';
 import { useAuth } from '@/lib/auth-client';
 import { formatCurrency } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -71,6 +73,7 @@ export default function UploadScreen() {
   const [bankDetails, setBankDetails] = useState<BankDetails | null>(null);
   const [selectedMonth, setSelectedMonth] = useState<AvailableMonth | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [showQris, setShowQris] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -404,6 +407,17 @@ export default function UploadScreen() {
         </div>
       </motion.div>
 
+      {/* Show QRIS Button */}
+      <motion.div variants={itemVariants}>
+        <button
+          onClick={() => setShowQris(true)}
+          className="w-full flex items-center justify-center gap-2.5 py-3.5 rounded-2xl border-2 border-blue-200 bg-blue-50 text-blue-700 font-semibold text-sm hover:bg-blue-100 active:scale-[0.98] transition-all duration-150"
+        >
+          <QrCode className="w-5 h-5" />
+          Lihat QRIS
+        </button>
+      </motion.div>
+
       {/* Upload Area */}
       <motion.div variants={itemVariants}>
         <input
@@ -504,6 +518,77 @@ export default function UploadScreen() {
           )}
         </AnimatePresence>
       </motion.div>
+      {/* QRIS Modal */}
+      <AnimatePresence>
+        {showQris && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4"
+          >
+            {/* Backdrop */}
+            <motion.div
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              onClick={() => setShowQris(false)}
+            />
+
+            {/* Modal card */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 40 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 40 }}
+              transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
+              className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between px-5 pt-5 pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
+                    <QrCode className="w-4 h-4 text-blue-600" />
+                  </div>
+                  <p className="font-bold text-slate-900 text-base">Pembayaran QRIS</p>
+                </div>
+                <button
+                  onClick={() => setShowQris(false)}
+                  className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-colors text-sm"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* QRIS Image */}
+              <div className="px-4 pb-2">
+                <div className="relative w-full aspect-[3/4] rounded-xl overflow-hidden">
+                  <Image
+                    src="/images/qris.jpeg"
+                    alt="QRIS Sakura Village"
+                    fill
+                    className="object-contain"
+                    priority
+                  />
+                </div>
+              </div>
+
+              {/* Footer hint */}
+              <p className="text-xs text-center text-slate-400 px-4 pb-2">
+                Scan menggunakan aplikasi dompet digital / mobile banking
+              </p>
+
+              {/* Close button */}
+              <div className="px-4 pb-5">
+                <button
+                  onClick={() => setShowQris(false)}
+                  className="w-full py-3.5 bg-blue-600 text-white rounded-2xl font-semibold text-sm active:scale-[0.98] transition-transform duration-150"
+                >
+                  Tutup
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }
