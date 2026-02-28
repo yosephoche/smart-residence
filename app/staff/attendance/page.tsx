@@ -94,7 +94,14 @@ export default function AttendancePage() {
 
   const fetchTodaySchedule = async () => {
     try {
-      const res = await fetch("/api/staff/schedule/today");
+      const today = new Date();
+      const localDate = [
+        today.getFullYear(),
+        String(today.getMonth() + 1).padStart(2, "0"),
+        String(today.getDate()).padStart(2, "0"),
+      ].join("-"); // "2026-02-28" in browser local time
+
+      const res = await fetch(`/api/staff/schedule/today?date=${localDate}`);
       const data = await res.json();
       if (res.ok && data.schedule) {
         setTodaySchedule(data.schedule);

@@ -15,7 +15,11 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const today = new Date();
+    const dateParam = req.nextUrl.searchParams.get("date"); // "2026-02-28"
+    // Use client-provided local date (parsed as UTC midnight) instead of server's new Date()
+    const today = dateParam
+      ? new Date(`${dateParam}T00:00:00.000Z`)
+      : new Date();
 
     const schedule = await scheduleService.getScheduleForStaffOnDate(
       session.user.id,

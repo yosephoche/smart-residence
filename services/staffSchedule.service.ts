@@ -110,7 +110,9 @@ export async function getScheduleForStaffOnDate(
   staffId: string,
   date: Date
 ) {
-  const normalizedDate = normalizeDate(date);
+  // Normalize to UTC midnight — consistent with how admin-created dates are stored
+  const normalizedDate = new Date(date);
+  normalizedDate.setUTCHours(0, 0, 0, 0);
 
   const schedule = await prisma.staffSchedule.findFirst({
     where: {
