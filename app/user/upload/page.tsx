@@ -526,7 +526,7 @@ export default function UploadScreen() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4"
+            className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-4"
           >
             {/* Backdrop */}
             <motion.div
