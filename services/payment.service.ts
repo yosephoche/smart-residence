@@ -9,14 +9,26 @@ const paymentMonthsInclude = {
 export async function getPayments({
   status,
   userId,
+  date,
 }: {
   status?: string;
   userId?: string;
+  date?: string;
 } = {}) {
+  let dateFilter: Record<string, unknown> = {};
+  if (date) {
+    const WITA_OFFSET_MS = 8 * 60 * 60 * 1000;
+    const [y, m, d] = date.split("-").map(Number);
+    const witaDayStartMs = Date.UTC(y, m - 1, d, 0, 0, 0);
+    const startUtc = new Date(witaDayStartMs - WITA_OFFSET_MS);
+    const endUtc   = new Date(witaDayStartMs - WITA_OFFSET_MS + 24 * 60 * 60 * 1000 - 1);
+    dateFilter = { createdAt: { gte: startUtc, lte: endUtc } };
+  }
   return prisma.payment.findMany({
     where: {
       ...(status ? { status: status as "PENDING" | "APPROVED" | "REJECTED" } : {}),
       ...(userId ? { userId } : {}),
+      ...dateFilter,
     },
     include: {
       user: { select: { id: true, name: true, email: true } },

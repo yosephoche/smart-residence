@@ -93,6 +93,18 @@ export default function AdminPaymentsPage() {
   const [bulkApproveModalOpen, setBulkApproveModalOpen] = useState(false);
   const [isBulkProcessing, setIsBulkProcessing] = useState(false);
 
+  // Feature: Date filter
+  const [filterDate, setFilterDate] = useState<string>("");
+
+  // Feature: WhatsApp modal
+  const [whatsappModalOpen, setWhatsappModalOpen] = useState(false);
+  const [whatsappTab, setWhatsappTab] = useState<"today" | "unpaid">("today");
+  const [whatsappTodayMsg, setWhatsappTodayMsg] = useState("");
+  const [whatsappUnpaidMsg, setWhatsappUnpaidMsg] = useState("");
+  const [isCopiedToday, setIsCopiedToday] = useState(false);
+  const [isCopiedUnpaid, setIsCopiedUnpaid] = useState(false);
+  const [isLoadingWA, setIsLoadingWA] = useState(false);
+
   // Initial fetch: payments + users in parallel
   useEffect(() => {
     Promise.all([
@@ -156,6 +168,8 @@ export default function AdminPaymentsPage() {
     "Juli","Agustus","September","Oktober","November","Desember",
   ];
 
+  const INDONESIAN_DAYS = ["Minggu","Senin","Selasa","Rabu","Kamis","Jumat","Sabtu"];
+
   const availableYears = useMemo(() => {
     const years = new Set<number>();
     payments.forEach((p) =>
@@ -181,8 +195,17 @@ export default function AdminPaymentsPage() {
         p.paymentMonths?.some((pm) => pm.year === filterYear && pm.month === filterMonth)
       );
     }
+    // 4. Date (WITA UTC+8)
+    if (filterDate !== "") {
+      result = result.filter((p) => {
+        const witaDate = new Date(
+          new Date(p.createdAt).getTime() + 8 * 60 * 60 * 1000
+        ).toISOString().slice(0, 10);
+        return witaDate === filterDate;
+      });
+    }
     return result;
-  }, [payments, statusFilter, filterUserId, filterYear, filterMonth]);
+  }, [payments, statusFilter, filterUserId, filterYear, filterMonth, filterDate]);
 
   // Houses view: filter by resident then split by paid/unpaid
   const displayedHouses = useMemo(() => {
@@ -206,7 +229,7 @@ export default function AdminPaymentsPage() {
     handlePageSizeChange: handlePaymentsPageSizeChange,
   } = usePagination(filteredPayments, {
     initialPageSize: 25,
-    resetDeps: [statusFilter, filterUserId, filterYear, filterMonth],
+    resetDeps: [statusFilter, filterUserId, filterYear, filterMonth, filterDate],
   });
 
   // Pagination for houses table
@@ -362,6 +385,72 @@ export default function AdminPaymentsPage() {
         ? prev.filter((id) => id !== paymentId)
         : [...prev, paymentId]
     );
+  };
+
+  // --- WhatsApp message generator ---
+  const buildWhatsappMessages = async () => {
+    setIsLoadingWA(true);
+    const nowWib = new Date(Date.now() + 8 * 60 * 60 * 1000);
+    const todayWibStr = nowWib.toISOString().slice(0, 10);
+    const dateLabel = `${INDONESIAN_DAYS[nowWib.getUTCDay()]}, ${nowWib.getUTCDate()} ${INDONESIAN_MONTHS[nowWib.getUTCMonth()]} ${nowWib.getUTCFullYear()}`;
+
+    // Message 1: filter payments state for today (WITA)
+    const todayPayments = payments.filter((p) =>
+      new Date(new Date(p.createdAt).getTime() + 8 * 60 * 60 * 1000)
+        .toISOString().slice(0, 10) === todayWibStr
+    );
+    let msg1 = `🏠 *Laporan Pembayaran IPL*\n📅 Hari ini: ${dateLabel}\n\n`;
+    if (todayPayments.length === 0) {
+      msg1 += `Belum ada pembayaran masuk hari ini.`;
+    } else {
+      msg1 += `✅ *Pembayaran Masuk (${todayPayments.length} transaksi):*\n\n`;
+      todayPayments.forEach((p, i) => {
+        msg1 += `${i + 1}. Blok ${p.house?.block ?? "—"} / No. ${p.house?.houseNumber ?? "—"} - ${p.user?.name ?? "—"} - ${formatCurrency(Number(p.totalAmount))}\n`;
+      });
+      const total = todayPayments.reduce((sum, p) => sum + Number(p.totalAmount), 0);
+      msg1 += `\n💰 *Total Diterima: ${formatCurrency(total)}*`;
+    }
+    setWhatsappTodayMsg(msg1);
+
+    // Message 2: fetch unpaid houses from existing endpoint
+    try {
+      const res = await fetch("/api/payments/unpaid-this-month");
+      const unpaid: Array<{ block: string; houseNumber: string }> = await res.json();
+      const periodLabel = `${INDONESIAN_MONTHS[nowWib.getUTCMonth()]} ${nowWib.getUTCFullYear()}`;
+      let msg2 = `⚠️ *Tagihan IPL Belum Dibayar*\n📅 Periode: ${periodLabel}\n\n`;
+      if (unpaid.length === 0) {
+        msg2 += `Semua unit sudah membayar bulan ini! 🎉`;
+      } else {
+        msg2 += `🏠 *Daftar Unit Belum Bayar (${unpaid.length} unit):*\n\n`;
+        unpaid.forEach((h, i) => {
+          msg2 += `${i + 1}. Blok ${h.block} / No. ${h.houseNumber}\n`;
+        });
+        msg2 += `\nTotal *${unpaid.length} unit* belum bayar bulan ini.`;
+      }
+      setWhatsappUnpaidMsg(msg2);
+    } catch {
+      setWhatsappUnpaidMsg("Gagal memuat data unit belum bayar.");
+    }
+    setIsLoadingWA(false);
+  };
+
+  const openWhatsappModal = () => {
+    setWhatsappModalOpen(true);
+    setWhatsappTab("today");
+    setIsCopiedToday(false);
+    setIsCopiedUnpaid(false);
+    buildWhatsappMessages();
+  };
+
+  const handleCopyWA = async (text: string, tab: "today" | "unpaid") => {
+    await navigator.clipboard.writeText(text);
+    if (tab === "today") {
+      setIsCopiedToday(true);
+      setTimeout(() => setIsCopiedToday(false), 2000);
+    } else {
+      setIsCopiedUnpaid(true);
+      setTimeout(() => setIsCopiedUnpaid(false), 2000);
+    }
   };
 
   // --- Payment table columns ---
@@ -714,6 +803,17 @@ export default function AdminPaymentsPage() {
             </div>
           </div>
 
+          {/* WhatsApp message generator */}
+          <button
+            onClick={openWhatsappModal}
+            className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-green-700 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-colors"
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+            </svg>
+            WhatsApp
+          </button>
+
           {/* Export dropdown */}
           <div className="relative" ref={exportDropdownRef}>
             <Button
@@ -791,13 +891,48 @@ export default function AdminPaymentsPage() {
             ))}
           </select>
 
+          {/* Date filter — only when not in houses view */}
+          {housesViewMode === null && (
+            <div className="flex items-center gap-2">
+              <input
+                type="date"
+                value={filterDate}
+                onChange={(e) => setFilterDate(e.target.value)}
+                max={new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString().slice(0, 10)}
+                className="px-3 py-2 text-sm border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-100 focus:border-primary-500"
+              />
+              <button
+                onClick={() =>
+                  setFilterDate(
+                    new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString().slice(0, 10)
+                  )
+                }
+                className="px-3 py-2 text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200 rounded-lg hover:bg-blue-100 whitespace-nowrap"
+              >
+                Hari Ini
+              </button>
+              {filterDate !== "" && (
+                <button
+                  onClick={() => setFilterDate("")}
+                  className="text-gray-400 hover:text-gray-600 flex items-center"
+                  title="Hapus filter tanggal"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
+            </div>
+          )}
+
           {housesViewMode === null
-            ? (filterUserId !== "" || filterYear !== 0 || filterMonth !== 0) && (
+            ? (filterUserId !== "" || filterYear !== 0 || filterMonth !== 0 || filterDate !== "") && (
                 <button
                   onClick={() => {
                     setFilterUserId("");
                     setFilterYear(0);
                     setFilterMonth(0);
+                    setFilterDate("");
                   }}
                   className="text-sm text-primary-600 hover:text-primary-700 underline underline-offset-2"
                 >
@@ -978,6 +1113,83 @@ export default function AdminPaymentsPage() {
         isLoading={isBulkProcessing}
         variant="primary"
       />
+
+      {/* WhatsApp Message Generator Modal */}
+      <Modal
+        isOpen={whatsappModalOpen}
+        onClose={() => setWhatsappModalOpen(false)}
+        title="Generator Pesan WhatsApp"
+        size="lg"
+      >
+        {/* Tab switcher */}
+        <div className="flex gap-1 bg-gray-100 rounded-lg p-1 mb-4">
+          {(["today", "unpaid"] as const).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setWhatsappTab(tab)}
+              className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${
+                whatsappTab === tab
+                  ? "bg-white text-gray-900 shadow-sm"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              {tab === "today" ? "Pembayaran Hari Ini" : "Belum Bayar Bulan Ini"}
+            </button>
+          ))}
+        </div>
+
+        {isLoadingWA ? (
+          <div className="flex items-center justify-center py-12">
+            <svg className="animate-spin w-8 h-8 text-green-600" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            </svg>
+          </div>
+        ) : (
+          <>
+            <textarea
+              readOnly
+              value={whatsappTab === "today" ? whatsappTodayMsg : whatsappUnpaidMsg}
+              rows={12}
+              className="w-full px-3 py-3 text-sm font-mono bg-gray-50 border border-gray-200 rounded-lg resize-none focus:outline-none"
+            />
+            <button
+              onClick={() =>
+                handleCopyWA(
+                  whatsappTab === "today" ? whatsappTodayMsg : whatsappUnpaidMsg,
+                  whatsappTab
+                )
+              }
+              className={`w-full mt-3 py-3 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 transition-all active:scale-[0.98] ${
+                (whatsappTab === "today" && isCopiedToday) ||
+                (whatsappTab === "unpaid" && isCopiedUnpaid)
+                  ? "bg-emerald-500 text-white"
+                  : "bg-blue-600 text-white hover:bg-blue-700"
+              }`}
+            >
+              {(whatsappTab === "today" && isCopiedToday) ||
+              (whatsappTab === "unpaid" && isCopiedUnpaid) ? (
+                <>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Disalin!
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                  </svg>
+                  Salin Pesan
+                </>
+              )}
+            </button>
+            <p className="text-xs text-gray-400 text-center mt-2">
+              Tanda *bintang* akan tampil tebal di WhatsApp.
+            </p>
+          </>
+        )}
+      </Modal>
     </div>
   );
 }

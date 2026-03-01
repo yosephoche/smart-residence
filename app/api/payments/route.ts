@@ -14,11 +14,16 @@ export const GET = auth(async (req) => {
 
   const url = new URL(req.url);
   const status = url.searchParams.get("status") ?? undefined;
+  const date = url.searchParams.get("date") ?? undefined;
+
+  if (date && !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    return NextResponse.json({ error: "Invalid date format. Use YYYY-MM-DD" }, { status: 400 });
+  }
 
   // USER sees only their own payments; ADMIN sees all
   const userId = session.user.role === "USER" ? session.user.id : (url.searchParams.get("userId") ?? undefined);
 
-  const payments = await getPayments({ status, userId });
+  const payments = await getPayments({ status, userId, date });
   return NextResponse.json(serializePrismaJson(payments));
 });
 
