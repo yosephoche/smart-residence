@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { motion } from "framer-motion";
-import { Home, Clock, FileText, User, AlertCircle } from "lucide-react";
+import { Home, Clock, FileText, User, AlertCircle, CalendarRange } from "lucide-react";
 
 interface TabItem {
   id: string;
@@ -54,6 +54,12 @@ const StaffBottomNav: React.FC = () => {
       ...baseTabs,
       thirdTab,
       {
+        id: "leave",
+        label: "Cuti",
+        icon: CalendarRange,
+        href: "/staff/leave",
+      },
+      {
         id: "profile",
         label: "Profil",
         icon: User,
@@ -89,7 +95,7 @@ const StaffBottomNav: React.FC = () => {
               role="tab"
               aria-selected={isActive}
               aria-label={tab.label}
-              className="relative flex flex-col items-center gap-0.5 py-1 px-3 min-w-[60px]"
+              className="relative flex flex-col items-center gap-0.5 py-1 px-2 min-w-[52px]"
             >
               {isActive && (
                 <motion.div

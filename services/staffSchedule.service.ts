@@ -64,7 +64,40 @@ export async function getSchedules(filters?: {
     ],
   });
 
-  return schedules;
+  // Annotate each schedule with isOnLeave flag
+  if (schedules.length === 0) return schedules.map((s) => ({ ...s, isOnLeave: false }));
+
+  const staffIds = [...new Set(schedules.map((s) => s.staffId))];
+  const rangeStart = filters?.startDate ? normalizeDate(filters.startDate) : schedules[0].date;
+  const rangeEnd = filters?.endDate
+    ? normalizeDate(filters.endDate)
+    : schedules[schedules.length - 1].date;
+
+  const approvedLeaves = await prisma.staffLeave.findMany({
+    where: {
+      staffId: { in: staffIds },
+      status: "APPROVED",
+      startDate: { lte: rangeEnd },
+      endDate: { gte: rangeStart },
+    },
+    select: { staffId: true, startDate: true, endDate: true },
+  });
+
+  // Build lookup: staffId -> [{start, end}]
+  const leaveMap = new Map<string, { start: Date; end: Date }[]>();
+  for (const leave of approvedLeaves) {
+    if (!leaveMap.has(leave.staffId)) leaveMap.set(leave.staffId, []);
+    leaveMap.get(leave.staffId)!.push({ start: leave.startDate, end: leave.endDate });
+  }
+
+  return schedules.map((s) => {
+    const leaves = leaveMap.get(s.staffId) ?? [];
+    const scheduleDate = normalizeDate(s.date);
+    const isOnLeave = leaves.some(
+      (l) => scheduleDate >= normalizeDate(l.start) && scheduleDate <= normalizeDate(l.end)
+    );
+    return { ...s, isOnLeave };
+  });
 }
 
 /**

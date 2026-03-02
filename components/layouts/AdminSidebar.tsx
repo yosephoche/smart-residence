@@ -24,7 +24,8 @@ import {
   FileText,
   CalendarDays,
   ClipboardList,
-  Phone
+  Phone,
+  CalendarRange,
 } from "lucide-react";
 import LanguageSwitcher from "@/components/i18n/LanguageSwitcher";
 
@@ -129,6 +130,11 @@ export default function AdminSidebar() {
           name: t('navigation.admin.schedule'),
           href: "/admin/staff/schedule",
           icon: <CalendarDays className="w-4 h-4" />,
+        },
+        {
+          name: t('navigation.admin.leave_requests'),
+          href: "/admin/staff/leave",
+          icon: <CalendarRange className="w-4 h-4" />,
         },
       ],
     },

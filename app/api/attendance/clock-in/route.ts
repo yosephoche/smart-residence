@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { clockIn } from "@/services/attendance.service";
 import { validateUploadedFile, saveUploadedFile } from "@/lib/utils/file-upload";
 import { serializePrismaJson } from "@/lib/utils/prisma-serializer";
+import { isStaffOnApprovedLeave } from "@/services/leaveRequest.service";
 
 export async function POST(req: NextRequest) {
   try {
@@ -17,6 +18,15 @@ export async function POST(req: NextRequest) {
     if (session.user.role !== "STAFF") {
       return NextResponse.json(
         { error: "Forbidden - Only staff members can clock in" },
+        { status: 403 }
+      );
+    }
+
+    // Block clock-in if staff is on approved leave today
+    const onLeave = await isStaffOnApprovedLeave(session.user.id, new Date());
+    if (onLeave) {
+      return NextResponse.json(
+        { error: "Tidak dapat absen. Anda sedang dalam masa cuti yang telah disetujui." },
         { status: 403 }
       );
     }

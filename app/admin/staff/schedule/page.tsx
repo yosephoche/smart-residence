@@ -19,6 +19,7 @@ interface Schedule {
   id: string;
   date: string;
   notes: string | null;
+  isOnLeave?: boolean;
   staff: {
     id: string;
     name: string;
@@ -30,6 +31,13 @@ interface Schedule {
     startTime: string;
     endTime: string;
   };
+}
+
+interface LeaveStub {
+  staffId: string;
+  staffName: string;
+  startDate: string;
+  endDate: string;
 }
 
 interface ShiftTemplate {
@@ -127,6 +135,9 @@ export default function SchedulePage() {
     return map;
   }, [schedules]);
 
+  // Leaves grouped by date key for calendar view
+  const [leavesByDate, setLeavesByDate] = useState<Map<string, { staffName: string }[]>>(new Map());
+
   // Pagination
   const {
     currentPage,
@@ -157,7 +168,7 @@ export default function SchedulePage() {
   }, [viewMode]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    fetchSchedules();
+    Promise.all([fetchSchedules(), fetchApprovedLeaves()]);
     fetchStaff();
     fetchShiftTemplates();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -182,6 +193,47 @@ export default function SchedulePage() {
       setError(err.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchApprovedLeaves = async () => {
+    try {
+      const params = new URLSearchParams({ status: "APPROVED" });
+      if (startDate) params.append("startDate", new Date(startDate).toISOString());
+      if (endDate) params.append("endDate", new Date(endDate).toISOString());
+
+      const res = await fetch(`/api/admin/staff/leave?${params.toString()}`);
+      if (!res.ok) return;
+
+      const data = await res.json();
+      const leaves: LeaveStub[] = (data.leaves ?? []).map((l: any) => ({
+        staffId: l.staffId,
+        staffName: l.staff?.name ?? "Staff",
+        startDate: l.startDate,
+        endDate: l.endDate,
+      }));
+
+      // Build date-keyed map (expand each leave across its date range)
+      const map = new Map<string, { staffName: string }[]>();
+      for (const leave of leaves) {
+        const start = new Date(leave.startDate);
+        const end = new Date(leave.endDate);
+        const cur = new Date(start);
+        cur.setUTCHours(0, 0, 0, 0);
+        const endNorm = new Date(end);
+        endNorm.setUTCHours(0, 0, 0, 0);
+
+        while (cur <= endNorm) {
+          const key = toDateKey(cur);
+          if (!map.has(key)) map.set(key, []);
+          map.get(key)!.push({ staffName: leave.staffName });
+          cur.setUTCDate(cur.getUTCDate() + 1);
+        }
+      }
+
+      setLeavesByDate(map);
+    } catch {
+      // non-critical, ignore errors
     }
   };
 
@@ -448,13 +500,20 @@ export default function SchedulePage() {
       key: "date",
       header: t('date'),
       render: (_, row) => (
-        <span className="font-medium">
-          {new Date(row.date).toLocaleDateString("id-ID", {
-            day: "2-digit",
-            month: "short",
-            year: "numeric",
-          })}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="font-medium">
+            {new Date(row.date).toLocaleDateString("id-ID", {
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+            })}
+          </span>
+          {row.isOnLeave && (
+            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-rose-50 text-rose-600 border border-rose-200">
+              Cuti
+            </span>
+          )}
+        </div>
       ),
     },
     {
@@ -634,6 +693,7 @@ export default function SchedulePage() {
           year={calendarMonth.year}
           month={calendarMonth.month}
           schedulesByDate={schedulesByDate}
+          leavesByDate={leavesByDate}
           loading={loading}
           onMonthChange={handleCalendarMonthChange}
           onDateClick={handleCalendarDateClick}

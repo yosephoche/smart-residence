@@ -342,6 +342,56 @@ export async function getExcludedIncomePeriodsConfig(): Promise<ExcludedIncomePe
   }
 }
 
+// Default leave configuration values
+const DEFAULT_LEAVE_CONFIG = {
+  maxDaysPerRequest: 3,
+  minAdvanceDays: 7,
+};
+
+export interface LeaveConfig {
+  maxDaysPerRequest: number;
+  minAdvanceDays: number;
+}
+
+/**
+ * Get the leave configuration from the database
+ * Falls back to default if no config exists
+ */
+export async function getLeaveConfig(): Promise<LeaveConfig> {
+  try {
+    const config = await prisma.systemConfig.findUnique({
+      where: { key: "leave_config" },
+    });
+
+    if (!config) {
+      return DEFAULT_LEAVE_CONFIG;
+    }
+
+    const value = config.value as unknown as LeaveConfig;
+    return {
+      maxDaysPerRequest: value.maxDaysPerRequest ?? DEFAULT_LEAVE_CONFIG.maxDaysPerRequest,
+      minAdvanceDays: value.minAdvanceDays ?? DEFAULT_LEAVE_CONFIG.minAdvanceDays,
+    };
+  } catch (error) {
+    console.error("Error fetching leave config:", error);
+    return DEFAULT_LEAVE_CONFIG;
+  }
+}
+
+/**
+ * Set leave configuration
+ */
+export async function setLeaveConfig(
+  config: LeaveConfig,
+  updatedBy: string
+): Promise<void> {
+  await setConfig("leave_config", config, updatedBy);
+
+  // Invalidate cache
+  const { invalidateLeaveConfigCache } = await import("@/lib/cache/leave-config");
+  invalidateLeaveConfigCache();
+}
+
 /**
  * Set WhatsApp message template configuration
  */

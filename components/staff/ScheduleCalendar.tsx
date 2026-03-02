@@ -3,6 +3,7 @@
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import ScheduleChip from "./ScheduleChip";
+import LeaveChip, { type LeaveChipData } from "./LeaveChip";
 
 // Minimal type needed by the calendar; compatible with the page's full Schedule type
 interface CalendarSchedule {
@@ -80,6 +81,7 @@ interface CalendarCellProps {
   isCurrentMonth: boolean;
   isToday: boolean;
   schedules: CalendarSchedule[];
+  leaves: LeaveChipData[];
   onDateClick: (dateKey: string) => void;
   onDeleteClick: (id: string) => void;
 }
@@ -90,11 +92,16 @@ function CalendarCell({
   isCurrentMonth,
   isToday,
   schedules,
+  leaves,
   onDateClick,
   onDeleteClick,
 }: CalendarCellProps) {
-  const visible = schedules.slice(0, MAX_CHIPS);
-  const overflow = schedules.length - MAX_CHIPS;
+  // Leave chips first, then schedule chips; combined cap at MAX_CHIPS
+  const totalCount = leaves.length + schedules.length;
+  const visibleLeaves = leaves.slice(0, MAX_CHIPS);
+  const remainingSlots = Math.max(0, MAX_CHIPS - visibleLeaves.length);
+  const visibleSchedules = schedules.slice(0, remainingSlots);
+  const overflow = totalCount - visibleLeaves.length - visibleSchedules.length;
 
   return (
     <div
@@ -126,9 +133,12 @@ function CalendarCell({
         <Plus className="w-3 h-3 text-blue-500" />
       </div>
 
-      {/* Schedule chips */}
+      {/* Chips: leave first, then schedule */}
       <div className="space-y-0.5">
-        {visible.map((schedule) => (
+        {visibleLeaves.map((leave, i) => (
+          <LeaveChip key={`leave-${i}`} leave={leave} />
+        ))}
+        {visibleSchedules.map((schedule) => (
           <ScheduleChip
             key={schedule.id}
             schedule={schedule}
@@ -148,6 +158,7 @@ export interface ScheduleCalendarProps {
   month: number;
   // Accepts any schedule shape that has id/staff/shiftTemplate fields
   schedulesByDate: Map<string, any[]>;
+  leavesByDate?: Map<string, LeaveChipData[]>;
   loading: boolean;
   onMonthChange: (year: number, month: number) => void;
   onDateClick: (dateKey: string) => void;
@@ -158,6 +169,7 @@ export default function ScheduleCalendar({
   year,
   month,
   schedulesByDate,
+  leavesByDate,
   loading,
   onMonthChange,
   onDateClick,
@@ -221,6 +233,7 @@ export default function ScheduleCalendar({
                 key={cell.dateKey}
                 {...cell}
                 schedules={schedulesByDate.get(cell.dateKey) ?? []}
+                leaves={leavesByDate?.get(cell.dateKey) ?? []}
                 onDateClick={onDateClick}
                 onDeleteClick={onDeleteClick}
               />
@@ -238,6 +251,10 @@ export default function ScheduleCalendar({
         <div className="flex items-center gap-1.5">
           <div className="w-2 h-2 rounded-full bg-amber-500" />
           <span className="text-[10px] text-gray-500">{t("calendar_legend_afternoon")}</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-2 h-2 rounded-full bg-rose-500" />
+          <span className="text-[10px] text-gray-500">{t("calendar_legend_leave")}</span>
         </div>
       </div>
     </div>

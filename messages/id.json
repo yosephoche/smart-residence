@@ -103,6 +103,7 @@
       "shift_reports": "Laporan Shift",
       "shift_templates": "Template Shift",
       "schedule": "Jadwal",
+      "leave_requests": "Cuti Staff",
       "settings": "Pengaturan",
       "urgent_contacts": "Kontak Darurat",
       "admin_panel": "Panel Admin"
@@ -759,7 +760,8 @@
       "view_table": "Tabel",
       "view_calendar": "Kalender",
       "calendar_legend_morning": "Pagi (sebelum 12:00)",
-      "calendar_legend_afternoon": "Siang / Malam"
+      "calendar_legend_afternoon": "Siang / Malam",
+      "calendar_legend_leave": "Cuti"
     }
   },
   "validation": {

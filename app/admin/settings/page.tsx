@@ -9,7 +9,8 @@ import BankDetailsConfigForm from "@/components/forms/BankDetailsConfigForm";
 import ResidenceInfoConfigForm from "@/components/forms/ResidenceInfoConfigForm";
 import WhatsAppTemplateConfigForm from "@/components/forms/WhatsAppTemplateConfigForm";
 import ExcludedIncomePeriodsForm from "@/components/forms/ExcludedIncomePeriodsForm";
-import { Settings, AlertCircle, CheckCircle, Key, MapPin, CreditCard, Building2, MessageSquare, CalendarX } from "lucide-react";
+import { Settings, AlertCircle, CheckCircle, Key, MapPin, CreditCard, Building2, MessageSquare, CalendarX, CalendarRange } from "lucide-react";
+import LeaveConfigForm from "@/components/forms/LeaveConfigForm";
 
 export const dynamic = 'force-dynamic';
 
@@ -44,6 +45,10 @@ export default function SettingsPage() {
   const [excludedIncomePeriodsConfig, setExcludedIncomePeriodsConfig] = useState<{
     periods: { year: number; month: number }[];
   } | null>(null);
+  const [leaveConfig, setLeaveConfig] = useState<{
+    maxDaysPerRequest: number;
+    minAdvanceDays: number;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
   const [alert, setAlert] = useState<{
     type: "success" | "error";
@@ -56,13 +61,14 @@ export default function SettingsPage() {
 
   const fetchConfigs = async () => {
     try {
-      const [uploadResponse, passwordResponse, geofenceResponse, waTemplateResponse, excludedPeriodsResponse] =
+      const [uploadResponse, passwordResponse, geofenceResponse, waTemplateResponse, excludedPeriodsResponse, leaveConfigResponse] =
         await Promise.all([
           fetch("/api/system-config/upload-window"),
           fetch("/api/system-config/default-password"),
           fetch("/api/system-config/geofence"),
           fetch("/api/system-config/whatsapp-template"),
           fetch("/api/system-config/excluded-income-periods"),
+          fetch("/api/system-config/leave-config"),
         ]);
 
       if (!uploadResponse.ok || !passwordResponse.ok || !geofenceResponse.ok) {
@@ -87,6 +93,11 @@ export default function SettingsPage() {
       if (excludedPeriodsResponse.ok) {
         const epData = await excludedPeriodsResponse.json();
         setExcludedIncomePeriodsConfig(epData);
+      }
+
+      if (leaveConfigResponse.ok) {
+        const lcData = await leaveConfigResponse.json();
+        setLeaveConfig(lcData);
       }
     } catch (error) {
       console.error("Error fetching configs:", error);
@@ -484,6 +495,53 @@ export default function SettingsPage() {
             <li>Pembayaran yang di-approve untuk bulan yang dikecualikan tidak akan membuat catatan pemasukan</li>
             <li>Jika sebagian bulan dikecualikan, pemasukan akan dihitung proporsional</li>
             <li>Gunakan Bulk Create di halaman Pembayaran untuk memasukkan data historis</li>
+          </ul>
+        </div>
+      </div>
+
+      {/* Leave Configuration */}
+      <div className="bg-white rounded-lg shadow border border-gray-200 mt-6">
+        <div className="p-6 border-b border-gray-200">
+          <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+            <CalendarRange className="w-5 h-5" />
+            Konfigurasi Pengajuan Cuti Staff
+          </h2>
+          <p className="text-sm text-gray-600 mt-1">
+            Atur batas maksimum hari cuti dan minimum hari pengajuan sebelumnya
+          </p>
+        </div>
+
+        <div className="p-6">
+          {loading ? (
+            <div className="animate-pulse space-y-4">
+              <div className="h-12 bg-gray-200 rounded"></div>
+              <div className="h-12 bg-gray-200 rounded"></div>
+            </div>
+          ) : leaveConfig ? (
+            <LeaveConfigForm
+              initialConfig={leaveConfig}
+              onSaveSuccess={(config) => {
+                setLeaveConfig(config);
+                setAlert({ type: "success", message: "Konfigurasi cuti berhasil disimpan" });
+                setTimeout(() => setAlert(null), 5000);
+              }}
+              onSaveError={handleSaveError}
+            />
+          ) : (
+            <div className="text-center py-8 text-gray-500">Gagal memuat konfigurasi</div>
+          )}
+        </div>
+
+        <div className="p-6 bg-rose-50 border-t border-rose-200">
+          <h3 className="font-medium text-rose-900 mb-2 flex items-center gap-2">
+            <AlertCircle className="w-4 h-4" />
+            Informasi Penting
+          </h3>
+          <ul className="text-sm text-rose-800 space-y-1 ml-6 list-disc">
+            <li>Staff tidak dapat absen pada hari cuti yang sudah disetujui</li>
+            <li>Sistem mencegah 100% staf cuti pada hari yang sama</li>
+            <li>Perubahan konfigurasi berlaku untuk pengajuan baru saja</li>
+            <li>Cuti yang sudah disetujui tidak terpengaruh perubahan konfigurasi</li>
           </ul>
         </div>
       </div>

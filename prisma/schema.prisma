@@ -20,6 +20,12 @@ enum PaymentStatus {
   REJECTED
 }
 
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 enum ExpenseCategory {
   MAINTENANCE
   SECURITY
@@ -82,6 +88,8 @@ model User {
   staffSchedules       StaffSchedule[]
   createdSchedules     StaffSchedule[] @relation("ScheduleCreator")
   urgentContacts       UrgentContact[]
+  staffLeaves          StaffLeave[]    @relation("StaffLeaves")
+  reviewedLeaves       StaffLeave[]    @relation("LeaveReviewer")
 }
 
 model HouseType {
@@ -272,4 +280,26 @@ model UrgentContact {
   creator     User     @relation(fields: [createdBy], references: [id])
 
   @@index([isActive, order])
+}
+
+model StaffLeave {
+  id            String      @id @default(cuid())
+  staffId       String
+  startDate     DateTime
+  endDate       DateTime
+  totalDays     Int
+  reason        String
+  status        LeaveStatus @default(PENDING)
+  reviewedBy    String?
+  reviewedAt    DateTime?
+  rejectionNote String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  staff         User        @relation("StaffLeaves", fields: [staffId], references: [id])
+  reviewer      User?       @relation("LeaveReviewer", fields: [reviewedBy], references: [id])
+
+  @@index([staffId, status])
+  @@index([startDate, endDate])
+  @@index([staffId, startDate, endDate])
 }
