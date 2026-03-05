@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getPayments, createPayment } from "@/services/payment.service";
-import { validateUploadedFile, saveUploadedFile } from "@/lib/utils/file-upload";
+import {
+  validateUploadedFile,
+  saveUploadedFile,
+} from "@/lib/utils/file-upload";
 import { getCachedUploadWindowConfig } from "@/lib/cache/upload-window";
 import { isWithinUploadWindow } from "@/services/systemConfig.service";
 import { serializePrismaJson } from "@/lib/utils/prisma-serializer";
@@ -17,11 +20,17 @@ export const GET = auth(async (req) => {
   const date = url.searchParams.get("date") ?? undefined;
 
   if (date && !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-    return NextResponse.json({ error: "Invalid date format. Use YYYY-MM-DD" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Invalid date format. Use YYYY-MM-DD" },
+      { status: 400 },
+    );
   }
 
   // USER sees only their own payments; ADMIN sees all
-  const userId = session.user.role === "USER" ? session.user.id : (url.searchParams.get("userId") ?? undefined);
+  const userId =
+    session.user.role === "USER"
+      ? session.user.id
+      : (url.searchParams.get("userId") ?? undefined);
 
   const payments = await getPayments({ status, userId, date });
   return NextResponse.json(serializePrismaJson(payments));
@@ -37,10 +46,7 @@ export const POST = auth(async (req) => {
   const uploadConfig = await getCachedUploadWindowConfig();
   const windowCheck = isWithinUploadWindow(uploadConfig);
   if (!windowCheck.allowed) {
-    return NextResponse.json(
-      { error: windowCheck.message },
-      { status: 403 }
-    );
+    return NextResponse.json({ error: windowCheck.message }, { status: 403 });
   }
 
   const formData = await req.formData();
@@ -51,14 +57,14 @@ export const POST = auth(async (req) => {
   if (!amountMonths || !proofImage || !houseId) {
     return NextResponse.json(
       { error: "amountMonths, proofImage, and houseId are required" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
   if (amountMonths < 1 || amountMonths > 12) {
     return NextResponse.json(
       { error: "amountMonths must be between 1 and 12" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -68,7 +74,25 @@ export const POST = auth(async (req) => {
   if (!house || house.userId !== session.user.id) {
     return NextResponse.json(
       { error: "House does not belong to you" },
-      { status: 403 }
+      { status: 403 },
+    );
+  }
+
+  // Block submission if there is already a PENDING payment for this house
+  const existingPending = await prisma.payment.findFirst({
+    where: {
+      houseId,
+      userId: session.user.id,
+      status: "PENDING",
+    },
+  });
+  if (existingPending) {
+    return NextResponse.json(
+      {
+        error:
+          "Anda masih memiliki pembayaran yang menunggu verifikasi admin. Silakan tunggu hingga pembayaran sebelumnya diproses sebelum mengirim bukti baru.",
+      },
+      { status: 409 },
     );
   }
 
@@ -87,13 +111,13 @@ export const POST = auth(async (req) => {
       session.user.id,
       houseId,
       amountMonths,
-      proofImagePath
+      proofImagePath,
     );
     return NextResponse.json(serializePrismaJson(payment), { status: 201 });
   } catch (err: any) {
     return NextResponse.json(
       { error: err.message || "Failed to create payment" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 });
