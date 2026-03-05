@@ -64,6 +64,8 @@ export default function AdminPaymentsPage() {
   const [filterUserId, setFilterUserId] = useState("");
   const [filterYear, setFilterYear] = useState(0);
   const [filterMonth, setFilterMonth] = useState(0);
+  const [filterBlock, setFilterBlock] = useState("");
+  const [filterHouseNumber, setFilterHouseNumber] = useState("");
 
   // Houses view (Paid / Unpaid pills)
   const [housesViewMode, setHousesViewMode] = useState<"PAID" | "UNPAID" | null>(null);
@@ -179,6 +181,13 @@ export default function AdminPaymentsPage() {
     return Array.from(years).sort((a, b) => a - b);
   }, [payments]);
 
+  const availableBlocks = useMemo(() => {
+    const blocks = new Set<string>();
+    payments.forEach((p) => { if (p.house?.block) blocks.add(p.house.block); });
+    allHousesWithStatus.forEach((h) => { if (h.block) blocks.add(h.block); });
+    return Array.from(blocks).sort();
+  }, [payments, allHousesWithStatus]);
+
   const filteredPayments = useMemo(() => {
     let result = payments;
     // 1. Status
@@ -204,8 +213,18 @@ export default function AdminPaymentsPage() {
         return witaDate === filterDate;
       });
     }
+    // 5. Block
+    if (filterBlock !== "") {
+      result = result.filter((p) => p.house?.block === filterBlock);
+    }
+    // 6. House number
+    if (filterHouseNumber.trim() !== "") {
+      result = result.filter((p) =>
+        p.house?.houseNumber?.toLowerCase().includes(filterHouseNumber.trim().toLowerCase())
+      );
+    }
     return result;
-  }, [payments, statusFilter, filterUserId, filterYear, filterMonth, filterDate]);
+  }, [payments, statusFilter, filterUserId, filterYear, filterMonth, filterDate, filterBlock, filterHouseNumber]);
 
   // Houses view: filter by resident then split by paid/unpaid
   const displayedHouses = useMemo(() => {
@@ -213,10 +232,18 @@ export default function AdminPaymentsPage() {
     if (filterUserId !== "") {
       list = list.filter((h) => h.user?.id === filterUserId);
     }
+    if (filterBlock !== "") {
+      list = list.filter((h) => h.block === filterBlock);
+    }
+    if (filterHouseNumber.trim() !== "") {
+      list = list.filter((h) =>
+        h.houseNumber?.toLowerCase().includes(filterHouseNumber.trim().toLowerCase())
+      );
+    }
     if (housesViewMode === "PAID")   list = list.filter((h) => h.paymentStatus !== null);
     if (housesViewMode === "UNPAID") list = list.filter((h) => h.paymentStatus === null);
     return list;
-  }, [allHousesWithStatus, housesViewMode, filterUserId]);
+  }, [allHousesWithStatus, housesViewMode, filterUserId, filterBlock, filterHouseNumber]);
 
   // Pagination for payments table
   const {
@@ -229,7 +256,7 @@ export default function AdminPaymentsPage() {
     handlePageSizeChange: handlePaymentsPageSizeChange,
   } = usePagination(filteredPayments, {
     initialPageSize: 25,
-    resetDeps: [statusFilter, filterUserId, filterYear, filterMonth, filterDate],
+    resetDeps: [statusFilter, filterUserId, filterYear, filterMonth, filterDate, filterBlock, filterHouseNumber],
   });
 
   // Pagination for houses table
@@ -243,7 +270,7 @@ export default function AdminPaymentsPage() {
     handlePageSizeChange: handleHousesPageSizeChange,
   } = usePagination(displayedHouses, {
     initialPageSize: 25,
-    resetDeps: [housesViewMode, filterUserId, filterYear, filterMonth],
+    resetDeps: [housesViewMode, filterUserId, filterYear, filterMonth, filterBlock, filterHouseNumber],
   });
 
   // Counts for pill badges — global (before resident filter)
@@ -891,6 +918,29 @@ export default function AdminPaymentsPage() {
             ))}
           </select>
 
+          {/* Block filter */}
+          {availableBlocks.length > 0 && (
+            <select
+              value={filterBlock}
+              onChange={(e) => setFilterBlock(e.target.value)}
+              className="min-w-[130px] px-4 py-2 text-sm bg-white border-2 border-gray-300 rounded-lg focus:border-primary-500 focus:ring-2 focus:ring-primary-100 focus:outline-none"
+            >
+              <option value="">Semua Blok</option>
+              {availableBlocks.map((b) => (
+                <option key={b} value={b}>{b}</option>
+              ))}
+            </select>
+          )}
+
+          {/* House number filter */}
+          <input
+            type="text"
+            placeholder="No. Rumah..."
+            value={filterHouseNumber}
+            onChange={(e) => setFilterHouseNumber(e.target.value)}
+            className="w-[120px] px-3 py-2 text-sm bg-white border-2 border-gray-300 rounded-lg focus:border-primary-500 focus:ring-2 focus:ring-primary-100 focus:outline-none"
+          />
+
           {/* Date filter — only when not in houses view */}
           {housesViewMode === null && (
             <div className="flex items-center gap-2">
@@ -926,13 +976,15 @@ export default function AdminPaymentsPage() {
           )}
 
           {housesViewMode === null
-            ? (filterUserId !== "" || filterYear !== 0 || filterMonth !== 0 || filterDate !== "") && (
+            ? (filterUserId !== "" || filterYear !== 0 || filterMonth !== 0 || filterDate !== "" || filterBlock !== "" || filterHouseNumber !== "") && (
                 <button
                   onClick={() => {
                     setFilterUserId("");
                     setFilterYear(0);
                     setFilterMonth(0);
                     setFilterDate("");
+                    setFilterBlock("");
+                    setFilterHouseNumber("");
                   }}
                   className="text-sm text-primary-600 hover:text-primary-700 underline underline-offset-2"
                 >
@@ -940,11 +992,15 @@ export default function AdminPaymentsPage() {
                 </button>
               )
             : (filterUserId !== "" ||
+                filterBlock !== "" ||
+                filterHouseNumber !== "" ||
                 filterMonth !== new Date().getMonth() + 1 ||
                 filterYear !== new Date().getFullYear()) && (
                 <button
                   onClick={() => {
                     setFilterUserId("");
+                    setFilterBlock("");
+                    setFilterHouseNumber("");
                     setFilterMonth(new Date().getMonth() + 1);
                     setFilterYear(new Date().getFullYear());
                     lastFetchedKey.current = ""; // force re-fetch for current month

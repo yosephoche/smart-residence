@@ -36,6 +36,9 @@ export default function UsersPage() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [resetPasswordModalOpen, setResetPasswordModalOpen] = useState(false);
+  const [userToReset, setUserToReset] = useState<User | null>(null);
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -83,6 +86,35 @@ export default function UsersPage() {
   const handleDeleteClick = (user: User) => {
     setUserToDelete(user);
     setDeleteModalOpen(true);
+  };
+
+  const handleResetPasswordClick = (user: User) => {
+    setUserToReset(user);
+    setResetPasswordModalOpen(true);
+  };
+
+  const handleResetPasswordConfirm = async () => {
+    if (!userToReset) return;
+    setIsResettingPassword(true);
+    try {
+      const res = await fetch(`/api/users/${userToReset.id}/reset-password`, { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) {
+        setErrorMessage(data.error || "Gagal reset password");
+        setTimeout(() => setErrorMessage(""), 8000);
+      } else {
+        setSuccessMessage(`Password "${userToReset.name}" berhasil direset ke password default`);
+        setTimeout(() => setSuccessMessage(""), 5000);
+        fetchUsers();
+      }
+    } catch {
+      setErrorMessage("Network error - gagal reset password");
+      setTimeout(() => setErrorMessage(""), 8000);
+    } finally {
+      setIsResettingPassword(false);
+      setResetPasswordModalOpen(false);
+      setUserToReset(null);
+    }
   };
 
   const handleDeleteConfirm = async () => {
@@ -173,6 +205,12 @@ export default function UsersPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
             </svg>
             {tCommon('actions.edit')}
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => handleResetPasswordClick(user)} className="text-amber-600 hover:bg-amber-50">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+            </svg>
+            Reset Password
           </Button>
           <Button variant="ghost" size="sm" onClick={() => handleDeleteClick(user)} className="text-danger-600 hover:bg-danger-50">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -276,6 +314,17 @@ export default function UsersPage() {
         confirmText={tCommon('actions.delete')}
         variant="danger"
         isLoading={isDeleting}
+      />
+
+      <ConfirmModal
+        isOpen={resetPasswordModalOpen}
+        onClose={() => setResetPasswordModalOpen(false)}
+        onConfirm={handleResetPasswordConfirm}
+        title="Reset Password"
+        message={`Reset password "${userToReset?.name ?? ''}" ke password default? User akan diminta untuk mengganti password saat login berikutnya.`}
+        confirmText="Reset Password"
+        variant="danger"
+        isLoading={isResettingPassword}
       />
     </div>
   );
