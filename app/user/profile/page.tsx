@@ -17,6 +17,7 @@ import {
   Pencil,
   Check,
   X,
+  MessageSquare,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-client';
 import { toast } from 'sonner';
@@ -356,6 +357,12 @@ export default function ProfileScreen() {
           label="Bantuan"
           subtitle="FAQ & hubungi kami"
           onClick={() => toast.info('Fitur akan segera hadir')}
+        />
+        <MenuItem
+          icon={<MessageSquare className="w-4 h-4" />}
+          label="Pengaduan & Permintaan"
+          subtitle="Kirim feedback atau permintaan kartu akses"
+          onClick={() => router.push('/user/submissions')}
         />
       </motion.div>
 

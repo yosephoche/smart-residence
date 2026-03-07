@@ -26,6 +26,7 @@ import {
   ClipboardList,
   Phone,
   CalendarRange,
+  MessageSquare,
 } from "lucide-react";
 import LanguageSwitcher from "@/components/i18n/LanguageSwitcher";
 
@@ -143,6 +144,12 @@ export default function AdminSidebar() {
       name: t('navigation.admin.urgent_contacts'),
       href: "/admin/urgent-contacts",
       icon: <Phone className="w-5 h-5" />,
+    },
+    {
+      type: "item",
+      name: t('navigation.admin.submissions'),
+      href: "/admin/submissions",
+      icon: <MessageSquare className="w-5 h-5" />,
     },
     {
       type: "item",

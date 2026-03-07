@@ -26,6 +26,20 @@ enum LeaveStatus {
   REJECTED
 }
 
+enum SubmissionType {
+  FEEDBACK
+  SUGGESTION
+  ACCESS_CARD_REPAIR
+  ACCESS_CARD_REPLACEMENT
+}
+
+enum SubmissionStatus {
+  PENDING
+  IN_REVIEW
+  RESOLVED
+  CLOSED
+}
+
 enum ExpenseCategory {
   MAINTENANCE
   SECURITY
@@ -90,6 +104,8 @@ model User {
   urgentContacts       UrgentContact[]
   staffLeaves          StaffLeave[]    @relation("StaffLeaves")
   reviewedLeaves       StaffLeave[]    @relation("LeaveReviewer")
+  submissions          Submission[]    @relation("UserSubmissions")
+  reviewedSubmissions  Submission[]    @relation("SubmissionReviewer")
 }
 
 model HouseType {
@@ -302,4 +318,24 @@ model StaffLeave {
   @@index([staffId, status])
   @@index([startDate, endDate])
   @@index([staffId, startDate, endDate])
+}
+
+model Submission {
+  id          String           @id @default(cuid())
+  userId      String
+  type        SubmissionType
+  title       String
+  content     String
+  status      SubmissionStatus @default(PENDING)
+  adminNote   String?
+  reviewedBy  String?
+  reviewedAt  DateTime?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  user        User             @relation("UserSubmissions", fields: [userId], references: [id])
+  reviewer    User?            @relation("SubmissionReviewer", fields: [reviewedBy], references: [id])
+
+  @@index([userId, status])
+  @@index([type, status])
 }
