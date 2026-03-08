@@ -448,11 +448,11 @@ export default function AdminPaymentsPage() {
       if (unpaid.length === 0) {
         msg2 += `Semua unit sudah membayar bulan ini! 🎉`;
       } else {
-        msg2 += `🏠 *Daftar Unit Belum Bayar (${unpaid.length} unit):*\n\n`;
+        msg2 += `🏠 *Daftar Unit Belum Bayar (${unpaid.length} unit):*\n`;
         unpaid.forEach((h, i) => {
-          msg2 += `${i + 1}. Blok ${h.block} / No. ${h.houseNumber}\n`;
+          msg2 += `${i + 1}. ${h.block} - ${h.houseNumber}\n`;
         });
-        msg2 += `\nTotal *${unpaid.length} unit* belum bayar bulan ini.`;
+        msg2 += `\nTotal *${unpaid.length} unit* belum bayar bulan ini. Jika ada yang telah melakukan pembayaran dan masih tercatat pada list diatas bisa hubungi pengurus, dan kembali diingatkan bahwa pengurus hanya mengecek bukti pembayaran yang sudah diupload via aplikasi.`;
       }
       setWhatsappUnpaidMsg(msg2);
     } catch {
