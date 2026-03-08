@@ -374,7 +374,8 @@ export async function getUnpaidHousesThisMonth() {
 export async function bulkCreatePayments(
   houseIds: string[],
   months: { year: number; month: number }[],
-  createdBy: string
+  createdBy: string,
+  proofImagePath?: string | null
 ): Promise<{ succeeded: any[]; failed: { houseId: string; reason: string }[] }> {
   const succeeded: any[] = [];
   const failed: { houseId: string; reason: string }[] = [];
@@ -432,7 +433,7 @@ export async function bulkCreatePayments(
             houseId,
             amountMonths: months.length,
             totalAmount,
-            proofImagePath: null,
+            proofImagePath: proofImagePath ?? null,
             status: "APPROVED",
             approvedBy: createdBy,
             approvedAt: new Date(),

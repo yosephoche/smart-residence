@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import Button from "@/components/ui/Button";
+import FileUpload from "@/components/ui/FileUpload";
 import { formatCurrency } from "@/lib/utils";
 import { CheckSquare, Square, Search } from "lucide-react";
 
@@ -69,6 +70,7 @@ export default function BulkCreatePaymentForm({ users, onSuccess, onCancel }: Pr
   const [blockFilter, setBlockFilter] = useState("");
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [proofImage, setProofImage] = useState<File | null>(null);
 
   // Fetch all occupied houses
   useEffect(() => {
@@ -189,13 +191,14 @@ export default function BulkCreatePaymentForm({ users, onSuccess, onCancel }: Pr
     if (!isValid) return;
     setIsSubmitting(true);
     try {
+      const fd = new FormData();
+      fd.append("houseIds", JSON.stringify(Array.from(selectedHouseIds)));
+      fd.append("months", JSON.stringify(selectedMonths));
+      if (proofImage) fd.append("proof", proofImage);
+
       const res = await fetch("/api/payments/bulk-create", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          houseIds: Array.from(selectedHouseIds),
-          months: selectedMonths,
-        }),
+        body: fd,
       });
 
       const data = await res.json();
@@ -376,7 +379,23 @@ export default function BulkCreatePaymentForm({ users, onSuccess, onCancel }: Pr
         )}
       </div>
 
-      {/* Section 3: Summary */}
+      {/* Section 3: Proof of Payment (Optional) */}
+      <div>
+        <h3 className="text-sm font-semibold text-gray-900 mb-1">
+          3. Bukti Pembayaran
+          <span className="ml-2 text-xs font-normal text-gray-400">(opsional)</span>
+        </h3>
+        <p className="text-xs text-gray-500 mb-3">
+          Satu bukti transfer untuk semua pembayaran yang dibuat.
+        </p>
+        <FileUpload
+          onChange={setProofImage}
+          value={proofImage}
+          helperText="JPG atau PNG, maks 10MB"
+        />
+      </div>
+
+      {/* Section 4: Summary */}
       {summary.totalHouses > 0 && summary.totalMonths > 0 && (
         <div className="bg-primary-50 border-2 border-primary-200 rounded-xl p-4 space-y-2">
           <p className="text-sm font-semibold text-primary-900">
@@ -401,7 +420,7 @@ export default function BulkCreatePaymentForm({ users, onSuccess, onCancel }: Pr
             </span>
           </div>
           <p className="text-xs text-primary-600 bg-primary-100 rounded-lg px-3 py-2 mt-1">
-            Pembayaran akan langsung berstatus <strong>Disetujui</strong> tanpa memerlukan bukti transfer.
+            Pembayaran akan langsung berstatus <strong>Disetujui</strong>. Bukti transfer bersifat opsional.
           </p>
         </div>
       )}
