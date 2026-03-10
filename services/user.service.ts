@@ -22,6 +22,15 @@ export async function getAllUsers(filters?: { role?: "ADMIN" | "USER" | "STAFF" 
       isFirstLogin: true,
       createdAt: true,
       updatedAt: true,
+      houses: {
+        select: {
+          id: true,
+          houseNumber: true,
+          block: true,
+          houseType: { select: { typeName: true } },
+        },
+        orderBy: { houseNumber: "asc" },
+      },
     },
   });
   return users;

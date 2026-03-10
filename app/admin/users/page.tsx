@@ -23,6 +23,12 @@ interface User {
   role: string;
   isFirstLogin: boolean;
   createdAt: string;
+  houses?: Array<{
+    id: string;
+    houseNumber: string;
+    block: string;
+    houseType?: { typeName: string };
+  }>;
 }
 
 export default function UsersPage() {
@@ -176,6 +182,24 @@ export default function UsersPage() {
           {value}
         </Badge>
       ),
+    },
+    {
+      key: "houses",
+      header: "Rumah",
+      render: (_, user) => {
+        if (!user.houses || user.houses.length === 0) {
+          return <span className="text-xs text-gray-400">—</span>;
+        }
+        return (
+          <div className="flex flex-wrap gap-1">
+            {user.houses.map((h) => (
+              <span key={h.id} className="inline-flex items-center text-xs bg-blue-50 text-blue-700 rounded px-1.5 py-0.5 font-medium">
+                {h.block}-{h.houseNumber}
+              </span>
+            ))}
+          </div>
+        );
+      },
     },
     {
       key: "isFirstLogin",

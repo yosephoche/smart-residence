@@ -15,6 +15,8 @@ import {
   CheckCircle2,
   AlertCircle,
   QrCode,
+  ChevronRight,
+  Home as HomeIcon,
 } from "lucide-react";
 import Image from "next/image";
 import { useAuth } from "@/lib/auth-client";
@@ -68,15 +70,11 @@ const itemVariants = {
 
 export default function UploadScreen() {
   const { user } = useAuth();
-  const [house, setHouse] = useState<House | null>(null);
+  const [houses, setHouses] = useState<House[]>([]);
+  const [selectedHouseId, setSelectedHouseId] = useState<string | null>(null);
+  const [allPayments, setAllPayments] = useState<any[]>([]);
   const [availableMonths, setAvailableMonths] = useState<AvailableMonth[]>([]);
   const [bankDetails, setBankDetails] = useState<BankDetails | null>(null);
-  const [pendingPayment, setPendingPayment] = useState<{
-    id: string;
-    totalAmount: number;
-    createdAt: string;
-    paymentMonths: Array<{ year: number; month: number }>;
-  } | null>(null);
   const [selectedMonth, setSelectedMonth] = useState<AvailableMonth | null>(
     null,
   );
@@ -90,6 +88,19 @@ export default function UploadScreen() {
     Array<{ year: number; month: number }>
   >([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Derived from selectedHouseId
+  const house = houses.find((h) => h.id === selectedHouseId) ?? null;
+
+  // Derive pendingPayment reactively based on selected house
+  const pendingPayment = useMemo(() => {
+    if (!selectedHouseId) return null;
+    return (
+      allPayments.find(
+        (p: any) => p.houseId === selectedHouseId && p.status === "PENDING",
+      ) ?? null
+    );
+  }, [allPayments, selectedHouseId]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -111,29 +122,18 @@ export default function UploadScreen() {
             paymentsRes.json(),
           ]);
 
-        // Detect any existing PENDING payment
-        const pending = Array.isArray(paymentsData)
-          ? (paymentsData.find((p: any) => p.status === "PENDING") ?? null)
-          : null;
-        setPendingPayment(pending);
+        const allPays = Array.isArray(paymentsData) ? paymentsData : [];
+        setAllPayments(allPays);
 
-        const houseRecord = houseData[0] || null;
-        setHouse(houseRecord);
+        const records: House[] = Array.isArray(houseData) ? houseData : [];
+        setHouses(records);
+        if (records.length === 1) setSelectedHouseId(records[0].id);
         setAvailableMonths(monthsData);
         setBankDetails(bankData);
 
         // Auto-select first available month
         if (monthsData.length > 0) {
           setSelectedMonth(monthsData[0]);
-        }
-
-        // Fetch occupied months for conflict detection
-        if (houseRecord?.id) {
-          const occupiedRes = await fetch(
-            `/api/payments/occupied-months?houseId=${houseRecord.id}`,
-          );
-          const occupiedData = await occupiedRes.json();
-          setOccupiedMonths(occupiedData);
         }
       } catch (error) {
         console.error("Error fetching upload data:", error);
@@ -145,6 +145,18 @@ export default function UploadScreen() {
 
     fetchData();
   }, [user?.id]);
+
+  // Fetch occupied months whenever the selected house changes
+  useEffect(() => {
+    if (!selectedHouseId) {
+      setOccupiedMonths([]);
+      return;
+    }
+    fetch(`/api/payments/occupied-months?houseId=${selectedHouseId}`)
+      .then((r) => r.json())
+      .then(setOccupiedMonths)
+      .catch((err) => console.error("Error fetching occupied months:", err));
+  }, [selectedHouseId]);
 
   // Compute covered months based on selected month and amount
   const coveredMonths = useMemo(() => {
@@ -247,7 +259,7 @@ export default function UploadScreen() {
     );
   }
 
-  if (!house) {
+  if (houses.length === 0) {
     return (
       <div className="px-4 pt-2 pb-4">
         <div className="bg-white rounded-2xl p-8 text-center">
@@ -274,6 +286,58 @@ export default function UploadScreen() {
         </p>
       </motion.div>
 
+      {/* House Selector — shown when user has multiple houses and none selected */}
+      {houses.length > 1 && !selectedHouseId && (
+        <motion.div
+          variants={itemVariants}
+          className="bg-white rounded-2xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)]"
+        >
+          <p className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-3">
+            Pilih Rumah
+          </p>
+          {houses.map((h) => (
+            <button
+              key={h.id}
+              onClick={() => setSelectedHouseId(h.id)}
+              className="w-full flex items-center justify-between p-3 rounded-xl border border-slate-100 hover:border-blue-200 mb-2 last:mb-0 active:scale-[0.98] transition-all duration-150"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center">
+                  <HomeIcon className="w-4 h-4 text-blue-600" />
+                </div>
+                <div className="text-left">
+                  <p className="text-sm font-semibold text-slate-800">
+                    Rumah {h.houseNumber}
+                  </p>
+                  <p className="text-[11px] text-slate-400 mt-0.5">
+                    Blok {h.block} · {h.houseType?.typeName}
+                  </p>
+                </div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-slate-400" />
+            </button>
+          ))}
+        </motion.div>
+      )}
+
+      {/* Ganti Rumah back button */}
+      {houses.length > 1 && selectedHouseId && (
+        <motion.div variants={itemVariants}>
+          <button
+            onClick={() => {
+              setSelectedHouseId(null);
+              setSelectedFile(null);
+              setAmountMonths(1);
+            }}
+            className="flex items-center gap-1.5 text-xs font-medium text-slate-500 bg-white rounded-lg px-3 py-2 shadow-[0_1px_2px_rgba(0,0,0,0.05)] active:scale-[0.98]"
+          >
+            <ChevronRight className="w-3.5 h-3.5 rotate-180" />
+            Ganti Rumah
+          </button>
+        </motion.div>
+      )}
+
+      {selectedHouseId && (<>
       {/* Pending Payment Blocker */}
       <AnimatePresence>
         {pendingPayment && (
@@ -300,7 +364,7 @@ export default function UploadScreen() {
                 </p>
                 {pendingPayment.paymentMonths?.length > 0 && (
                   <div className="flex flex-wrap gap-1 mt-2">
-                    {pendingPayment.paymentMonths.map((m) => (
+                    {pendingPayment.paymentMonths.map((m: { year: number; month: number }) => (
                       <span
                         key={`${m.year}-${m.month}`}
                         className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700"
@@ -462,7 +526,7 @@ export default function UploadScreen() {
           <div className="flex justify-between">
             <span className="text-sm text-slate-500">Tagihan IPL/Bulan</span>
             <span className="text-sm font-medium text-slate-700">
-              {house.houseType
+              {house?.houseType
                 ? formatCurrency(Number(house.houseType.price))
                 : "-"}
             </span>
@@ -478,7 +542,7 @@ export default function UploadScreen() {
               Total Bayar
             </span>
             <span className="text-base font-bold text-blue-600">
-              {house.houseType
+              {house?.houseType
                 ? formatCurrency(Number(house.houseType.price) * amountMonths)
                 : "-"}
             </span>
@@ -628,6 +692,8 @@ export default function UploadScreen() {
           )}
         </AnimatePresence>
       </motion.div>
+      </>)}
+
       {/* QRIS Modal */}
       <AnimatePresence>
         {showQris && (

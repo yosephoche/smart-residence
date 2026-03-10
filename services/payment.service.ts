@@ -357,6 +357,15 @@ export async function getUnpaidHousesThisMonth() {
   });
   const paidHouseIds = new Set(paidRows.map((r) => r.payment.houseId));
 
+  // Find user IDs who own any paid house — so all their houses get excluded
+  const paidHousesOwners = await prisma.house.findMany({
+    where: { id: { in: [...paidHouseIds] }, userId: { not: null } },
+    select: { userId: true },
+  });
+  const paidUserIds = new Set(
+    paidHousesOwners.map((h) => h.userId).filter((id): id is string => id !== null)
+  );
+
   // All occupied houses (assigned to a user)
   const occupiedHouses = await prisma.house.findMany({
     where: { userId: { not: null } },
@@ -367,8 +376,10 @@ export async function getUnpaidHousesThisMonth() {
     orderBy: { houseNumber: "asc" },
   });
 
-  // Filter out houses that already have payment this month
-  return occupiedHouses.filter((h) => !paidHouseIds.has(h.id));
+  // Filter out houses where the owner already has any payment this month
+  return occupiedHouses.filter(
+    (h) => !paidHouseIds.has(h.id) && !paidUserIds.has(h.userId!)
+  );
 }
 
 export async function bulkCreatePayments(
@@ -481,7 +492,24 @@ export async function getHousePaymentStatusForMonth(year: number, month: number)
     }
   }
 
-  // 2. All occupied houses
+  // 2. Propagate status to all houses owned by users who already have a payment
+  const paidHouseIds2 = [...statusMap.keys()];
+  const paidHousesOwners = await prisma.house.findMany({
+    where: { id: { in: paidHouseIds2 }, userId: { not: null } },
+    select: { userId: true, id: true },
+  });
+  // Build user → best status (APPROVED beats PENDING)
+  const userStatusMap = new Map<string, string>();
+  for (const { userId, id } of paidHousesOwners) {
+    if (!userId) continue;
+    const houseStatus = statusMap.get(id);
+    if (!houseStatus) continue;
+    if (userStatusMap.get(userId) !== "APPROVED") {
+      userStatusMap.set(userId, houseStatus);
+    }
+  }
+
+  // 3. All occupied houses
   const occupiedHouses = await prisma.house.findMany({
     where: { userId: { not: null } },
     include: {
@@ -491,10 +519,11 @@ export async function getHousePaymentStatusForMonth(year: number, month: number)
     orderBy: { houseNumber: "asc" },
   });
 
-  // 3. Annotate each house with its payment status for the given month
+  // 4. Annotate each house with its payment status for the given month
+  //    A house inherits its user's best status if the house itself has no direct payment
   return occupiedHouses.map((h) => ({
     ...h,
-    paymentStatus: (statusMap.get(h.id) ?? null) as "PENDING" | "APPROVED" | null,
+    paymentStatus: (statusMap.get(h.id) ?? userStatusMap.get(h.userId!) ?? null) as "PENDING" | "APPROVED" | null,
   }));
 }
 

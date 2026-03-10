@@ -36,6 +36,7 @@ interface House {
 
 interface Payment {
   id: string;
+  houseId: string;
   amountMonths: number;
   totalAmount: number;
   status: "PENDING" | "APPROVED" | "REJECTED";
@@ -94,7 +95,7 @@ const itemVariants = {
 export function HomeScreen() {
   const { user } = useAuth();
   const router = useRouter();
-  const [house, setHouse] = useState<House | null>(null);
+  const [houses, setHouses] = useState<House[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [financialData, setFinancialData] = useState<FinancialData[]>([]);
   const [onDutyStaff, setOnDutyStaff] = useState<OnDutyStaff[]>([]);
@@ -124,8 +125,8 @@ export function HomeScreen() {
         fetch("/api/system-config/whatsapp-template").then((r) => r.json()),
       ]);
 
-      if (housesResult.status === "fulfilled")
-        setHouse(housesResult.value[0] || null);
+      if (housesResult.status === "fulfilled" && Array.isArray(housesResult.value))
+        setHouses(housesResult.value);
       if (paymentsResult.status === "fulfilled")
         setPayments(paymentsResult.value);
       if (financialResult.status === "fulfilled")
@@ -169,55 +170,24 @@ export function HomeScreen() {
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth() + 1;
 
-  const hasApprovedPayment = payments.some(
-    (p) =>
-      p.status === "APPROVED" &&
-      p.paymentMonths?.some(
-        (pm) => pm.year === currentYear && pm.month === currentMonth,
-      ),
-  );
-
-  // Any PENDING payment across all months blocks new submissions
-  const hasPendingPayment = payments.some((p) => p.status === "PENDING");
-
-  const currentMonthStatus = hasApprovedPayment
-    ? "APPROVED"
-    : hasPendingPayment
-      ? "PENDING"
-      : "UNPAID";
-  const currentMonthLabel = formatPaymentMonth({
-    year: currentYear,
-    month: currentMonth,
-  });
-
-  const statusConfig = {
-    APPROVED: {
-      icon: CheckCircle,
-      label: "Lunas",
-      color: "text-emerald-500",
-      bgColor: "bg-emerald-50",
-      badge: "✓ Paid",
-      badgeColor: "bg-emerald-50 text-emerald-600",
-    },
-    PENDING: {
-      icon: AlertCircle,
-      label: "Menunggu",
-      color: "text-amber-500",
-      bgColor: "bg-amber-50",
-      badge: "Pending",
-      badgeColor: "bg-amber-50 text-amber-600",
-    },
-    UNPAID: {
-      icon: AlertCircle,
-      label: "Belum Bayar",
-      color: "text-amber-500",
-      bgColor: "bg-amber-50",
-      badge: "Pending",
-      badgeColor: "bg-amber-50 text-amber-600",
-    },
+  const getHouseStatus = (h: House): "APPROVED" | "PENDING" | "UNPAID" => {
+    const hasApproved = payments.some(
+      (p) =>
+        p.houseId === h.id &&
+        p.status === "APPROVED" &&
+        p.paymentMonths?.some(
+          (pm) => pm.year === currentYear && pm.month === currentMonth,
+        ),
+    );
+    if (hasApproved) return "APPROVED";
+    const hasPending = payments.some(
+      (p) => p.houseId === h.id && p.status === "PENDING",
+    );
+    return hasPending ? "PENDING" : "UNPAID";
   };
 
-  const currentStatus = statusConfig[currentMonthStatus];
+  const anyHousePending = houses.some((h) => getHouseStatus(h) === "PENDING");
+  const anyHouseUnpaid = houses.some((h) => getHouseStatus(h) === "UNPAID");
 
   // Calculate totals for financial summary
   const totalIncome = financialData.reduce((sum, d) => sum + d.income, 0);
@@ -227,8 +197,8 @@ export function HomeScreen() {
   const buildWhatsAppUrl = (phone: string) => {
     const cleanPhone = phone.replace(/\D/g, "");
     const message = whatsappTemplate
-      .replace("{block}", house?.block ?? "")
-      .replace("{number}", house?.houseNumber ?? "");
+      .replace("{block}", houses[0]?.block ?? "")
+      .replace("{number}", houses[0]?.houseNumber ?? "");
     return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
   };
 
@@ -260,86 +230,72 @@ export function HomeScreen() {
         </h1>
       </motion.div>
 
-      {/* House Info Card */}
-      {house ? (
-        <motion.div
-          variants={itemVariants}
-          className="bg-white rounded-2xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)]"
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
-              <HomeIcon className="w-5 h-5 text-blue-600" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">
-                Info Rumah
-              </p>
-              <div className="flex items-center gap-4 mt-1">
-                <div>
-                  <p className="text-[11px] text-slate-400">Tipe Rumah</p>
-                  <p className="text-sm font-semibold text-slate-800">
-                    {house.houseType?.typeName}
-                  </p>
-                </div>
-                <div className="w-px h-8 bg-slate-100" />
-                <div>
-                  <p className="text-[11px] text-slate-400">No. Rumah</p>
-                  <p className="text-sm font-semibold text-slate-800">
-                    {house.houseNumber}
-                  </p>
-                </div>
-                <div className="w-px h-8 bg-slate-100" />
-                <div>
-                  <p className="text-[11px] text-slate-400">Blok</p>
-                  <p className="text-sm font-semibold text-slate-800">
-                    {house.block}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </motion.div>
-      ) : (
+      {/* House Info Cards — one per house */}
+      {houses.length === 0 ? (
         <motion.div
           variants={itemVariants}
           className="bg-white rounded-2xl p-8 text-center"
         >
           <p className="text-slate-500">Tidak ada rumah yang ditetapkan</p>
         </motion.div>
-      )}
-
-      {/* Payment Status */}
-      <motion.div
-        variants={itemVariants}
-        className="bg-white rounded-2xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)]"
-      >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div
-              className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${currentStatus.bgColor}`}
+      ) : (
+        houses.map((h, index) => {
+          const houseStatus = getHouseStatus(h);
+          const houseStatusConfig = {
+            APPROVED: { label: "Lunas", color: "text-emerald-600", bg: "bg-emerald-50" },
+            PENDING: { label: "Menunggu", color: "text-amber-600", bg: "bg-amber-50" },
+            UNPAID: { label: "Belum Bayar", color: "text-red-600", bg: "bg-red-50" },
+          }[houseStatus];
+          return (
+            <motion.div
+              key={h.id}
+              variants={itemVariants}
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: index * 0.05 }}
+              className="bg-white rounded-2xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)]"
             >
-              <currentStatus.icon
-                className={`w-5 h-5 ${currentStatus.color}`}
-              />
-            </div>
-            <div>
-              <p className="text-xs text-slate-400">
-                Status IPL {currentMonthLabel}
-              </p>
-              <p
-                className={`text-sm font-semibold mt-0.5 ${currentStatus.color}`}
-              >
-                {currentStatus.label}
-              </p>
-            </div>
-          </div>
-          <span
-            className={`text-[11px] font-semibold px-2.5 py-1 rounded-full ${currentStatus.badgeColor}`}
-          >
-            {currentStatus.badge}
-          </span>
-        </div>
-      </motion.div>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
+                  <HomeIcon className="w-5 h-5 text-blue-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">
+                    Info Rumah
+                  </p>
+                  <div className="flex items-center gap-4 mt-1">
+                    <div>
+                      <p className="text-[11px] text-slate-400">Tipe Rumah</p>
+                      <p className="text-sm font-semibold text-slate-800">
+                        {h.houseType?.typeName}
+                      </p>
+                    </div>
+                    <div className="w-px h-8 bg-slate-100" />
+                    <div>
+                      <p className="text-[11px] text-slate-400">No. Rumah</p>
+                      <p className="text-sm font-semibold text-slate-800">
+                        {h.houseNumber}
+                      </p>
+                    </div>
+                    <div className="w-px h-8 bg-slate-100" />
+                    <div>
+                      <p className="text-[11px] text-slate-400">Blok</p>
+                      <p className="text-sm font-semibold text-slate-800">
+                        {h.block}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <span
+                  className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${houseStatusConfig.bg} ${houseStatusConfig.color}`}
+                >
+                  {houseStatusConfig.label}
+                </span>
+              </div>
+            </motion.div>
+          );
+        })
+      )}
 
       {/* On-Duty Security Staff */}
       <motion.div
@@ -487,7 +443,7 @@ export function HomeScreen() {
 
       {/* Upload Button */}
       <motion.div variants={itemVariants}>
-        {hasPendingPayment ? (
+        {anyHousePending ? (
           <div className="w-full bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-amber-100 flex items-center justify-center flex-shrink-0">
               <AlertCircle className="w-4.5 h-4.5 text-amber-500" />
@@ -501,7 +457,7 @@ export function HomeScreen() {
               </p>
             </div>
           </div>
-        ) : (
+        ) : anyHouseUnpaid ? (
           <button
             onClick={() => router.push("/user/upload")}
             className="w-full bg-blue-600 text-white rounded-2xl p-4 flex items-center justify-center gap-2.5 font-semibold text-sm active:scale-[0.98] transition-transform duration-150"
@@ -509,7 +465,7 @@ export function HomeScreen() {
             <UploadIcon className="w-4.5 h-4.5" />
             Upload Bukti Bayar IPL
           </button>
-        )}
+        ) : null}
       </motion.div>
 
       {/* Recent Payments */}
