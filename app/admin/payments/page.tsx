@@ -287,6 +287,21 @@ export default function AdminPaymentsPage() {
       .reduce((sum, p) => sum + Number(p.totalAmount), 0),
   }), [payments]);
 
+  const monthlyStats = useMemo(() => {
+    const dm = filterMonth !== 0 ? filterMonth : new Date().getMonth() + 1;
+    const dy = filterYear  !== 0 ? filterYear  : new Date().getFullYear();
+    const mp = payments.filter((p) =>
+      p.paymentMonths?.some((pm) => pm.year === dy && pm.month === dm)
+    );
+    return {
+      total: mp.length,
+      totalRevenue: mp
+        .filter((p) => p.status === "APPROVED")
+        .reduce((sum, p) => sum + Number(p.totalAmount), 0),
+      periodLabel: `${INDONESIAN_MONTHS[dm - 1]} ${dy}`,
+    };
+  }, [payments, filterMonth, filterYear]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // --- Handlers ---
   const handleStatusFilter = (value: "ALL" | "PENDING" | "APPROVED" | "REJECTED") => {
     setStatusFilter(value);
@@ -753,7 +768,8 @@ export default function AdminPaymentsPage() {
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <div className="bg-white rounded-xl border-2 border-gray-200 p-4 shadow-sm">
           <p className="text-sm font-medium text-gray-600 mb-1">{t('total_payments')}</p>
-          <p className="text-3xl font-bold text-gray-900">{stats.total}</p>
+          <p className="text-3xl font-bold text-gray-900">{monthlyStats.total}</p>
+          <p className="text-xs text-gray-400 mt-1">{monthlyStats.periodLabel}</p>
         </div>
         <div className="bg-warning-50 rounded-xl border-2 border-warning-200 p-4 shadow-sm">
           <p className="text-sm font-medium text-warning-700 mb-1">{t('pending')}</p>
@@ -768,15 +784,17 @@ export default function AdminPaymentsPage() {
           <p className="text-3xl font-bold text-danger-900">{stats.rejected}</p>
         </div>
         <div className="bg-primary-50 rounded-xl border-2 border-primary-200 p-4 shadow-sm">
-          <p className="text-sm font-medium text-primary-700 mb-1">{t('total_revenue')}</p>
-          <p className="text-xl font-bold text-primary-900">{formatCurrency(stats.totalRevenue)}</p>
+          <p className="text-sm font-medium text-primary-700 mb-1">Total Pendapatan</p>
+          <p className="text-xl font-bold text-primary-900">{formatCurrency(monthlyStats.totalRevenue)}</p>
+          <p className="text-xs text-primary-400 mt-1">{monthlyStats.periodLabel}</p>
         </div>
       </div>
 
       {/* Filter bar + Export */}
-      <div className="bg-white rounded-xl border-2 border-gray-200 p-2 shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="flex flex-wrap items-center gap-2">
+      <div className="bg-white rounded-xl border-2 border-gray-200 shadow-sm">
+        {/* Top row: status tabs + action buttons */}
+        <div className="flex flex-wrap items-center justify-between gap-2 p-3">
+          <div className="flex flex-wrap items-center gap-1.5">
             {[
               { value: "ALL" as const, label: t('all_payments'), count: stats.total },
               { value: "PENDING" as const, label: t('pending_review'), count: stats.pending },
@@ -786,7 +804,7 @@ export default function AdminPaymentsPage() {
               <button
                 key={filter.value}
                 onClick={() => handleStatusFilter(filter.value)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                   housesViewMode === null && statusFilter === filter.value
                     ? "bg-primary-600 text-white shadow-md"
                     : "text-gray-700 hover:bg-gray-100"
@@ -794,222 +812,246 @@ export default function AdminPaymentsPage() {
               >
                 {filter.label}
                 {filter.count > 0 && (
-                  <span className="ml-2 text-xs opacity-75">({filter.count})</span>
+                  <span className="ml-1.5 text-xs opacity-75">({filter.count})</span>
                 )}
               </button>
             ))}
 
-            {/* Paid / Unpaid pills — visually distinct group */}
-            <div className="ml-3 flex gap-2">
-              <button
-                onClick={() => enterHousesMode("PAID")}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                  housesViewMode === "PAID"
-                    ? "bg-success-600 text-white shadow-md"
-                    : "text-success-700 bg-success-50 border border-success-300 hover:bg-success-100"
-                }`}
-              >
-                {t('paid')}
-                {allHousesWithStatus.length > 0 && (
-                  <span className="ml-2 text-xs opacity-75">({paidCount})</span>
-                )}
-              </button>
-              <button
-                onClick={() => enterHousesMode("UNPAID")}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                  housesViewMode === "UNPAID"
-                    ? "bg-warning-600 text-white shadow-md"
-                    : "text-warning-700 bg-warning-50 border border-warning-300 hover:bg-warning-100"
-                }`}
-              >
-                {t('unpaid')}
-                {allHousesWithStatus.length > 0 && (
-                  <span className="ml-2 text-xs opacity-75">({unpaidCount})</span>
-                )}
-              </button>
-            </div>
+            {/* Separator */}
+            <div className="h-6 w-px bg-gray-200 mx-1" />
+
+            {/* Paid / Unpaid pills */}
+            <button
+              onClick={() => enterHousesMode("PAID")}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                housesViewMode === "PAID"
+                  ? "bg-success-600 text-white shadow-md"
+                  : "text-success-700 bg-success-50 border border-success-300 hover:bg-success-100"
+              }`}
+            >
+              {t('paid')}
+              {allHousesWithStatus.length > 0 && (
+                <span className="ml-1.5 text-xs opacity-75">({paidCount})</span>
+              )}
+            </button>
+            <button
+              onClick={() => enterHousesMode("UNPAID")}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                housesViewMode === "UNPAID"
+                  ? "bg-warning-600 text-white shadow-md"
+                  : "text-warning-700 bg-warning-50 border border-warning-300 hover:bg-warning-100"
+              }`}
+            >
+              {t('unpaid')}
+              {allHousesWithStatus.length > 0 && (
+                <span className="ml-1.5 text-xs opacity-75">({unpaidCount})</span>
+              )}
+            </button>
           </div>
 
-          {/* WhatsApp message generator */}
-          <button
-            onClick={openWhatsappModal}
-            className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-green-700 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-colors"
-          >
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-            </svg>
-            WhatsApp
-          </button>
-
-          {/* Export dropdown */}
-          <div className="relative" ref={exportDropdownRef}>
-            <Button
-              variant="secondary"
-              size="md"
-              onClick={() => setShowExportDropdown(!showExportDropdown)}
+          <div className="flex items-center gap-2">
+            {/* WhatsApp message generator */}
+            <button
+              onClick={openWhatsappModal}
+              className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-green-700 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-colors"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
               </svg>
-              {t('export')}
-              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L10 6.414l-3.293 3.293a1 1 0 01-1.414 0z" />
-              </svg>
-            </Button>
-            {showExportDropdown && (
-              <div className="absolute right-0 mt-1 w-44 bg-white rounded-lg border-2 border-gray-200 shadow-lg z-10">
-                <button
-                  onClick={() => handleExport("csv")}
-                  className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                >
-                  {t('export_csv')}
-                </button>
-                <button
-                  onClick={() => handleExport("xlsx")}
-                  className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors border-t border-gray-100"
-                >
-                  {t('export_xlsx')}
-                </button>
-              </div>
-            )}
+              WhatsApp
+            </button>
+
+            {/* Export dropdown */}
+            <div className="relative" ref={exportDropdownRef}>
+              <Button
+                variant="secondary"
+                size="md"
+                onClick={() => setShowExportDropdown(!showExportDropdown)}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                {t('export')}
+                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L10 6.414l-3.293 3.293a1 1 0 01-1.414 0z" />
+                </svg>
+              </Button>
+              {showExportDropdown && (
+                <div className="absolute right-0 mt-1 w-44 bg-white rounded-lg border-2 border-gray-200 shadow-lg z-10">
+                  <button
+                    onClick={() => handleExport("csv")}
+                    className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                  >
+                    {t('export_csv')}
+                  </button>
+                  <button
+                    onClick={() => handleExport("xlsx")}
+                    className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors border-t border-gray-100"
+                  >
+                    {t('export_xlsx')}
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Resident & Month/Year filter row — always visible */}
-        <div className="flex flex-wrap items-center gap-3 mt-2 pt-2 border-t border-gray-100">
-          <select
-            value={filterUserId}
-            onChange={(e) => setFilterUserId(e.target.value)}
-            className="min-w-[160px] px-4 py-2 text-sm bg-white border-2 border-gray-300 rounded-lg focus:border-primary-500 focus:ring-2 focus:ring-primary-100 focus:outline-none"
-          >
-            <option value="">{t('all_residents')}</option>
-            {users
-              .filter((u) => u.role !== "admin")
-              .map((u) => (
-                <option key={u.id} value={u.id}>
-                  {u.name}
-                </option>
-              ))}
-          </select>
+        {/* Divider */}
+        <div className="border-t border-gray-100" />
 
-          <select
-            value={filterMonth}
-            onChange={(e) => setFilterMonth(Number(e.target.value))}
-            className="min-w-[160px] px-4 py-2 text-sm bg-white border-2 border-gray-300 rounded-lg focus:border-primary-500 focus:ring-2 focus:ring-primary-100 focus:outline-none"
-          >
-            {housesViewMode === null && <option value={0}>{t('all_months')}</option>}
-            {INDONESIAN_MONTHS.map((name, i) => (
-              <option key={i + 1} value={i + 1}>
-                {name}
-              </option>
-            ))}
-          </select>
-
-          <select
-            value={filterYear}
-            onChange={(e) => setFilterYear(Number(e.target.value))}
-            className="min-w-[160px] px-4 py-2 text-sm bg-white border-2 border-gray-300 rounded-lg focus:border-primary-500 focus:ring-2 focus:ring-primary-100 focus:outline-none"
-          >
-            {housesViewMode === null && <option value={0}>{t('all_years')}</option>}
-            {availableYears.map((y) => (
-              <option key={y} value={y}>
-                {y}
-              </option>
-            ))}
-          </select>
-
-          {/* Block filter */}
-          {availableBlocks.length > 0 && (
-            <select
-              value={filterBlock}
-              onChange={(e) => setFilterBlock(e.target.value)}
-              className="min-w-[130px] px-4 py-2 text-sm bg-white border-2 border-gray-300 rounded-lg focus:border-primary-500 focus:ring-2 focus:ring-primary-100 focus:outline-none"
-            >
-              <option value="">Semua Blok</option>
-              {availableBlocks.map((b) => (
-                <option key={b} value={b}>{b}</option>
-              ))}
-            </select>
-          )}
-
-          {/* House number filter */}
-          <input
-            type="text"
-            placeholder="No. Rumah..."
-            value={filterHouseNumber}
-            onChange={(e) => setFilterHouseNumber(e.target.value)}
-            className="w-[120px] px-3 py-2 text-sm bg-white border-2 border-gray-300 rounded-lg focus:border-primary-500 focus:ring-2 focus:ring-primary-100 focus:outline-none"
-          />
-
-          {/* Date filter — only when not in houses view */}
-          {housesViewMode === null && (
-            <div className="flex items-center gap-2">
-              <input
-                type="date"
-                value={filterDate}
-                onChange={(e) => setFilterDate(e.target.value)}
-                max={new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString().slice(0, 10)}
-                className="px-3 py-2 text-sm border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-100 focus:border-primary-500"
-              />
-              <button
-                onClick={() =>
-                  setFilterDate(
-                    new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString().slice(0, 10)
-                  )
-                }
-                className="px-3 py-2 text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200 rounded-lg hover:bg-blue-100 whitespace-nowrap"
+        {/* Filter grid with labels */}
+        <div className="p-3">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+            {/* Penghuni */}
+            <div>
+              <label className="text-xs font-medium text-gray-500 mb-1 block">Penghuni</label>
+              <select
+                value={filterUserId}
+                onChange={(e) => setFilterUserId(e.target.value)}
+                className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:border-primary-500 focus:ring-2 focus:ring-primary-100 focus:outline-none"
               >
-                Hari Ini
-              </button>
-              {filterDate !== "" && (
-                <button
-                  onClick={() => setFilterDate("")}
-                  className="text-gray-400 hover:text-gray-600 flex items-center"
-                  title="Hapus filter tanggal"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              )}
+                <option value="">{t('all_residents')}</option>
+                {users
+                  .filter((u) => u.role !== "admin")
+                  .map((u) => (
+                    <option key={u.id} value={u.id}>{u.name}</option>
+                  ))}
+              </select>
             </div>
-          )}
 
-          {housesViewMode === null
-            ? (filterUserId !== "" || filterYear !== 0 || filterMonth !== 0 || filterDate !== "" || filterBlock !== "" || filterHouseNumber !== "") && (
-                <button
-                  onClick={() => {
-                    setFilterUserId("");
-                    setFilterYear(0);
-                    setFilterMonth(0);
-                    setFilterDate("");
-                    setFilterBlock("");
-                    setFilterHouseNumber("");
-                  }}
-                  className="text-sm text-primary-600 hover:text-primary-700 underline underline-offset-2"
-                >
-                  {t('clear_filter')}
-                </button>
-              )
-            : (filterUserId !== "" ||
-                filterBlock !== "" ||
-                filterHouseNumber !== "" ||
-                filterMonth !== new Date().getMonth() + 1 ||
-                filterYear !== new Date().getFullYear()) && (
-                <button
-                  onClick={() => {
-                    setFilterUserId("");
-                    setFilterBlock("");
-                    setFilterHouseNumber("");
-                    setFilterMonth(new Date().getMonth() + 1);
-                    setFilterYear(new Date().getFullYear());
-                    lastFetchedKey.current = ""; // force re-fetch for current month
-                  }}
-                  className="text-sm text-primary-600 hover:text-primary-700 underline underline-offset-2"
-                >
-                  {t('clear_filter')}
-                </button>
-              )}
+            {/* Bulan */}
+            <div>
+              <label className="text-xs font-medium text-gray-500 mb-1 block">Bulan</label>
+              <select
+                value={filterMonth}
+                onChange={(e) => setFilterMonth(Number(e.target.value))}
+                className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:border-primary-500 focus:ring-2 focus:ring-primary-100 focus:outline-none"
+              >
+                {housesViewMode === null && <option value={0}>{t('all_months')}</option>}
+                {INDONESIAN_MONTHS.map((name, i) => (
+                  <option key={i + 1} value={i + 1}>{name}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Tahun */}
+            <div>
+              <label className="text-xs font-medium text-gray-500 mb-1 block">Tahun</label>
+              <select
+                value={filterYear}
+                onChange={(e) => setFilterYear(Number(e.target.value))}
+                className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:border-primary-500 focus:ring-2 focus:ring-primary-100 focus:outline-none"
+              >
+                {housesViewMode === null && <option value={0}>{t('all_years')}</option>}
+                {availableYears.map((y) => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Blok */}
+            <div>
+              <label className="text-xs font-medium text-gray-500 mb-1 block">Blok</label>
+              <select
+                value={filterBlock}
+                onChange={(e) => setFilterBlock(e.target.value)}
+                className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:border-primary-500 focus:ring-2 focus:ring-primary-100 focus:outline-none"
+              >
+                <option value="">Semua Blok</option>
+                {availableBlocks.map((b) => (
+                  <option key={b} value={b}>{b}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* No. Rumah */}
+            <div>
+              <label className="text-xs font-medium text-gray-500 mb-1 block">No. Rumah</label>
+              <input
+                type="text"
+                placeholder="Cari no. rumah..."
+                value={filterHouseNumber}
+                onChange={(e) => setFilterHouseNumber(e.target.value)}
+                className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:border-primary-500 focus:ring-2 focus:ring-primary-100 focus:outline-none"
+              />
+            </div>
+
+            {/* Tanggal — only in payments view */}
+            {housesViewMode === null && (
+              <div>
+                <label className="text-xs font-medium text-gray-500 mb-1 block">Tanggal</label>
+                <div className="flex items-center gap-1">
+                  <input
+                    type="date"
+                    value={filterDate}
+                    onChange={(e) => setFilterDate(e.target.value)}
+                    max={new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString().slice(0, 10)}
+                    className="flex-1 min-w-0 px-2 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-100 focus:border-primary-500"
+                  />
+                  <button
+                    onClick={() =>
+                      setFilterDate(
+                        new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString().slice(0, 10)
+                      )
+                    }
+                    className="px-2 py-2 text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200 rounded-lg hover:bg-blue-100 whitespace-nowrap"
+                  >
+                    Hari Ini
+                  </button>
+                  {filterDate !== "" && (
+                    <button
+                      onClick={() => setFilterDate("")}
+                      className="text-gray-400 hover:text-gray-600 flex items-center"
+                      title="Hapus filter tanggal"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Clear filters */}
+          <div className="flex justify-end mt-2">
+            {housesViewMode === null
+              ? (filterUserId !== "" || filterYear !== 0 || filterMonth !== 0 || filterDate !== "" || filterBlock !== "" || filterHouseNumber !== "") && (
+                  <button
+                    onClick={() => {
+                      setFilterUserId("");
+                      setFilterYear(0);
+                      setFilterMonth(0);
+                      setFilterDate("");
+                      setFilterBlock("");
+                      setFilterHouseNumber("");
+                    }}
+                    className="text-sm text-primary-600 hover:text-primary-700 underline underline-offset-2"
+                  >
+                    {t('clear_filter')}
+                  </button>
+                )
+              : (filterUserId !== "" ||
+                  filterBlock !== "" ||
+                  filterHouseNumber !== "" ||
+                  filterMonth !== new Date().getMonth() + 1 ||
+                  filterYear !== new Date().getFullYear()) && (
+                  <button
+                    onClick={() => {
+                      setFilterUserId("");
+                      setFilterBlock("");
+                      setFilterHouseNumber("");
+                      setFilterMonth(new Date().getMonth() + 1);
+                      setFilterYear(new Date().getFullYear());
+                      lastFetchedKey.current = ""; // force re-fetch for current month
+                    }}
+                    className="text-sm text-primary-600 hover:text-primary-700 underline underline-offset-2"
+                  >
+                    {t('clear_filter')}
+                  </button>
+                )}
+          </div>
         </div>
       </div>
 

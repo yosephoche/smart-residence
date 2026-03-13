@@ -286,6 +286,36 @@ export function mapAttendancesForExport(attendances: Attendance[]): {
   return { headers, rows };
 }
 
+interface ScheduleForExport {
+  date: string;
+  notes: string | null;
+  isOnLeave?: boolean;
+  staff: {
+    name: string;
+    staffJobType: string;
+  };
+  shiftTemplate: {
+    shiftName: string;
+    startTime: string;
+    endTime: string;
+  };
+}
+
+export function mapSchedulesForExport(schedules: ScheduleForExport[]): { headers: string[]; rows: string[][] } {
+  const headers = ["Tanggal", "Nama Staff", "Jenis Pekerjaan", "Shift", "Jam Masuk", "Jam Keluar", "Catatan", "Status Cuti"];
+  const rows = schedules.map((s) => [
+    s.date.slice(0, 10),
+    s.staff.name,
+    s.staff.staffJobType,
+    s.shiftTemplate.shiftName,
+    s.shiftTemplate.startTime,
+    s.shiftTemplate.endTime,
+    s.notes ?? "",
+    s.isOnLeave ? "Cuti" : "Hadir",
+  ]);
+  return { headers, rows };
+}
+
 interface HouseForExport {
   houseNumber: string;
   block: string;

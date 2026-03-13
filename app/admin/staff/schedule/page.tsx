@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { JobType } from "@prisma/client";
@@ -9,7 +9,8 @@ import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import Modal, { ConfirmModal } from "@/components/ui/Modal";
 import Input from "@/components/ui/Input";
-import { Plus, Sparkles, Trash2, List, CalendarDays } from "lucide-react";
+import { Plus, Sparkles, Trash2, List, CalendarDays, Download, Printer } from "lucide-react";
+import { exportCSV, exportXLSX, mapSchedulesForExport } from "@/lib/utils/export";
 import { usePagination } from "@/lib/hooks/usePagination";
 import ScheduleCalendar, { toDateKey } from "@/components/staff/ScheduleCalendar";
 
@@ -87,6 +88,10 @@ export default function SchedulePage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isAutoGenModalOpen, setIsAutoGenModalOpen] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+
+  // Export
+  const [showExportDropdown, setShowExportDropdown] = useState(false);
+  const exportDropdownRef = useRef<HTMLDivElement>(null);
 
   // Bulk delete
   const [selectedScheduleIds, setSelectedScheduleIds] = useState<string[]>([]);
@@ -173,6 +178,35 @@ export default function SchedulePage() {
     fetchShiftTemplates();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [startDate, endDate]);
+
+  // Close export dropdown on outside click
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (exportDropdownRef.current && !exportDropdownRef.current.contains(e.target as Node)) {
+        setShowExportDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
+  const handleExport = async (format: "csv" | "xlsx") => {
+    setShowExportDropdown(false);
+    const { headers, rows } = mapSchedulesForExport(schedules);
+    const filename =
+      viewMode === "calendar"
+        ? `jadwal-staff-${calendarMonth.year}-${calendarMonth.month + 1}.${format}`
+        : `jadwal-staff-${startDate}-${endDate}.${format}`;
+    if (format === "csv") {
+      exportCSV(filename, headers, rows);
+    } else {
+      await exportXLSX(filename, headers, rows);
+    }
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
 
   const fetchSchedules = async () => {
     try {
@@ -607,6 +641,37 @@ export default function SchedulePage() {
             <Sparkles className="w-4 h-4 mr-2" />
             {t('auto_generate')}
           </Button>
+
+          {/* Print */}
+          <Button variant="secondary" onClick={handlePrint}>
+            <Printer className="w-4 h-4 mr-2" />
+            Print
+          </Button>
+
+          {/* Export dropdown */}
+          <div className="relative" ref={exportDropdownRef}>
+            <Button variant="secondary" onClick={() => setShowExportDropdown(!showExportDropdown)}>
+              <Download className="w-4 h-4 mr-2" />
+              Unduh
+            </Button>
+            {showExportDropdown && (
+              <div className="absolute right-0 mt-1 w-44 bg-white rounded-lg border-2 border-gray-200 shadow-lg z-10">
+                <button
+                  onClick={() => handleExport("csv")}
+                  className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  Export CSV
+                </button>
+                <button
+                  onClick={() => handleExport("xlsx")}
+                  className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors border-t border-gray-100"
+                >
+                  Export Excel (.xlsx)
+                </button>
+              </div>
+            )}
+          </div>
+
           <Button onClick={() => setIsCreateModalOpen(true)}>
             <Plus className="w-4 h-4 mr-2" />
             {t('create_assignment')}
