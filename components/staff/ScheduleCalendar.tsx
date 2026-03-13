@@ -72,7 +72,6 @@ function CalendarLoadingSkeleton() {
   );
 }
 
-const MAX_CHIPS = 4;
 const DOW_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 interface CalendarCellProps {
@@ -96,12 +95,6 @@ function CalendarCell({
   onDateClick,
   onDeleteClick,
 }: CalendarCellProps) {
-  // Leave chips first, then schedule chips; combined cap at MAX_CHIPS
-  const totalCount = leaves.length + schedules.length;
-  const visibleLeaves = leaves.slice(0, MAX_CHIPS);
-  const remainingSlots = Math.max(0, MAX_CHIPS - visibleLeaves.length);
-  const visibleSchedules = schedules.slice(0, remainingSlots);
-  const overflow = totalCount - visibleLeaves.length - visibleSchedules.length;
 
   return (
     <div
@@ -135,19 +128,16 @@ function CalendarCell({
 
       {/* Chips: leave first, then schedule */}
       <div className="space-y-0.5">
-        {visibleLeaves.map((leave, i) => (
+        {leaves.map((leave, i) => (
           <LeaveChip key={`leave-${i}`} leave={leave} />
         ))}
-        {visibleSchedules.map((schedule) => (
+        {schedules.map((schedule) => (
           <ScheduleChip
             key={schedule.id}
             schedule={schedule}
             onDeleteClick={onDeleteClick}
           />
         ))}
-        {overflow > 0 && (
-          <p className="text-[9px] text-gray-400 pl-0.5 leading-none">+{overflow} more</p>
-        )}
       </div>
     </div>
   );
