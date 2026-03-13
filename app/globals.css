@@ -66,5 +66,7 @@
     left: 0;
     top: 0;
     width: 100%;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 }
