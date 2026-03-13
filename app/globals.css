@@ -49,3 +49,22 @@
 ::-webkit-scrollbar-thumb:hover {
   @apply bg-gray-400;
 }
+
+@media print {
+  /* Hide everything */
+  body * {
+    visibility: hidden;
+  }
+  /* Show only the schedule area */
+  #schedule-print-area,
+  #schedule-print-area * {
+    visibility: visible;
+  }
+  /* Position it at the top-left */
+  #schedule-print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+}

@@ -642,11 +642,13 @@ export default function SchedulePage() {
             {t('auto_generate')}
           </Button>
 
-          {/* Print */}
-          <Button variant="secondary" onClick={handlePrint}>
-            <Printer className="w-4 h-4 mr-2" />
-            Print
-          </Button>
+          {/* Print — only in calendar view */}
+          {viewMode === "calendar" && (
+            <Button variant="secondary" onClick={handlePrint}>
+              <Printer className="w-4 h-4 mr-2" />
+              Print
+            </Button>
+          )}
 
           {/* Export dropdown */}
           <div className="relative" ref={exportDropdownRef}>
@@ -724,6 +726,9 @@ export default function SchedulePage() {
         </div>
       )}
 
+      {/* Print-scoped area */}
+      <div id="schedule-print-area">
+
       {/* Table view */}
       {viewMode === "table" && (
         loading ? (
@@ -765,6 +770,8 @@ export default function SchedulePage() {
           onDeleteClick={(id) => setDeleteTargetId(id)}
         />
       )}
+
+      </div>{/* end #schedule-print-area */}
 
       {/* Create Schedule Modal */}
       <Modal
