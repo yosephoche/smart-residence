@@ -2,13 +2,27 @@ import { prisma } from "@/lib/prisma";
 import { LeaveStatus } from "@prisma/client";
 import { getCachedLeaveConfig } from "@/lib/cache/leave-config";
 
+const TZ_OFFSET_MS = 8 * 60 * 60 * 1000; // WITA = UTC+8, matches shiftTemplate.service.ts
+
 /**
- * Normalize a date to UTC midnight (consistent with StaffSchedule pattern)
+ * Normalize a date to UTC midnight (for dates already stored as UTC midnight representing WITA calendar dates)
  */
 function toUTCMidnight(date: Date): Date {
   const d = new Date(date);
   d.setUTCHours(0, 0, 0, 0);
   return d;
+}
+
+/**
+ * Convert a UTC Date to the WITA (UTC+8) calendar date, returned as UTC midnight.
+ * Use this when comparing "now" against stored leave dates to avoid the 8-hour UTC/WITA mismatch.
+ * Matches the pattern in shiftTemplate.service.ts for consistency.
+ */
+function toWITACalendarDateUTC(date: Date): Date {
+  const witaDate = new Date(date.getTime() + TZ_OFFSET_MS);
+  return new Date(
+    Date.UTC(witaDate.getUTCFullYear(), witaDate.getUTCMonth(), witaDate.getUTCDate())
+  );
 }
 
 /**
@@ -26,7 +40,7 @@ export async function isStaffOnApprovedLeave(
   staffId: string,
   date: Date
 ): Promise<boolean> {
-  const normalizedDate = toUTCMidnight(date);
+  const normalizedDate = toWITACalendarDateUTC(date);
 
   const leave = await prisma.staffLeave.findFirst({
     where: {
