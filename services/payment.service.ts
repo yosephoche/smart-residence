@@ -56,86 +56,94 @@ export async function createPayment(
   amountMonths: number,
   proofImagePath: string
 ) {
-  return prisma.$transaction(async (tx) => {
-    // Server-side price calculation — never trusts client
-    const house = await tx.house.findUnique({
-      where: { id: houseId },
-      include: { houseType: true },
-    });
-
-    if (!house?.houseType) {
-      throw new Error("House or house type not found");
-    }
-
-    const totalAmount = Number(house.houseType.price) * amountMonths;
-
-    const occupiedMonths = await tx.paymentMonth.findMany({
-      where: {
-        payment: {
-          houseId,
-          status: { in: ["PENDING", "APPROVED"] },
-        },
-      },
-      select: { year: true, month: true },
-    });
-    const startMonth = computeNextStartMonth(occupiedMonths);
-    const coveredMonths = computeCoveredMonths(startMonth, amountMonths);
-
-    // Check for conflicts: any target month already has a PENDING or APPROVED payment for this house
-    const conflicts = await tx.paymentMonth.findMany({
-      where: {
-        payment: {
-          houseId,
-          status: { in: ["PENDING", "APPROVED"] },
-        },
-        OR: coveredMonths.map(({ year, month }) => ({ year, month })),
-      },
-      select: { year: true, month: true },
-    });
-
-    if (conflicts.length > 0) {
-      // Deduplicate in case multiple payments cover the same month
-      const seen = new Set<string>();
-      const unique = conflicts.filter(({ year, month }) => {
-        const key = `${year}-${month}`;
-        if (seen.has(key)) return false;
-        seen.add(key);
-        return true;
-      });
-      const monthLabels = unique.map((m) => formatPaymentMonth(m)).join(", ");
-      throw new Error(
-        `Bulan berikut sudah memiliki pembayaran yang sedang diproses atau telah disetujui: ${monthLabels}`
-      );
-    }
-
-    const payment = await tx.payment.create({
-      data: {
-        userId,
-        houseId,
-        amountMonths,
-        totalAmount,
-        proofImagePath,
-        status: "PENDING",
-      },
-    });
-
-    await tx.paymentMonth.createMany({
-      data: coveredMonths.map(({ year, month }) => ({
-        paymentId: payment.id,
-        year,
-        month,
-      })),
-    });
-
-    return tx.payment.findUnique({
-      where: { id: payment.id },
-      include: {
-        user: { select: { id: true, name: true, email: true } },
-        house: { include: { houseType: true } },
-        paymentMonths: paymentMonthsInclude,
-      },
-    });
+  // READ PHASE: perform all reads outside the transaction to avoid pgbouncer
+  // recycling the connection mid-transaction (interactive transactions require
+  // a persistent connection, which pgbouncer doesn't guarantee).
+  const house = await prisma.house.findUnique({
+    where: { id: houseId },
+    include: { houseType: true },
   });
+
+  if (!house?.houseType) {
+    throw new Error("House or house type not found");
+  }
+
+  // Server-side price calculation — never trusts client
+  const totalAmount = Number(house.houseType.price) * amountMonths;
+
+  const occupiedMonths = await prisma.paymentMonth.findMany({
+    where: {
+      payment: {
+        houseId,
+        status: { in: ["PENDING", "APPROVED"] },
+      },
+    },
+    select: { year: true, month: true },
+  });
+  const startMonth = computeNextStartMonth(occupiedMonths);
+  const coveredMonths = computeCoveredMonths(startMonth, amountMonths);
+
+  // Check for conflicts: any target month already has a PENDING or APPROVED payment for this house
+  const conflicts = await prisma.paymentMonth.findMany({
+    where: {
+      payment: {
+        houseId,
+        status: { in: ["PENDING", "APPROVED"] },
+      },
+      OR: coveredMonths.map(({ year, month }) => ({ year, month })),
+    },
+    select: { year: true, month: true },
+  });
+
+  if (conflicts.length > 0) {
+    // Deduplicate in case multiple payments cover the same month
+    const seen = new Set<string>();
+    const unique = conflicts.filter(({ year, month }) => {
+      const key = `${year}-${month}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+    const monthLabels = unique.map((m) => formatPaymentMonth(m)).join(", ");
+    throw new Error(
+      `Bulan berikut sudah memiliki pembayaran yang sedang diproses atau telah disetujui: ${monthLabels}`
+    );
+  }
+
+  // WRITE PHASE: short transaction with only 2 write + 1 read — minimizes
+  // the open-connection window so pgbouncer doesn't recycle it.
+  return prisma.$transaction(
+    async (tx) => {
+      const payment = await tx.payment.create({
+        data: {
+          userId,
+          houseId,
+          amountMonths,
+          totalAmount,
+          proofImagePath,
+          status: "PENDING",
+        },
+      });
+
+      await tx.paymentMonth.createMany({
+        data: coveredMonths.map(({ year, month }) => ({
+          paymentId: payment.id,
+          year,
+          month,
+        })),
+      });
+
+      return tx.payment.findUnique({
+        where: { id: payment.id },
+        include: {
+          user: { select: { id: true, name: true, email: true } },
+          house: { include: { houseType: true } },
+          paymentMonths: paymentMonthsInclude,
+        },
+      });
+    },
+    { timeout: 10000 }
+  );
 }
 
 export async function getOccupiedMonthsForHouse(houseId: string) {
