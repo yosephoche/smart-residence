@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Wallet, X, CheckCircle, Clock, XCircle } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/lib/utils';
@@ -36,11 +36,18 @@ const statusConfig = {
   REJECTED: { label: 'Ditolak', color: 'text-red-600',   bg: 'bg-red-50',     icon: XCircle,     iconColor: 'text-red-500'     },
 };
 
+const INDONESIAN_MONTHS = [
+  'Januari','Februari','Maret','April','Mei','Juni',
+  'Juli','Agustus','September','Oktober','November','Desember',
+];
+
 export default function PaymentsScreen() {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
   const [imageFullscreen, setImageFullscreen] = useState(false);
+  const [filterYear, setFilterYear] = useState(new Date().getFullYear());
+  const [filterMonth, setFilterMonth] = useState(new Date().getMonth() + 1);
 
   useEffect(() => {
     fetch('/api/payments')
@@ -50,8 +57,28 @@ export default function PaymentsScreen() {
       .finally(() => setIsLoading(false));
   }, []);
 
-  const totalPaid = payments.filter((p) => p.status === 'APPROVED').reduce((sum, p) => sum + Number(p.totalAmount), 0);
-  const paidCount = payments.filter((p) => p.status === 'APPROVED').length;
+  const availableYears = useMemo(() => {
+    const years = new Set<number>();
+    payments.forEach((p) => p.paymentMonths?.forEach((pm) => years.add(pm.year)));
+    years.add(new Date().getFullYear());
+    return Array.from(years).sort((a, b) => b - a);
+  }, [payments]);
+
+  const filteredPayments = useMemo(() => {
+    if (filterYear === 0 && filterMonth === 0) return payments;
+    return payments.filter((p) => {
+      if (filterYear !== 0 && filterMonth !== 0) {
+        return p.paymentMonths?.some((pm) => pm.year === filterYear && pm.month === filterMonth);
+      }
+      if (filterYear !== 0) {
+        return p.paymentMonths?.some((pm) => pm.year === filterYear);
+      }
+      return true;
+    });
+  }, [payments, filterYear, filterMonth]);
+
+  const totalPaid = filteredPayments.filter((p) => p.status === 'APPROVED').reduce((sum, p) => sum + Number(p.totalAmount), 0);
+  const paidCount = filteredPayments.filter((p) => p.status === 'APPROVED').length;
   const currentYear = new Date().getFullYear();
 
   if (isLoading) {
@@ -80,7 +107,11 @@ export default function PaymentsScreen() {
 
         {/* Summary Card */}
         <motion.div variants={itemVariants} className="bg-blue-600 rounded-2xl p-4 text-white">
-          <p className="text-xs text-blue-200 font-medium">Total Dibayar ({currentYear})</p>
+          <p className="text-xs text-blue-200 font-medium">
+            Total Dibayar {filterMonth !== 0 && filterYear !== 0
+              ? `${INDONESIAN_MONTHS[filterMonth - 1]} ${filterYear}`
+              : filterYear !== 0 ? String(filterYear) : '(Semua)'}
+          </p>
           <p className="text-2xl font-bold mt-1">{formatCurrency(totalPaid)}</p>
           <div className="flex items-center gap-2 mt-3">
             <span className="text-[11px] bg-white/20 px-2 py-0.5 rounded-full">
@@ -89,12 +120,48 @@ export default function PaymentsScreen() {
           </div>
         </motion.div>
 
+        {/* Filter Row */}
+        <motion.div variants={itemVariants} className="flex items-center gap-2">
+          <select
+            value={filterYear}
+            onChange={(e) => setFilterYear(Number(e.target.value))}
+            className={`flex-1 px-3 py-2 text-sm rounded-xl border transition-colors focus:outline-none focus:ring-2 focus:ring-blue-100 bg-white ${
+              filterYear !== 0 ? 'border-blue-300 text-blue-700 font-medium' : 'border-slate-200 text-slate-600'
+            }`}
+          >
+            <option value={0}>Semua Tahun</option>
+            {availableYears.map((y) => (
+              <option key={y} value={y}>{y}</option>
+            ))}
+          </select>
+          <select
+            value={filterMonth}
+            onChange={(e) => setFilterMonth(Number(e.target.value))}
+            className={`flex-1 px-3 py-2 text-sm rounded-xl border transition-colors focus:outline-none focus:ring-2 focus:ring-blue-100 bg-white ${
+              filterMonth !== 0 ? 'border-blue-300 text-blue-700 font-medium' : 'border-slate-200 text-slate-600'
+            }`}
+          >
+            <option value={0}>Semua Bulan</option>
+            {INDONESIAN_MONTHS.map((name, i) => (
+              <option key={i + 1} value={i + 1}>{name}</option>
+            ))}
+          </select>
+          {(filterYear !== 0 || filterMonth !== 0) && (
+            <button
+              onClick={() => { setFilterYear(0); setFilterMonth(0); }}
+              className="px-3 py-2 text-xs font-medium text-slate-500 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 whitespace-nowrap"
+            >
+              Semua
+            </button>
+          )}
+        </motion.div>
+
         {/* Payment List */}
         <motion.div
           variants={itemVariants}
           className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)] overflow-hidden"
         >
-          {payments.length === 0 ? (
+          {filteredPayments.length === 0 ? (
             <div className="p-12 text-center">
               <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center mx-auto mb-3">
                 <Wallet className="w-6 h-6 text-slate-300" />
@@ -103,7 +170,7 @@ export default function PaymentsScreen() {
               <p className="text-xs text-slate-400 mt-1">Pembayaran IPL Anda akan muncul di sini</p>
             </div>
           ) : (
-            payments.map((payment, index) => {
+            filteredPayments.map((payment, index) => {
               const config = statusConfig[payment.status];
               const monthLabel = payment.paymentMonths?.[0]
                 ? formatPaymentMonth(payment.paymentMonths[0])

@@ -25,8 +25,8 @@ export default function UserExpensesPage() {
 
   // Filters
   const [categoryFilter, setCategoryFilter] = useState<string>("ALL");
-  const [filterMonth, setFilterMonth] = useState(0);
-  const [filterYear, setFilterYear] = useState(0);
+  const [filterMonth, setFilterMonth] = useState(new Date().getMonth() + 1);
+  const [filterYear, setFilterYear] = useState(new Date().getFullYear());
 
   const categories = getExpenseCategoryOptions();
 
@@ -180,7 +180,6 @@ export default function UserExpensesPage() {
               value={filterMonth}
               onChange={(e) => setFilterMonth(Number(e.target.value))}
               className="px-3 py-2 border rounded-lg"
-              disabled={filterYear === 0}
             >
               <option value={0}>{tPayments('all_months')}</option>
               {Array.from({ length: 12 }, (_, i) => (

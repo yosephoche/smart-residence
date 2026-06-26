@@ -45,7 +45,12 @@ const currencyFormatter = (value: number) => formatCurrency(value);
 export const dynamic = "force-dynamic";
 
 export default function AdminDashboardPage() {
-  const currentYear = new Date().getFullYear();
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth() + 1;
+  const monthStart = `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`;
+  const monthEnd = new Date(currentYear, currentMonth, 0).toISOString().slice(0, 10);
+  const currentMonthLabel = now.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
 
   const [totalIncome, setTotalIncome] = useState(0);
   const [totalExpenses, setTotalExpenses] = useState(0);
@@ -55,8 +60,8 @@ export default function AdminDashboardPage() {
 
   useEffect(() => {
     Promise.all([
-      fetch("/api/income/stats").then((r) => r.json()),
-      fetch("/api/expenses/stats").then((r) => r.json()),
+      fetch(`/api/income/stats?startDate=${monthStart}&endDate=${monthEnd}`).then((r) => r.json()),
+      fetch(`/api/expenses/stats?startDate=${monthStart}&endDate=${monthEnd}`).then((r) => r.json()),
       fetch(`/api/admin/monthly-trend?year=${currentYear}`).then((r) => r.json()),
     ]).then(([incomeStats, expenseStats, trend]) => {
       setTotalIncome(incomeStats.totalAmount ?? 0);
@@ -65,7 +70,7 @@ export default function AdminDashboardPage() {
       setMonthlyTrend(trend);
       setIsLoading(false);
     });
-  }, [currentYear]);
+  }, [currentYear, monthStart, monthEnd]);
 
   const saldo = totalIncome - totalExpenses;
 
@@ -116,7 +121,7 @@ export default function AdminDashboardPage() {
         <StatCard
           title="Total Pemasukan"
           value={totalIncome}
-          subtitle="Seluruh pemasukan"
+          subtitle={currentMonthLabel}
           variant="success"
           compactNumbers={true}
           compactThreshold={10_000_000}
@@ -130,7 +135,7 @@ export default function AdminDashboardPage() {
         <StatCard
           title="Total Pengeluaran"
           value={totalExpenses}
-          subtitle="Seluruh pengeluaran"
+          subtitle={currentMonthLabel}
           variant="danger"
           compactNumbers={true}
           compactThreshold={10_000_000}
@@ -144,7 +149,7 @@ export default function AdminDashboardPage() {
         <StatCard
           title="Saldo"
           value={saldo}
-          subtitle="Pemasukan - Pengeluaran"
+          subtitle={`${currentMonthLabel} · Pemasukan - Pengeluaran`}
           variant={saldo >= 0 ? "success" : "danger"}
           compactNumbers={true}
           compactThreshold={10_000_000}

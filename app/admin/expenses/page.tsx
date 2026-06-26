@@ -30,8 +30,8 @@ export default function AdminExpensesPage() {
 
   // Filters
   const [categoryFilter, setCategoryFilter] = useState<string>("ALL");
-  const [filterMonth, setFilterMonth] = useState(0);
-  const [filterYear, setFilterYear] = useState(0);
+  const [filterMonth, setFilterMonth] = useState(new Date().getMonth() + 1);
+  const [filterYear, setFilterYear] = useState(new Date().getFullYear());
 
   const categories = getExpenseCategoryOptions();
 
@@ -282,8 +282,7 @@ export default function AdminExpensesPage() {
               <select
                 value={filterMonth}
                 onChange={(e) => setFilterMonth(Number(e.target.value))}
-                disabled={filterYear === 0}
-                className={`px-3 py-2 text-sm rounded-lg border transition-colors focus:outline-none focus:ring-2 focus:ring-blue-100 disabled:opacity-40 disabled:cursor-not-allowed ${
+                className={`px-3 py-2 text-sm rounded-lg border transition-colors focus:outline-none focus:ring-2 focus:ring-blue-100 ${
                   filterMonth !== 0
                     ? "border-blue-400 bg-blue-50 text-blue-700 font-medium"
                     : "border-slate-200 bg-white text-slate-700"

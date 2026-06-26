@@ -67,8 +67,8 @@ export default function AdminPaymentsPage() {
 
   // Resident & month/year filters
   const [filterUserId, setFilterUserId] = useState("");
-  const [filterYear, setFilterYear] = useState(0);
-  const [filterMonth, setFilterMonth] = useState(0);
+  const [filterYear, setFilterYear] = useState(new Date().getFullYear());
+  const [filterMonth, setFilterMonth] = useState(new Date().getMonth() + 1);
   const [filterBlock, setFilterBlock] = useState("");
   const [filterHouseNumber, setFilterHouseNumber] = useState("");
   const debouncedHouseNumber = useDebounce(filterHouseNumber, 300);
