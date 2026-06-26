@@ -189,9 +189,10 @@ export function HomeScreen() {
   const anyHousePending = houses.some((h) => getHouseStatus(h) === "PENDING");
   const anyHouseUnpaid = houses.some((h) => getHouseStatus(h) === "UNPAID");
 
-  // Calculate totals for financial summary
-  const totalIncome = financialData.reduce((sum, d) => sum + d.income, 0);
-  const totalExpense = financialData.reduce((sum, d) => sum + d.expense, 0);
+  // Current month financials (last item = current month)
+  const currentMonthData = financialData[financialData.length - 1];
+  const totalIncome = currentMonthData?.income ?? 0;
+  const totalExpense = currentMonthData?.expense ?? 0;
 
   // Build a WhatsApp URL with the configurable message template
   const buildWhatsAppUrl = (phone: string) => {
@@ -410,7 +411,7 @@ export function HomeScreen() {
           <div className="flex-1 bg-slate-50 rounded-xl p-3">
             <div className="flex items-center gap-1.5 mb-1">
               <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
-              <span className="text-[11px] text-slate-400">Pemasukan</span>
+              <span className="text-[11px] text-slate-400">Pemasukan Bulan Ini</span>
             </div>
             <p className="text-sm font-bold text-slate-800">
               {formatCurrency(totalIncome)}
@@ -419,7 +420,7 @@ export function HomeScreen() {
           <div className="flex-1 bg-slate-50 rounded-xl p-3">
             <div className="flex items-center gap-1.5 mb-1">
               <TrendingDown className="w-3.5 h-3.5 text-red-400" />
-              <span className="text-[11px] text-slate-400">Pengeluaran</span>
+              <span className="text-[11px] text-slate-400">Pengeluaran Bulan Ini</span>
             </div>
             <p className="text-sm font-bold text-slate-800">
               {formatCurrency(totalExpense)}
