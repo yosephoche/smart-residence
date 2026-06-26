@@ -1,5 +1,7 @@
 "use client";
 
+import { motion } from "framer-motion";
+
 import { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -15,6 +17,7 @@ import { Skeleton } from "@/components/ui/Loading";
 import { House, User } from "@/types";
 import { formatCurrency } from "@/lib/utils";
 import ImportHousesForm from "@/components/forms/ImportHousesForm";
+import { useDebounce } from "@/lib/hooks/useDebounce";
 import { usePagination } from "@/lib/hooks/usePagination";
 import { exportCSV, exportXLSX, mapHousesForExport } from "@/lib/utils/export";
 
@@ -28,6 +31,7 @@ export default function HousesPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearch = useDebounce(searchQuery, 300);
   const [blockFilter, setBlockFilter] = useState<string>("ALL");
   const [statusFilter, setStatusFilter] = useState<"ALL" | "OCCUPIED" | "VACANT">("ALL");
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -116,15 +120,15 @@ export default function HousesPage() {
     }
 
     // Apply search query
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
+    if (debouncedSearch) {
+      const query = debouncedSearch.toLowerCase();
       filtered = filtered.filter((house) =>
         house.houseNumber.toLowerCase().includes(query)
       );
     }
 
     return filtered;
-  }, [houses, searchQuery, blockFilter, statusFilter]);
+  }, [houses, debouncedSearch, blockFilter, statusFilter]);
 
   // Pagination
   const {
@@ -137,7 +141,7 @@ export default function HousesPage() {
     handlePageSizeChange,
   } = usePagination(filteredHouses, {
     initialPageSize: 25,
-    resetDeps: [searchQuery, blockFilter, statusFilter],
+    resetDeps: [debouncedSearch, blockFilter, statusFilter],
   });
 
   const handleDeleteClick = (house: House) => {
@@ -177,8 +181,8 @@ export default function HousesPage() {
       sortable: true,
       render: (_, house) => (
         <div>
-          <p className="font-semibold text-gray-900 text-lg">{house.houseNumber}</p>
-          <p className="text-xs text-gray-500">{t('block')} {house.block}</p>
+          <p className="font-semibold text-slate-900 text-lg">{house.houseNumber}</p>
+          <p className="text-xs text-slate-500">{t('block')} {house.block}</p>
         </div>
       ),
     },
@@ -187,8 +191,8 @@ export default function HousesPage() {
       header: t('type_and_price'),
       render: (_, house) => (
         <div>
-          <p className="font-medium text-gray-900">{house.houseType?.typeName}</p>
-          <p className="text-sm text-gray-600">
+          <p className="font-medium text-slate-900">{house.houseType?.typeName}</p>
+          <p className="text-sm text-slate-600">
             {house.houseType && formatCurrency(house.houseType.price)}/{t('per_month')}
           </p>
         </div>
@@ -204,11 +208,11 @@ export default function HousesPage() {
         const user = users.find((u) => u.id === userId);
         return user ? (
           <div>
-            <p className="font-medium text-gray-900 text-sm">{user.name}</p>
-            <p className="text-xs text-gray-500">{user.email}</p>
+            <p className="font-medium text-slate-900 text-sm">{user.name}</p>
+            <p className="text-xs text-slate-500">{user.email}</p>
           </div>
         ) : (
-          <span className="text-gray-400">{tCommon('unknown')}</span>
+          <span className="text-slate-400">{tCommon('unknown')}</span>
         );
       },
     },
@@ -225,7 +229,7 @@ export default function HousesPage() {
               {t('rented')}
             </Badge>
             {house.renterName && (
-              <p className="text-sm font-medium text-gray-900 mt-1">
+              <p className="text-sm font-medium text-slate-900 mt-1">
                 {house.renterName}
               </p>
             )}
@@ -294,7 +298,7 @@ export default function HousesPage() {
           <Skeleton className="h-24 rounded-xl" />
           <Skeleton className="h-24 rounded-xl" />
         </div>
-        <div className="bg-white rounded-xl border-2 border-gray-200 p-4 space-y-4">
+        <div className="bg-white rounded-xl border-2 border-slate-200 p-4 space-y-4">
           <Skeleton className="h-10 w-full" />
           <Skeleton className="h-5 w-40" />
         </div>
@@ -307,15 +311,24 @@ export default function HousesPage() {
     );
   }
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.06, delayChildren: 0.02 } },
+  };
+  const itemVariants = {
+    hidden: { opacity: 0, y: 12 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] } },
+  };
+
   return (
-    <div className="space-y-6">
+    <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
+          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
             {t('title')}
           </h1>
-          <p className="text-gray-600 mt-1">
+          <p className="text-slate-600 mt-1">
             {t('subtitle')}
           </p>
         </div>
@@ -339,16 +352,16 @@ export default function HousesPage() {
             </Button>
 
             {showExportDropdown && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
+              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-slate-200 z-10">
                 <button
                   onClick={() => handleExport("csv")}
-                  className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 rounded-t-lg"
+                  className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 rounded-t-lg"
                 >
                   Export as CSV
                 </button>
                 <button
                   onClick={() => handleExport("xlsx")}
-                  className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 rounded-b-lg"
+                  className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 rounded-b-lg"
                 >
                   Export as Excel
                 </button>
@@ -374,63 +387,94 @@ export default function HousesPage() {
 
       {/* Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white rounded-xl border-2 border-gray-200 p-4 shadow-sm">
-          <p className="text-sm font-medium text-gray-600">{t('total_houses')}</p>
-          <p className="text-3xl font-bold text-gray-900 mt-1">{houses.length}</p>
+        <div className="bg-white rounded-xl border-2 border-slate-200 p-4 shadow-sm">
+          <p className="text-sm font-medium text-slate-600">{t('total_houses')}</p>
+          <p className="text-3xl font-bold text-slate-900 mt-1">{houses.length}</p>
         </div>
         <div className="bg-success-50 rounded-xl border-2 border-success-200 p-4 shadow-sm">
           <p className="text-sm font-medium text-success-700">{t('occupied')}</p>
           <p className="text-3xl font-bold text-success-900 mt-1">{occupiedCount}</p>
         </div>
-        <div className="bg-gray-50 rounded-xl border-2 border-gray-200 p-4 shadow-sm">
-          <p className="text-sm font-medium text-gray-700">{t('vacant')}</p>
-          <p className="text-3xl font-bold text-gray-900 mt-1">{vacantCount}</p>
+        <div className="bg-slate-50 rounded-xl border-2 border-slate-200 p-4 shadow-sm">
+          <p className="text-sm font-medium text-slate-700">{t('vacant')}</p>
+          <p className="text-3xl font-bold text-slate-900 mt-1">{vacantCount}</p>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl border-2 border-gray-200 p-4">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1">
-            <Input
-              placeholder={t('search_placeholder')}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              leftIcon={
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              }
-              fullWidth
-            />
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 space-y-3">
+        <div className="bg-slate-50 rounded-xl p-3">
+          <div className="flex flex-col md:flex-row gap-3 items-start">
+            {/* Search */}
+            <div className="flex-1 relative">
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
+                type="text"
+                placeholder={t('search_placeholder')}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className={`w-full pl-9 pr-3 py-2 text-sm rounded-lg border transition-colors focus:outline-none focus:ring-2 focus:ring-blue-100 ${
+                  searchQuery !== ""
+                    ? "border-blue-400 bg-blue-50 text-blue-700"
+                    : "border-slate-200 bg-white text-slate-700"
+                }`}
+              />
+            </div>
+            {/* Blok */}
+            <div className="flex flex-col gap-1">
+              <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">{t('block')}</label>
+              <select
+                value={blockFilter}
+                onChange={(e) => setBlockFilter(e.target.value)}
+                className={`px-3 py-2 text-sm rounded-lg border transition-colors focus:outline-none focus:ring-2 focus:ring-blue-100 ${
+                  blockFilter !== "ALL"
+                    ? "border-blue-400 bg-blue-50 text-blue-700 font-medium"
+                    : "border-slate-200 bg-white text-slate-700"
+                }`}
+              >
+                <option value="ALL">{t('all_blocks')}</option>
+                {blocks.map((block) => (
+                  <option key={block} value={block}>{t('block')} {block}</option>
+                ))}
+              </select>
+            </div>
+            {/* Status */}
+            <div className="flex flex-col gap-1">
+              <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Status</label>
+              <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-xl p-1">
+                {[
+                  { value: "ALL", label: t('all_status') },
+                  { value: "OCCUPIED", label: t('occupied') },
+                  { value: "VACANT", label: t('vacant') },
+                ].map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => setStatusFilter(opt.value as any)}
+                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                      statusFilter === opt.value
+                        ? "bg-slate-100 text-slate-900 shadow-sm"
+                        : "text-slate-500 hover:text-slate-700"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
-          <select
-            value={blockFilter}
-            onChange={(e) => setBlockFilter(e.target.value)}
-            className="px-4 py-2.5 text-sm text-gray-900 bg-white border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-          >
-            <option value="ALL">{t('all_blocks')}</option>
-            {blocks.map((block) => (
-              <option key={block} value={block}>
-                {t('block')} {block}
-              </option>
-            ))}
-          </select>
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as any)}
-            className="px-4 py-2.5 text-sm text-gray-900 bg-white border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-          >
-            <option value="ALL">{t('all_status')}</option>
-            <option value="OCCUPIED">{t('occupied')}</option>
-            <option value="VACANT">{t('vacant')}</option>
-          </select>
         </div>
-
-        <div className="mt-4 pt-4 border-t-2 border-gray-100">
-          <span className="text-sm text-gray-600">
-            {t('showing_count', { filtered: filteredHouses.length, total: houses.length })}
-          </span>
+        <div className="flex items-center text-sm text-slate-500">
+          <span>{t('showing_count', { filtered: filteredHouses.length, total: houses.length })}</span>
+          {(searchQuery !== "" || blockFilter !== "ALL" || statusFilter !== "ALL") && (
+            <button
+              onClick={() => { setSearchQuery(""); setBlockFilter("ALL"); setStatusFilter("ALL"); }}
+              className="ml-auto text-xs text-slate-400 hover:text-red-500 underline underline-offset-2 transition-colors"
+            >
+              Reset filter
+            </button>
+          )}
         </div>
       </div>
 
@@ -482,6 +526,6 @@ export default function HousesPage() {
           onClose={() => setImportModalOpen(false)}
         />
       </Modal>
-    </div>
+    </motion.div>
   );
 }

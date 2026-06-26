@@ -79,8 +79,8 @@ const RecentActivity: React.FC<RecentActivityProps> = ({ payments }) => {
     return (
       <Card className="p-8">
         <div className="flex flex-col items-center justify-center text-center space-y-3">
-          <FileText className="w-12 h-12 text-gray-400" />
-          <p className="text-gray-600 dark:text-gray-400">
+          <FileText className="w-12 h-12 text-slate-400" />
+          <p className="text-slate-600 dark:text-slate-400">
             Belum ada pembayaran
           </p>
         </div>
@@ -92,7 +92,7 @@ const RecentActivity: React.FC<RecentActivityProps> = ({ payments }) => {
     <Card className="p-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
           Aktivitas Terbaru
         </h2>
         <Link
@@ -119,15 +119,15 @@ const RecentActivity: React.FC<RecentActivityProps> = ({ payments }) => {
 
                 {/* Payment Info */}
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                  <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
                     {payment.amountMonths} Bulan IPL
                   </p>
                   <div className="flex items-center gap-2 mt-1">
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
                       {formatDate(payment.createdAt)}
                     </p>
-                    <span className="text-xs text-gray-400">•</span>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                    <span className="text-xs text-slate-400">•</span>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
                       {formatMonthRange(payment)}
                     </p>
                   </div>
@@ -135,7 +135,7 @@ const RecentActivity: React.FC<RecentActivityProps> = ({ payments }) => {
 
                 {/* Amount & Status */}
                 <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                  <p className="text-sm font-semibold text-slate-900 dark:text-white">
                     {new Intl.NumberFormat('id-ID', {
                       style: 'currency',
                       currency: 'IDR',
@@ -150,7 +150,7 @@ const RecentActivity: React.FC<RecentActivityProps> = ({ payments }) => {
 
               {/* Divider (except last item) */}
               {index < Math.min(payments.length, 5) - 1 && (
-                <div className="border-b border-gray-200 dark:border-gray-700" />
+                <div className="border-b border-slate-200 dark:border-gray-700" />
               )}
             </div>
           );

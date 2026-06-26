@@ -86,14 +86,14 @@ export function UploadWindowConfigForm({
             type="checkbox"
             id="enabled"
             {...register("enabled")}
-            className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+            className="w-5 h-5 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
           />
         </div>
         <div className="flex-1">
-          <label htmlFor="enabled" className="block font-medium text-gray-900">
+          <label htmlFor="enabled" className="block font-medium text-slate-900">
             Aktifkan Pembatasan Periode Upload
           </label>
-          <p className="text-sm text-gray-600 mt-1">
+          <p className="text-sm text-slate-600 mt-1">
             {enabled
               ? `User hanya dapat upload pada tanggal ${startDay} - ${endDay} setiap bulan`
               : "User dapat upload bukti pembayaran kapan saja"}
@@ -107,7 +107,7 @@ export function UploadWindowConfigForm({
         <div>
           <label
             htmlFor="startDay"
-            className="block text-sm font-medium text-gray-700 mb-2"
+            className="block text-sm font-medium text-slate-700 mb-2"
           >
             Tanggal Mulai
           </label>
@@ -120,9 +120,9 @@ export function UploadWindowConfigForm({
             max={31}
             className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
               !enabled
-                ? "bg-gray-100 text-gray-500 cursor-not-allowed"
+                ? "bg-slate-100 text-slate-500 cursor-not-allowed"
                 : "bg-white"
-            } ${errors.startDay ? "border-red-500" : "border-gray-300"}`}
+            } ${errors.startDay ? "border-red-500" : "border-slate-300"}`}
           />
           {errors.startDay && (
             <p className="text-sm text-red-600 mt-1">
@@ -135,7 +135,7 @@ export function UploadWindowConfigForm({
         <div>
           <label
             htmlFor="endDay"
-            className="block text-sm font-medium text-gray-700 mb-2"
+            className="block text-sm font-medium text-slate-700 mb-2"
           >
             Tanggal Akhir
           </label>
@@ -148,9 +148,9 @@ export function UploadWindowConfigForm({
             max={31}
             className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
               !enabled
-                ? "bg-gray-100 text-gray-500 cursor-not-allowed"
+                ? "bg-slate-100 text-slate-500 cursor-not-allowed"
                 : "bg-white"
-            } ${errors.endDay ? "border-red-500" : "border-gray-300"}`}
+            } ${errors.endDay ? "border-red-500" : "border-slate-300"}`}
           />
           {errors.endDay && (
             <p className="text-sm text-red-600 mt-1">{errors.endDay.message}</p>
@@ -160,9 +160,9 @@ export function UploadWindowConfigForm({
 
       {/* Preview Section */}
       {enabled && !errors.startDay && !errors.endDay && (
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-          <div className="flex items-center gap-2 text-gray-700">
-            <Calendar className="w-5 h-5 text-gray-500" />
+        <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
+          <div className="flex items-center gap-2 text-slate-700">
+            <Calendar className="w-5 h-5 text-slate-500" />
             <span className="font-medium">Preview:</span>
             <span>
               User dapat upload pada tanggal{" "}
@@ -176,7 +176,7 @@ export function UploadWindowConfigForm({
       )}
 
       {/* Submit Button */}
-      <div className="flex justify-end pt-4 border-t border-gray-200">
+      <div className="flex justify-end pt-4 border-t border-slate-200">
         <button
           type="submit"
           disabled={isSaving}

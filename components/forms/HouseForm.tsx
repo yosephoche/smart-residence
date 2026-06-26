@@ -87,12 +87,12 @@ export default function HouseForm({
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium text-gray-700 tracking-tight">
+        <label className="text-sm font-medium text-slate-700 tracking-tight">
           {t('house_type')} <span className="text-danger-500 ml-1">*</span>
         </label>
         <select
           {...register("houseTypeId")}
-          className="w-full px-4 py-2.5 text-sm text-gray-900 bg-white border-2 border-gray-300 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:border-primary-500 focus:ring-primary-100"
+          className="w-full px-4 py-2.5 text-sm text-slate-900 bg-white border-2 border-slate-300 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:border-primary-500 focus:ring-primary-100"
         >
           <option value="">{t('select_house_type')}</option>
           {houseTypes.map((type) => (
@@ -123,12 +123,12 @@ export default function HouseForm({
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium text-gray-700 tracking-tight">
+        <label className="text-sm font-medium text-slate-700 tracking-tight">
           {t('assign_resident')}
         </label>
         <select
           {...register("userId")}
-          className="w-full px-4 py-2.5 text-sm text-gray-900 bg-white border-2 border-gray-300 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:border-primary-500 focus:ring-primary-100"
+          className="w-full px-4 py-2.5 text-sm text-slate-900 bg-white border-2 border-slate-300 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:border-primary-500 focus:ring-primary-100"
         >
           <option value="">{t('unassigned')}</option>
           {users
@@ -139,21 +139,21 @@ export default function HouseForm({
               </option>
             ))}
         </select>
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-slate-500">
           {t('unassigned_help')}
         </p>
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label className="flex items-center gap-2 text-sm font-medium text-gray-700 tracking-tight cursor-pointer">
+        <label className="flex items-center gap-2 text-sm font-medium text-slate-700 tracking-tight cursor-pointer">
           <input
             type="checkbox"
             {...register("isRented")}
-            className="w-4 h-4 text-primary-600 bg-white border-2 border-gray-300 rounded focus:ring-2 focus:ring-primary-500"
+            className="w-4 h-4 text-primary-600 bg-white border-2 border-slate-300 rounded focus:ring-2 focus:ring-primary-500"
           />
           <span>{t('is_rented')}</span>
         </label>
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-slate-500">
           {t('is_rented_help')}
         </p>
       </div>

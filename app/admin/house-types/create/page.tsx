@@ -43,10 +43,10 @@ export default function CreateHouseTypePage() {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
+        <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
           {t('add_type')}
         </h1>
-        <p className="text-gray-600 mt-1">
+        <p className="text-slate-600 mt-1">
           {t('create_subtitle')}
         </p>
       </div>

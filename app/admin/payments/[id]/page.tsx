@@ -123,14 +123,14 @@ export default function PaymentDetailPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div>
-        <button onClick={() => router.push("/admin/payments")} className="text-gray-600 hover:text-gray-900 font-medium mb-4 flex items-center gap-1">
+        <button onClick={() => router.push("/admin/payments")} className="text-slate-600 hover:text-slate-900 font-medium mb-4 flex items-center gap-1">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
           Back to Payments
         </button>
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Payment Details</h1>
+          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Payment Details</h1>
           {payment && <PaymentStatusBadge status={payment.status as any} size="lg" showDot />}
         </div>
       </div>
@@ -144,26 +144,26 @@ export default function PaymentDetailPage() {
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <p className="text-sm font-medium text-gray-600 mb-1">Payment Amount</p>
-                  <p className="text-3xl font-bold text-gray-900">{formatCurrency(Number(payment.totalAmount))}</p>
-                  <p className="text-sm text-gray-500 mt-1">
+                  <p className="text-sm font-medium text-slate-600 mb-1">Payment Amount</p>
+                  <p className="text-3xl font-bold text-slate-900">{formatCurrency(Number(payment.totalAmount))}</p>
+                  <p className="text-sm text-slate-500 mt-1">
                     {payment.amountMonths} month{payment.amountMonths !== 1 ? "s" : ""} ×{" "}
                     {formatCurrency(Number(payment.totalAmount) / payment.amountMonths)}/month
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-600 mb-1">Submitted On</p>
-                  <p className="text-lg font-semibold text-gray-900">{formatDateTime(payment.createdAt)}</p>
+                  <p className="text-sm font-medium text-slate-600 mb-1">Submitted On</p>
+                  <p className="text-lg font-semibold text-slate-900">{formatDateTime(payment.createdAt)}</p>
                 </div>
                 {payment.status === "APPROVED" && payment.approvedAt && (
                   <div>
-                    <p className="text-sm font-medium text-gray-600 mb-1">Approved On</p>
+                    <p className="text-sm font-medium text-slate-600 mb-1">Approved On</p>
                     <p className="text-lg font-semibold text-success-700">{formatDateTime(payment.approvedAt)}</p>
                   </div>
                 )}
                 {payment.paymentMonths && payment.paymentMonths.length > 0 && (
                   <div className="md:col-span-2">
-                    <p className="text-sm font-medium text-gray-600 mb-2">Bulan yang Dicakup</p>
+                    <p className="text-sm font-medium text-slate-600 mb-2">Bulan yang Dicakup</p>
                     <div className="flex flex-wrap gap-2">
                       {payment.paymentMonths.map((pm) => (
                         <span
@@ -190,13 +190,13 @@ export default function PaymentDetailPage() {
                       <span className="text-primary-700 font-bold text-xl">{payment.user.name.charAt(0).toUpperCase()}</span>
                     </div>
                     <div>
-                      <p className="font-semibold text-gray-900 text-lg">{payment.user.name}</p>
-                      <p className="text-sm text-gray-600">{payment.user.email}</p>
-                      <p className="text-xs text-gray-500 mt-2">Member since {formatDate(payment.user.createdAt)}</p>
+                      <p className="font-semibold text-slate-900 text-lg">{payment.user.name}</p>
+                      <p className="text-sm text-slate-600">{payment.user.email}</p>
+                      <p className="text-xs text-slate-500 mt-2">Member since {formatDate(payment.user.createdAt)}</p>
                     </div>
                   </div>
                 ) : (
-                  <p className="text-gray-500">User information not available</p>
+                  <p className="text-slate-500">User information not available</p>
                 )}
               </CardContent>
             </Card>
@@ -206,26 +206,26 @@ export default function PaymentDetailPage() {
               <CardContent>
                 {payment.house ? (
                   <div>
-                    <p className="text-2xl font-bold text-gray-900 mb-2">{payment.house.houseNumber}</p>
+                    <p className="text-2xl font-bold text-slate-900 mb-2">{payment.house.houseNumber}</p>
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Block:</span>
-                        <span className="font-medium text-gray-900">{payment.house.block}</span>
+                        <span className="text-slate-600">Block:</span>
+                        <span className="font-medium text-slate-900">{payment.house.block}</span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Type:</span>
-                        <span className="font-medium text-gray-900">{payment.house.houseType?.typeName}</span>
+                        <span className="text-slate-600">Type:</span>
+                        <span className="font-medium text-slate-900">{payment.house.houseType?.typeName}</span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Monthly Rate:</span>
-                        <span className="font-medium text-gray-900">
+                        <span className="text-slate-600">Monthly Rate:</span>
+                        <span className="font-medium text-slate-900">
                           {payment.house.houseType && formatCurrency(Number(payment.house.houseType.price))}
                         </span>
                       </div>
                     </div>
                   </div>
                 ) : (
-                  <p className="text-gray-500">House information not available</p>
+                  <p className="text-slate-500">House information not available</p>
                 )}
               </CardContent>
             </Card>
@@ -237,7 +237,7 @@ export default function PaymentDetailPage() {
             <CardContent>
               <button
                 onClick={() => setImageModalOpen(true)}
-                className="relative aspect-video bg-gray-100 rounded-lg border-2 border-gray-200 flex items-center justify-center overflow-hidden w-full group hover:border-primary-400 transition-all cursor-pointer"
+                className="relative aspect-video bg-slate-100 rounded-lg border-2 border-slate-200 flex items-center justify-center overflow-hidden w-full group hover:border-primary-400 transition-all cursor-pointer"
               >
                 <Image
                   src={payment.proofImagePath}
@@ -250,11 +250,11 @@ export default function PaymentDetailPage() {
                   }}
                 />
                 <div className="hidden text-center p-8">
-                  <svg className="w-24 h-24 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-24 h-24 text-slate-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
-                  <p className="text-gray-600 font-medium mb-2">Payment Proof Image</p>
-                  <p className="text-sm text-gray-500">{payment.proofImagePath}</p>
+                  <p className="text-slate-600 font-medium mb-2">Payment Proof Image</p>
+                  <p className="text-sm text-slate-500">{payment.proofImagePath}</p>
                 </div>
                 {/* Hover overlay */}
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">

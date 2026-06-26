@@ -124,14 +124,14 @@ export default function AdminCreatePaymentForm({
     <form onSubmit={handleSubmit} className="space-y-5">
       {/* Block filter */}
       <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium text-gray-700 tracking-tight">
+        <label className="text-sm font-medium text-slate-700 tracking-tight">
           {t('filter_block')}
         </label>
         <select
           value={blockFilter}
           onChange={(e) => handleBlockChange(e.target.value)}
           disabled={isLoadingHouses || isSubmitting}
-          className="w-full px-4 py-3 text-sm text-gray-900 bg-white border-2 border-gray-300 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:border-primary-500 focus:ring-primary-100 disabled:opacity-50"
+          className="w-full px-4 py-3 text-sm text-slate-900 bg-white border-2 border-slate-300 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:border-primary-500 focus:ring-primary-100 disabled:opacity-50"
         >
           <option value="">{t('all_blocks')}</option>
           {uniqueBlocks.map((block) => (
@@ -144,7 +144,7 @@ export default function AdminCreatePaymentForm({
 
       {/* House searchable select */}
       <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium text-gray-700 tracking-tight">
+        <label className="text-sm font-medium text-slate-700 tracking-tight">
           {t('house')} <span className="text-danger-500">*</span>
         </label>
         <SearchableSelect
@@ -159,7 +159,7 @@ export default function AdminCreatePaymentForm({
 
       {/* Resident info (auto-filled) */}
       <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium text-gray-700 tracking-tight">
+        <label className="text-sm font-medium text-slate-700 tracking-tight">
           {t('resident_info')}
         </label>
         {selectedHouse?.user ? (
@@ -168,8 +168,8 @@ export default function AdminCreatePaymentForm({
             <p className="text-xs text-blue-600 mt-0.5">{selectedHouse.user.email}</p>
           </div>
         ) : (
-          <div className="px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-lg">
-            <p className="text-sm text-gray-400 italic">
+          <div className="px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-lg">
+            <p className="text-sm text-slate-400 italic">
               {selectedHouseId ? t('no_resident') : t('select_house')}
             </p>
           </div>
@@ -178,14 +178,14 @@ export default function AdminCreatePaymentForm({
 
       {/* Amount months select */}
       <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium text-gray-700 tracking-tight">
+        <label className="text-sm font-medium text-slate-700 tracking-tight">
           {t('number_of_months')} <span className="text-danger-500">*</span>
         </label>
         <select
           value={amountMonths}
           onChange={(e) => setAmountMonths(parseInt(e.target.value))}
           disabled={isSubmitting}
-          className="w-full px-4 py-3 text-sm text-gray-900 bg-white border-2 border-gray-300 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:border-primary-500 focus:ring-primary-100 disabled:opacity-50"
+          className="w-full px-4 py-3 text-sm text-slate-900 bg-white border-2 border-slate-300 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:border-primary-500 focus:ring-primary-100 disabled:opacity-50"
         >
           {monthOptions.map((opt) => (
             <option key={opt.value} value={opt.value}>

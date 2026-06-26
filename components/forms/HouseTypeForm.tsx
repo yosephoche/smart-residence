@@ -73,7 +73,7 @@ export default function HouseTypeForm({
               fullWidth
               required
               leftIcon={
-                <span className="text-gray-500 font-medium">Rp</span>
+                <span className="text-slate-500 font-medium">Rp</span>
               }
             />
           )}
@@ -93,14 +93,14 @@ export default function HouseTypeForm({
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium text-gray-700 tracking-tight">
+        <label className="text-sm font-medium text-slate-700 tracking-tight">
           {t('description')}
         </label>
         <textarea
           {...register("description")}
           rows={3}
           placeholder={t('description_placeholder')}
-          className="w-full px-4 py-2.5 text-sm text-gray-900 bg-white border-2 border-gray-300 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:border-primary-500 focus:ring-primary-100 resize-none"
+          className="w-full px-4 py-2.5 text-sm text-slate-900 bg-white border-2 border-slate-300 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:border-primary-500 focus:ring-primary-100 resize-none"
         />
         {errors.description && (
           <p className="text-xs text-danger-600">{errors.description.message}</p>

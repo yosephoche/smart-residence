@@ -105,12 +105,12 @@ export default function UserForm({
       />
 
       <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium text-gray-700 tracking-tight">
+        <label className="text-sm font-medium text-slate-700 tracking-tight">
           {t('role')} <span className="text-danger-500 ml-1">*</span>
         </label>
         <select
           {...register("role")}
-          className="w-full px-4 py-2.5 text-sm text-gray-900 bg-white border-2 border-gray-300 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:border-primary-500 focus:ring-primary-100"
+          className="w-full px-4 py-2.5 text-sm text-slate-900 bg-white border-2 border-slate-300 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:border-primary-500 focus:ring-primary-100"
         >
           <option value="USER">{t('role_user')}</option>
           <option value="ADMIN">{t('role_admin')}</option>
@@ -123,12 +123,12 @@ export default function UserForm({
 
       {role === "STAFF" && (
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-gray-700 tracking-tight">
+          <label className="text-sm font-medium text-slate-700 tracking-tight">
             {t('job_type')} <span className="text-danger-500 ml-1">*</span>
           </label>
           <select
             {...register("staffJobType")}
-            className="w-full px-4 py-2.5 text-sm text-gray-900 bg-white border-2 border-gray-300 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:border-primary-500 focus:ring-primary-100"
+            className="w-full px-4 py-2.5 text-sm text-slate-900 bg-white border-2 border-slate-300 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:border-primary-500 focus:ring-primary-100"
           >
             <option value="">{t('job_type_placeholder')}</option>
             <option value="SECURITY">{t('job_security')}</option>
@@ -145,7 +145,7 @@ export default function UserForm({
 
       {!isEditMode && role === "USER" && (
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-gray-700 tracking-tight">
+          <label className="text-sm font-medium text-slate-700 tracking-tight">
             {t('assign_house')}
           </label>
           <SearchableSelect
@@ -164,9 +164,9 @@ export default function UserForm({
             disabled={isLoadingHouses}
           />
           {isLoadingHouses && (
-            <p className="text-xs text-gray-500">{t('loading_houses')}</p>
+            <p className="text-xs text-slate-500">{t('loading_houses')}</p>
           )}
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-slate-500">
             {t('assign_house_help')}
           </p>
           {errors.houseId && (
@@ -176,8 +176,8 @@ export default function UserForm({
       )}
 
       {isEditMode && (
-        <div className="p-4 bg-gray-50 rounded-lg border-2 border-gray-200">
-          <p className="text-xs text-gray-600">
+        <div className="p-4 bg-slate-50 rounded-lg border-2 border-slate-200">
+          <p className="text-xs text-slate-600">
             <strong>{t('password_note')}</strong> {t('password_note_message')}
           </p>
         </div>

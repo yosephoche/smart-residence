@@ -1,5 +1,7 @@
 "use client";
 
+import { motion } from "framer-motion";
+
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { CalendarRange, RefreshCw, CheckCircle, XCircle } from "lucide-react";
@@ -133,8 +135,8 @@ export default function AdminLeavePage() {
       header: "Staff",
       render: (_, row) => (
         <div>
-          <div className="font-medium text-gray-900">{row.staff.name}</div>
-          <div className="text-sm text-gray-500">
+          <div className="font-medium text-slate-900">{row.staff.name}</div>
+          <div className="text-sm text-slate-500">
             {JOB_TYPE_LABELS[row.staff.staffJobType] ?? row.staff.staffJobType}
           </div>
         </div>
@@ -152,7 +154,7 @@ export default function AdminLeavePage() {
               year: "numeric",
             })}
           </div>
-          <div className="text-sm text-gray-500">
+          <div className="text-sm text-slate-500">
             s/d{" "}
             {new Date(row.endDate).toLocaleDateString("id-ID", {
               day: "numeric",
@@ -173,7 +175,7 @@ export default function AdminLeavePage() {
       header: "Alasan",
       render: (_, row) => (
         <div
-          className="max-w-[200px] text-sm text-gray-700 truncate"
+          className="max-w-[200px] text-sm text-slate-700 truncate"
           title={row.reason}
         >
           {row.reason}
@@ -194,7 +196,7 @@ export default function AdminLeavePage() {
       render: (_, row) => {
         if (row.status !== "PENDING") {
           return (
-            <span className="text-xs text-gray-400">
+            <span className="text-xs text-slate-400">
               {row.reviewer ? `oleh ${row.reviewer.name}` : "-"}
             </span>
           );
@@ -223,16 +225,25 @@ export default function AdminLeavePage() {
     },
   ];
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.06, delayChildren: 0.02 } },
+  };
+  const itemVariants = {
+    hidden: { opacity: 0, y: 12 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] } },
+  };
+
   return (
-    <div className="space-y-6">
+    <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+          <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-3">
             <CalendarRange className="w-8 h-8" />
             Cuti Staff
           </h1>
-          <p className="text-gray-500 mt-1">Kelola pengajuan cuti staff</p>
+          <p className="text-slate-500 mt-1">Kelola pengajuan cuti staff</p>
         </div>
         <Button variant="secondary" onClick={fetchLeaves}>
           <RefreshCw className="w-4 h-4 mr-2" />
@@ -241,16 +252,16 @@ export default function AdminLeavePage() {
       </div>
 
       {/* Filter Row */}
-      <div className="bg-white rounded-lg border border-gray-200 p-4">
+      <div className="bg-white rounded-lg border border-slate-200 p-4">
         <div className="flex items-center gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 mb-1">
               Status
             </label>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">Semua</option>
               <option value="PENDING">Menunggu</option>
@@ -286,6 +297,6 @@ export default function AdminLeavePage() {
           )}
         </>
       )}
-    </div>
+    </motion.div>
   );
 }

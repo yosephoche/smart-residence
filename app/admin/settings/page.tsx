@@ -1,5 +1,7 @@
 "use client";
 
+import { motion } from "framer-motion";
+
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { UploadWindowConfigForm } from "@/components/forms/UploadWindowConfigForm";
@@ -168,14 +170,23 @@ export default function SettingsPage() {
     });
   };
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.06, delayChildren: 0.02 } },
+  };
+  const itemVariants = {
+    hidden: { opacity: 0, y: 12 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] } },
+  };
+
   return (
-    <div className="p-6 max-w-4xl">
+    <motion.div variants={containerVariants} initial="hidden" animate="visible" className="p-6 max-w-4xl">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+        <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
           <Settings className="w-7 h-7" />
           {t('title')}
         </h1>
-        <p className="text-gray-600 mt-1">
+        <p className="text-slate-600 mt-1">
           {t('subtitle')}
         </p>
       </div>
@@ -199,7 +210,7 @@ export default function SettingsPage() {
           </div>
           <button
             onClick={() => setAlert(null)}
-            className="ml-auto text-gray-500 hover:text-gray-700"
+            className="ml-auto text-slate-500 hover:text-slate-700"
           >
             ×
           </button>
@@ -207,13 +218,13 @@ export default function SettingsPage() {
       )}
 
       {/* Residence Info Configuration */}
-      <div className="bg-white rounded-lg shadow border border-gray-200">
-        <div className="p-6 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+      <div className="bg-white rounded-lg shadow border border-slate-200">
+        <div className="p-6 border-b border-slate-200">
+          <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
             <Building2 className="w-5 h-5" />
             Informasi Perumahan
           </h2>
-          <p className="text-sm text-gray-600 mt-1">
+          <p className="text-sm text-slate-600 mt-1">
             Atur nama dan alamat perumahan yang ditampilkan di profil penghuni
           </p>
         </div>
@@ -243,13 +254,13 @@ export default function SettingsPage() {
       </div>
 
       {/* Upload Window Configuration */}
-      <div className="bg-white rounded-lg shadow border border-gray-200 mt-6">
-        <div className="p-6 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+      <div className="bg-white rounded-lg shadow border border-slate-200 mt-6">
+        <div className="p-6 border-b border-slate-200">
+          <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
             <Settings className="w-5 h-5" />
             Periode Upload Pembayaran
           </h2>
-          <p className="text-sm text-gray-600 mt-1">
+          <p className="text-sm text-slate-600 mt-1">
             Atur pembatasan waktu upload bukti pembayaran untuk user
           </p>
         </div>
@@ -268,7 +279,7 @@ export default function SettingsPage() {
               onSaveError={handleSaveError}
             />
           ) : (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-slate-500">
               Gagal memuat konfigurasi
             </div>
           )}
@@ -297,13 +308,13 @@ export default function SettingsPage() {
       </div>
 
       {/* Default Password Configuration */}
-      <div className="bg-white rounded-lg shadow border border-gray-200 mt-6">
-        <div className="p-6 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+      <div className="bg-white rounded-lg shadow border border-slate-200 mt-6">
+        <div className="p-6 border-b border-slate-200">
+          <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
             <Key className="w-5 h-5" />
             Password Default User Baru
           </h2>
-          <p className="text-sm text-gray-600 mt-1">
+          <p className="text-sm text-slate-600 mt-1">
             Atur password default yang akan digunakan saat membuat user baru
           </p>
         </div>
@@ -321,7 +332,7 @@ export default function SettingsPage() {
               onSaveError={handleSaveError}
             />
           ) : (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-slate-500">
               Gagal memuat konfigurasi
             </div>
           )}
@@ -349,13 +360,13 @@ export default function SettingsPage() {
       </div>
 
       {/* Geofence Configuration */}
-      <div className="bg-white rounded-lg shadow border border-gray-200 mt-6">
-        <div className="p-6 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+      <div className="bg-white rounded-lg shadow border border-slate-200 mt-6">
+        <div className="p-6 border-b border-slate-200">
+          <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
             <MapPin className="w-5 h-5" />
             Geofence Absensi Staff
           </h2>
-          <p className="text-sm text-gray-600 mt-1">
+          <p className="text-sm text-slate-600 mt-1">
             Atur lokasi pusat dan radius untuk validasi lokasi absensi staff
           </p>
         </div>
@@ -374,7 +385,7 @@ export default function SettingsPage() {
               onSaveError={handleSaveError}
             />
           ) : (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-slate-500">
               Gagal memuat konfigurasi
             </div>
           )}
@@ -405,13 +416,13 @@ export default function SettingsPage() {
       </div>
 
       {/* WhatsApp Message Template Configuration */}
-      <div className="bg-white rounded-lg shadow border border-gray-200 mt-6">
-        <div className="p-6 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+      <div className="bg-white rounded-lg shadow border border-slate-200 mt-6">
+        <div className="p-6 border-b border-slate-200">
+          <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
             <MessageSquare className="w-5 h-5" />
             Template Pesan WhatsApp
           </h2>
-          <p className="text-sm text-gray-600 mt-1">
+          <p className="text-sm text-slate-600 mt-1">
             Atur template pesan yang otomatis terisi saat penghuni menekan tombol WhatsApp kontak darurat
           </p>
         </div>
@@ -459,13 +470,13 @@ export default function SettingsPage() {
       </div>
 
       {/* Excluded Income Periods Configuration */}
-      <div className="bg-white rounded-lg shadow border border-gray-200 mt-6">
-        <div className="p-6 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+      <div className="bg-white rounded-lg shadow border border-slate-200 mt-6">
+        <div className="p-6 border-b border-slate-200">
+          <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
             <CalendarX className="w-5 h-5" />
             Periode Pengecualian Pemasukan (Pre-launch)
           </h2>
-          <p className="text-sm text-gray-600 mt-1">
+          <p className="text-sm text-slate-600 mt-1">
             Pembayaran yang disetujui untuk periode ini tidak akan mencatat pemasukan otomatis
           </p>
         </div>
@@ -500,13 +511,13 @@ export default function SettingsPage() {
       </div>
 
       {/* Leave Configuration */}
-      <div className="bg-white rounded-lg shadow border border-gray-200 mt-6">
-        <div className="p-6 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+      <div className="bg-white rounded-lg shadow border border-slate-200 mt-6">
+        <div className="p-6 border-b border-slate-200">
+          <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
             <CalendarRange className="w-5 h-5" />
             Konfigurasi Pengajuan Cuti Staff
           </h2>
-          <p className="text-sm text-gray-600 mt-1">
+          <p className="text-sm text-slate-600 mt-1">
             Atur batas maksimum hari cuti dan minimum hari pengajuan sebelumnya
           </p>
         </div>
@@ -528,7 +539,7 @@ export default function SettingsPage() {
               onSaveError={handleSaveError}
             />
           ) : (
-            <div className="text-center py-8 text-gray-500">Gagal memuat konfigurasi</div>
+            <div className="text-center py-8 text-slate-500">Gagal memuat konfigurasi</div>
           )}
         </div>
 
@@ -547,13 +558,13 @@ export default function SettingsPage() {
       </div>
 
       {/* Bank Details Configuration */}
-      <div className="bg-white rounded-lg shadow border border-gray-200 mt-6">
-        <div className="p-6 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+      <div className="bg-white rounded-lg shadow border border-slate-200 mt-6">
+        <div className="p-6 border-b border-slate-200">
+          <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
             <CreditCard className="w-5 h-5" />
             Konfigurasi Rekening Bank
           </h2>
-          <p className="text-sm text-gray-600 mt-1">
+          <p className="text-sm text-slate-600 mt-1">
             Atur informasi rekening bank untuk pembayaran IPL
           </p>
         </div>
@@ -589,6 +600,6 @@ export default function SettingsPage() {
           </ul>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

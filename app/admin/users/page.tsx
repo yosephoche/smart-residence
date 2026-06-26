@@ -1,5 +1,7 @@
 "use client";
 
+import { motion } from "framer-motion";
+
 import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -12,6 +14,7 @@ import { ConfirmModal } from "@/components/ui/Modal";
 import Alert from "@/components/ui/Alert";
 import { Skeleton } from "@/components/ui/Loading";
 import { formatDate } from "@/lib/utils";
+import { useDebounce } from "@/lib/hooks/useDebounce";
 import { usePagination } from "@/lib/hooks/usePagination";
 
 export const dynamic = 'force-dynamic';
@@ -38,6 +41,7 @@ export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearch = useDebounce(searchQuery, 300);
   const [roleFilter, setRoleFilter] = useState<"ALL" | "ADMIN" | "USER">("ALL");
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
@@ -64,8 +68,8 @@ export default function UsersPage() {
     if (roleFilter !== "ALL") {
       filtered = filtered.filter((user) => user.role === roleFilter);
     }
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
+    if (debouncedSearch) {
+      const query = debouncedSearch.toLowerCase();
       filtered = filtered.filter(
         (user) =>
           user.name.toLowerCase().includes(query) ||
@@ -73,7 +77,7 @@ export default function UsersPage() {
       );
     }
     return filtered;
-  }, [users, searchQuery, roleFilter]);
+  }, [users, debouncedSearch, roleFilter]);
 
   // Pagination
   const {
@@ -86,7 +90,7 @@ export default function UsersPage() {
     handlePageSizeChange,
   } = usePagination(filteredUsers, {
     initialPageSize: 25,
-    resetDeps: [searchQuery, roleFilter],
+    resetDeps: [debouncedSearch, roleFilter],
   });
 
   const handleDeleteClick = (user: User) => {
@@ -167,8 +171,8 @@ export default function UsersPage() {
             </span>
           </div>
           <div>
-            <p className="font-medium text-gray-900">{user.name}</p>
-            <p className="text-xs text-gray-500">{user.email}</p>
+            <p className="font-medium text-slate-900">{user.name}</p>
+            <p className="text-xs text-slate-500">{user.email}</p>
           </div>
         </div>
       ),
@@ -188,7 +192,7 @@ export default function UsersPage() {
       header: "Rumah",
       render: (_, user) => {
         if (!user.houses || user.houses.length === 0) {
-          return <span className="text-xs text-gray-400">—</span>;
+          return <span className="text-xs text-slate-400">—</span>;
         }
         return (
           <div className="flex flex-wrap gap-1">
@@ -216,7 +220,7 @@ export default function UsersPage() {
       header: tCommon('table.created'),
       sortable: true,
       render: (value) => (
-        <span className="text-sm text-gray-600">{formatDate(value)}</span>
+        <span className="text-sm text-slate-600">{formatDate(value)}</span>
       ),
     },
     {
@@ -260,12 +264,21 @@ export default function UsersPage() {
     );
   }
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.06, delayChildren: 0.02 } },
+  };
+  const itemVariants = {
+    hidden: { opacity: 0, y: 12 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] } },
+  };
+
   return (
-    <div className="space-y-6">
+    <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">{t('title')}</h1>
-          <p className="text-gray-600 mt-1">{t('subtitle')}</p>
+          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">{t('title')}</h1>
+          <p className="text-slate-600 mt-1">{t('subtitle')}</p>
         </div>
         <Link href="/admin/users/create">
           <Button variant="primary" size="lg">
@@ -280,38 +293,62 @@ export default function UsersPage() {
       {successMessage && <Alert variant="success" message={successMessage} autoClose />}
       {errorMessage && <Alert variant="error" message={errorMessage} autoClose />}
 
-      <div className="bg-white rounded-xl border-2 border-gray-200 p-4">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1">
-            <Input
-              placeholder={t('search_placeholder')}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              leftIcon={
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              }
-              fullWidth
-            />
-          </div>
-          <div className="w-full md:w-48">
-            <select
-              value={roleFilter}
-              onChange={(e) => setRoleFilter(e.target.value as any)}
-              className="w-full px-4 py-2.5 text-sm text-gray-900 bg-white border-2 border-gray-300 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:border-primary-500 focus:ring-primary-100"
-            >
-              <option value="ALL">{t('all_roles')}</option>
-              <option value="ADMIN">{t('role_admin')}</option>
-              <option value="USER">{t('role_user')}</option>
-            </select>
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 space-y-3">
+        <div className="bg-slate-50 rounded-xl p-3">
+          <div className="flex flex-col md:flex-row gap-3">
+            {/* Search */}
+            <div className="flex-1 relative">
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
+                type="text"
+                placeholder={t('search_placeholder')}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className={`w-full pl-9 pr-3 py-2 text-sm rounded-lg border transition-colors focus:outline-none focus:ring-2 focus:ring-blue-100 ${
+                  searchQuery !== ""
+                    ? "border-blue-400 bg-blue-50 text-blue-700"
+                    : "border-slate-200 bg-white text-slate-700"
+                }`}
+              />
+            </div>
+            {/* Role filter */}
+            <div className="flex items-center gap-1 bg-slate-100 rounded-xl p-1 self-start">
+              {[
+                { value: "ALL", label: t('all_roles') },
+                { value: "ADMIN", label: t('role_admin') },
+                { value: "USER", label: t('role_user') },
+              ].map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => setRoleFilter(opt.value as any)}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                    roleFilter === opt.value
+                      ? "bg-white text-slate-900 shadow-sm"
+                      : "text-slate-500 hover:text-slate-700"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
-        <div className="flex items-center gap-4 mt-4 pt-4 border-t-2 border-gray-100">
-          <span className="text-sm text-gray-600">
-            {tCommon('table.showing')} <span className="font-semibold">{filteredUsers.length}</span> {tCommon('table.of')}{" "}
-            <span className="font-semibold">{users.length}</span> {t('showing_users')}
-          </span>
+        <div className="flex items-center gap-2 text-sm text-slate-500">
+          <span>{tCommon('table.showing')}</span>
+          <span className="font-semibold text-slate-800">{filteredUsers.length}</span>
+          <span>{tCommon('table.of')}</span>
+          <span className="font-semibold text-slate-800">{users.length}</span>
+          <span>{t('showing_users')}</span>
+          {(searchQuery !== "" || roleFilter !== "ALL") && (
+            <button
+              onClick={() => { setSearchQuery(""); setRoleFilter("ALL"); }}
+              className="ml-auto text-xs text-slate-400 hover:text-red-500 underline underline-offset-2 transition-colors"
+            >
+              {tCommon('actions.reset') || 'Reset'}
+            </button>
+          )}
         </div>
       </div>
 
@@ -350,6 +387,6 @@ export default function UsersPage() {
         variant="danger"
         isLoading={isResettingPassword}
       />
-    </div>
+    </motion.div>
   );
 }

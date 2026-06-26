@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import { Card, CardHeader, CardContent } from "@/components/ui/Card";
 import StatCard from "@/components/ui/StatCard";
 import { Skeleton } from "@/components/ui/Loading";
@@ -93,12 +94,21 @@ export default function AdminDashboardPage() {
     );
   }
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.06, delayChildren: 0.02 } },
+  };
+  const itemVariants = {
+    hidden: { opacity: 0, y: 12 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] } },
+  };
+
   return (
-    <div className="space-y-8">
+    <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Dashboard</h1>
-        <p className="text-gray-600 mt-1">Ringkasan keuangan perumahan</p>
+        <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Dashboard</h1>
+        <p className="text-slate-600 mt-1">Ringkasan keuangan perumahan</p>
       </div>
 
       {/* Section 1 — 3 KPI Cards */}
@@ -148,7 +158,7 @@ export default function AdminDashboardPage() {
 
       {/* Section 2 — Monthly Trend Chart */}
       <Card>
-        <CardHeader action={<span className="text-sm font-normal text-gray-500">{currentYear}</span>}>
+        <CardHeader action={<span className="text-sm font-normal text-slate-500">{currentYear}</span>}>
           Pemasukan &amp; Pengeluaran Bulanan
         </CardHeader>
         <CardContent>
@@ -229,6 +239,6 @@ export default function AdminDashboardPage() {
           </CardContent>
         </Card>
       )}
-    </div>
+    </motion.div>
   );
 }

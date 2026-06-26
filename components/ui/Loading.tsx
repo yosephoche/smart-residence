@@ -19,7 +19,7 @@ export default function Loading({ size = "md", className, text }: LoadingProps) 
       <div className="relative">
         <div
           className={cn(
-            "border-4 border-gray-200 rounded-full",
+            "border-4 border-slate-200 rounded-full",
             sizes[size]
           )}
         />
@@ -31,7 +31,7 @@ export default function Loading({ size = "md", className, text }: LoadingProps) 
         />
       </div>
       {text && (
-        <p className="text-sm text-gray-600 animate-pulse font-medium">{text}</p>
+        <p className="text-sm text-slate-600 animate-pulse font-medium">{text}</p>
       )}
     </div>
   );
@@ -40,7 +40,7 @@ export default function Loading({ size = "md", className, text }: LoadingProps) 
 export function LoadingOverlay({ text }: { text?: string }) {
   return (
     <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 animate-in fade-in duration-200">
-      <div className="bg-white rounded-xl p-8 shadow-2xl border-2 border-gray-200 animate-in zoom-in-95 duration-200">
+      <div className="bg-white rounded-xl p-8 shadow-2xl border-2 border-slate-200 animate-in zoom-in-95 duration-200">
         <Loading size="lg" text={text} />
       </div>
     </div>

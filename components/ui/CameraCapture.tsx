@@ -224,10 +224,10 @@ export default function CameraCapture({ onCapture, onClose }: CameraCaptureProps
             <div className="flex justify-center">
               <button
                 onClick={capturePhoto}
-                className="p-3 bg-white rounded-full hover:bg-gray-100 transition-colors min-h-[56px] min-w-[56px] flex items-center justify-center"
+                className="p-3 bg-white rounded-full hover:bg-slate-100 transition-colors min-h-[56px] min-w-[56px] flex items-center justify-center"
                 aria-label="Capture photo"
               >
-                <Camera className="w-7 h-7 text-gray-900" />
+                <Camera className="w-7 h-7 text-slate-900" />
               </button>
             </div>
           )}

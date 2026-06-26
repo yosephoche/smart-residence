@@ -219,7 +219,7 @@ export default function BulkCreatePaymentForm({ users, onSuccess, onCancel }: Pr
     <div className="space-y-6">
       {/* Section 1: Month Selection */}
       <div>
-        <h3 className="text-sm font-semibold text-gray-900 mb-3">
+        <h3 className="text-sm font-semibold text-slate-900 mb-3">
           1. Pilih Bulan
           {selectedMonths.length > 0 && (
             <span className="ml-2 text-xs font-normal text-primary-600">
@@ -238,7 +238,7 @@ export default function BulkCreatePaymentForm({ users, onSuccess, onCancel }: Pr
                 className={`px-3 py-2 rounded-lg text-sm font-medium transition-all border-2 ${
                   selected
                     ? "bg-primary-600 text-white border-primary-600"
-                    : "bg-white text-gray-700 border-gray-200 hover:border-primary-300"
+                    : "bg-white text-slate-700 border-slate-200 hover:border-primary-300"
                 }`}
               >
                 {MONTH_NAMES[period.month - 1].slice(0, 3)} {period.year}
@@ -254,7 +254,7 @@ export default function BulkCreatePaymentForm({ users, onSuccess, onCancel }: Pr
       {/* Section 2: House Selection */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold text-gray-900">
+          <h3 className="text-sm font-semibold text-slate-900">
             2. Pilih Rumah
             {selectedHouseIds.size > 0 && (
               <span className="ml-2 text-xs font-normal text-primary-600">
@@ -270,11 +270,11 @@ export default function BulkCreatePaymentForm({ users, onSuccess, onCancel }: Pr
             >
               Pilih Semua
             </button>
-            <span className="text-gray-300">|</span>
+            <span className="text-slate-300">|</span>
             <button
               type="button"
               onClick={deselectAllVisible}
-              className="text-xs text-gray-500 hover:text-gray-700 font-medium"
+              className="text-xs text-slate-500 hover:text-slate-700 font-medium"
             >
               Batal Semua
             </button>
@@ -284,20 +284,20 @@ export default function BulkCreatePaymentForm({ users, onSuccess, onCancel }: Pr
         {/* Filters */}
         <div className="flex gap-2 mb-3">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input
               type="text"
               placeholder="Cari rumah atau penghuni..."
               value={houseSearch}
               onChange={(e) => setHouseSearch(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 text-sm bg-white border-2 border-gray-300 rounded-lg focus:border-primary-500 focus:outline-none"
+              className="w-full pl-9 pr-3 py-2 text-sm bg-white border-2 border-slate-300 rounded-lg focus:border-primary-500 focus:outline-none"
             />
           </div>
           {blocks.length > 1 && (
             <select
               value={blockFilter}
               onChange={(e) => setBlockFilter(e.target.value)}
-              className="px-3 py-2 text-sm bg-white border-2 border-gray-300 rounded-lg focus:border-primary-500 focus:outline-none"
+              className="px-3 py-2 text-sm bg-white border-2 border-slate-300 rounded-lg focus:border-primary-500 focus:outline-none"
             >
               <option value="">Semua Blok</option>
               {blocks.map((b) => (
@@ -313,27 +313,27 @@ export default function BulkCreatePaymentForm({ users, onSuccess, onCancel }: Pr
         {isLoadingHouses ? (
           <div className="space-y-2">
             {[...Array(4)].map((_, i) => (
-              <div key={i} className="h-14 bg-gray-100 rounded-lg animate-pulse" />
+              <div key={i} className="h-14 bg-slate-100 rounded-lg animate-pulse" />
             ))}
           </div>
         ) : filteredHouses.length === 0 ? (
-          <p className="text-sm text-gray-400 text-center py-6">
+          <p className="text-sm text-slate-400 text-center py-6">
             {houses.length === 0 ? "Belum ada rumah yang ditempati" : "Tidak ada rumah yang sesuai filter"}
           </p>
         ) : (
-          <div className="max-h-52 overflow-y-auto rounded-lg border-2 border-gray-200">
+          <div className="max-h-52 overflow-y-auto rounded-lg border-2 border-slate-200">
             {/* Select all header */}
             <button
               type="button"
               onClick={allVisibleSelected ? deselectAllVisible : selectAllVisible}
-              className="w-full flex items-center gap-3 px-4 py-2.5 bg-gray-50 border-b border-gray-200 hover:bg-gray-100 transition-colors"
+              className="w-full flex items-center gap-3 px-4 py-2.5 bg-slate-50 border-b border-slate-200 hover:bg-slate-100 transition-colors"
             >
               {allVisibleSelected ? (
                 <CheckSquare className="w-4 h-4 text-primary-600 flex-shrink-0" />
               ) : (
-                <Square className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                <Square className="w-4 h-4 text-slate-400 flex-shrink-0" />
               )}
-              <span className="text-xs font-medium text-gray-600">
+              <span className="text-xs font-medium text-slate-600">
                 {allVisibleSelected ? "Batal pilih semua" : "Pilih semua yang terlihat"} ({filteredHouses.length})
               </span>
             </button>
@@ -346,24 +346,24 @@ export default function BulkCreatePaymentForm({ users, onSuccess, onCancel }: Pr
                   key={house.id}
                   type="button"
                   onClick={() => toggleHouse(house.id)}
-                  className={`w-full flex items-center gap-3 px-4 py-3 border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors ${
+                  className={`w-full flex items-center gap-3 px-4 py-3 border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors ${
                     selected ? "bg-primary-50" : ""
                   }`}
                 >
                   {selected ? (
                     <CheckSquare className="w-4 h-4 text-primary-600 flex-shrink-0" />
                   ) : (
-                    <Square className="w-4 h-4 text-gray-300 flex-shrink-0" />
+                    <Square className="w-4 h-4 text-slate-300 flex-shrink-0" />
                   )}
                   <div className="flex-1 text-left min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">
+                    <p className="text-sm font-medium text-slate-900 truncate">
                       {house.houseNumber} · Blok {house.block}
                     </p>
-                    <p className="text-xs text-gray-500 truncate">
+                    <p className="text-xs text-slate-500 truncate">
                       {user?.name ?? "—"} · {house.houseType?.typeName ?? "—"}
                     </p>
                   </div>
-                  <p className="text-xs text-gray-500 flex-shrink-0">
+                  <p className="text-xs text-slate-500 flex-shrink-0">
                     {house.houseType?.price != null
                       ? formatCurrency(Number(house.houseType.price)) + "/bln"
                       : "—"}
@@ -381,11 +381,11 @@ export default function BulkCreatePaymentForm({ users, onSuccess, onCancel }: Pr
 
       {/* Section 3: Proof of Payment (Optional) */}
       <div>
-        <h3 className="text-sm font-semibold text-gray-900 mb-1">
+        <h3 className="text-sm font-semibold text-slate-900 mb-1">
           3. Bukti Pembayaran
-          <span className="ml-2 text-xs font-normal text-gray-400">(opsional)</span>
+          <span className="ml-2 text-xs font-normal text-slate-400">(opsional)</span>
         </h3>
-        <p className="text-xs text-gray-500 mb-3">
+        <p className="text-xs text-slate-500 mb-3">
           Satu bukti transfer untuk semua pembayaran yang dibuat.
         </p>
         <FileUpload

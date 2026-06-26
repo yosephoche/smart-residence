@@ -9,7 +9,15 @@
       "Bash(npx prisma migrate dev:*)",
       "Bash(npx tsc:*)",
       "Bash(git add:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(rtk ls *)",
+      "Bash(rtk grep *)",
+      "Bash(rtk wc *)",
+      "Bash(rtk find *)",
+      "Bash(rtk du *)",
+      "Bash(rtk read *)",
+      "mcp__visualize__read_me",
+      "mcp__visualize__show_widget"
     ]
   }
 }

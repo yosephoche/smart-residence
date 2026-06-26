@@ -16,7 +16,7 @@ export default function Badge({
   dot = false,
 }: BadgeProps) {
   const variants = {
-    default: "bg-gray-100 text-gray-700 border-gray-300",
+    default: "bg-slate-100 text-slate-700 border-slate-300",
     success: "bg-success-50 text-success-700 border-success-200",
     danger: "bg-danger-50 text-danger-700 border-danger-200",
     warning: "bg-warning-50 text-warning-700 border-warning-200",
@@ -24,7 +24,7 @@ export default function Badge({
   };
 
   const dotColors = {
-    default: "bg-gray-500",
+    default: "bg-slate-500",
     success: "bg-success-500",
     danger: "bg-danger-500",
     warning: "bg-warning-500",

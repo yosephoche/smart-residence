@@ -34,7 +34,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
         {label && (
           <label
             htmlFor={inputId}
-            className="text-sm font-medium text-gray-700 tracking-tight"
+            className="text-sm font-medium text-slate-700 tracking-tight"
           >
             {label}
             {props.required && <span className="text-danger-500 ml-1">*</span>}
@@ -43,7 +43,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
 
         <div className="relative">
           {leftIcon && (
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
               {leftIcon}
             </div>
           )}
@@ -54,13 +54,13 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
             type={type}
             disabled={disabled}
             className={cn(
-              "w-full px-4 py-2.5 text-sm text-gray-900 bg-white border-2 rounded-lg transition-all duration-200",
-              "placeholder:text-gray-400",
+              "w-full px-4 py-2.5 text-sm text-slate-900 bg-white border-2 rounded-lg transition-all duration-200",
+              "placeholder:text-slate-400",
               "focus:outline-none focus:ring-2 focus:ring-offset-1",
               error
                 ? "border-danger-300 focus:border-danger-500 focus:ring-danger-200"
-                : "border-gray-300 focus:border-primary-500 focus:ring-primary-100",
-              disabled && "bg-gray-50 text-gray-500 cursor-not-allowed",
+                : "border-slate-300 focus:border-primary-500 focus:ring-primary-100",
+              disabled && "bg-slate-50 text-slate-500 cursor-not-allowed",
               leftIcon && "pl-10",
               rightIcon && "pr-10",
               className
@@ -69,7 +69,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
           />
 
           {rightIcon && (
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
               {rightIcon}
             </div>
           )}
@@ -93,7 +93,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
         )}
 
         {helperText && !error && (
-          <p className="text-xs text-gray-500">{helperText}</p>
+          <p className="text-xs text-slate-500">{helperText}</p>
         )}
       </div>
     );

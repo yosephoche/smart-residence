@@ -88,17 +88,17 @@ const SettingsPage = () => {
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
+        <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white">
           {t('title')}
         </h1>
-        <p className="text-gray-600 dark:text-gray-400 mt-2">
+        <p className="text-slate-600 dark:text-slate-400 mt-2">
           {t('subtitle')}
         </p>
       </div>
 
       {/* Profile Section */}
       <div>
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-3">
           {t('profile')}
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -109,8 +109,8 @@ const SettingsPage = () => {
                 <User className="w-5 h-5 text-blue-600 dark:text-blue-400" />
               </div>
               <div>
-                <p className="text-xs text-gray-600 dark:text-gray-400">{t('name')}</p>
-                <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                <p className="text-xs text-slate-600 dark:text-slate-400">{t('name')}</p>
+                <p className="text-sm font-semibold text-slate-900 dark:text-white">
                   {user?.name || '-'}
                 </p>
               </div>
@@ -124,8 +124,8 @@ const SettingsPage = () => {
                 <Mail className="w-5 h-5 text-green-600 dark:text-green-400" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs text-gray-600 dark:text-gray-400">{t('email')}</p>
-                <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                <p className="text-xs text-slate-600 dark:text-slate-400">{t('email')}</p>
+                <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">
                   {user?.email || '-'}
                 </p>
               </div>
@@ -140,8 +140,8 @@ const SettingsPage = () => {
                   <Home className="w-5 h-5 text-purple-600 dark:text-purple-400" />
                 </div>
                 <div>
-                  <p className="text-xs text-gray-600 dark:text-gray-400">{t('house')}</p>
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                  <p className="text-xs text-slate-600 dark:text-slate-400">{t('house')}</p>
+                  <p className="text-sm font-semibold text-slate-900 dark:text-white">
                     {house.houseNumber} - Blok {house.block} ({house.houseType.typeName})
                   </p>
                 </div>
@@ -153,16 +153,16 @@ const SettingsPage = () => {
 
       {/* Preferences Section */}
       <div>
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-3">
           {t('preferences')}
         </h2>
         <Card className="p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-900 dark:text-white">
+              <p className="text-sm font-medium text-slate-900 dark:text-white">
                 {t('language')}
               </p>
-              <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+              <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
                 {t('language_hint')}
               </p>
             </div>
@@ -173,7 +173,7 @@ const SettingsPage = () => {
 
       {/* Security Section */}
       <div>
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-3">
           {t('security')}
         </h2>
         <Card className="p-4">
@@ -183,10 +183,10 @@ const SettingsPage = () => {
                 <KeyRound className="w-5 h-5 text-orange-600 dark:text-orange-400" />
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-900 dark:text-white">
+                <p className="text-sm font-medium text-slate-900 dark:text-white">
                   {t('password')}
                 </p>
-                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
                   {t('change_password')}
                 </p>
               </div>
@@ -211,10 +211,10 @@ const SettingsPage = () => {
                 <LogOut className="w-5 h-5 text-red-600 dark:text-red-400" />
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-900 dark:text-white">
+                <p className="text-sm font-medium text-slate-900 dark:text-white">
                   {t('logout_section')}
                 </p>
-                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
                   {t('logout_description')}
                 </p>
               </div>

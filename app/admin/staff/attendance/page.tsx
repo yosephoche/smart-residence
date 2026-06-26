@@ -1,5 +1,7 @@
 "use client";
 
+import { motion } from "framer-motion";
+
 import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
@@ -135,7 +137,7 @@ export default function AdminAttendancePage() {
       render: (_, row) => (
         <div>
           <div className="font-medium">{row.staff.name}</div>
-          <div className="text-sm text-gray-500">
+          <div className="text-sm text-slate-500">
             {row.staff.staffJobType.replace("_", " ")}
           </div>
         </div>
@@ -148,7 +150,7 @@ export default function AdminAttendancePage() {
         row.schedule ? (
           <div>
             <div className="font-medium">{row.schedule.shiftTemplate.shiftName}</div>
-            <div className="text-sm text-gray-500">
+            <div className="text-sm text-slate-500">
               {row.schedule.shiftTemplate.startTime} - {row.schedule.shiftTemplate.endTime}
             </div>
           </div>
@@ -238,13 +240,22 @@ export default function AdminAttendancePage() {
     );
   }
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.06, delayChildren: 0.02 } },
+  };
+  const itemVariants = {
+    hidden: { opacity: 0, y: 12 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] } },
+  };
+
   return (
-    <div className="space-y-6">
+    <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">{t('title')}</h1>
-          <p className="text-gray-500 mt-1">{t('subtitle')}</p>
+          <h1 className="text-3xl font-bold text-slate-900">{t('title')}</h1>
+          <p className="text-slate-500 mt-1">{t('subtitle')}</p>
         </div>
         <Button onClick={handleExportCSV} variant="secondary">
           <Download className="w-4 h-4 mr-2" />
@@ -253,17 +264,17 @@ export default function AdminAttendancePage() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white p-4 rounded-lg border border-gray-200 space-y-4">
-        <h3 className="font-semibold text-gray-900">{tCommon('filters.title')}</h3>
+      <div className="bg-white p-4 rounded-lg border border-slate-200 space-y-4">
+        <h3 className="font-semibold text-slate-900">{tCommon('filters.title')}</h3>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 mb-1">
               {tCommon('labels.job_type')}
             </label>
             <select
               value={jobTypeFilter}
               onChange={(e) => setJobTypeFilter(e.target.value as JobType | "ALL")}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             >
               <option value="ALL">{t('all_jobs')}</option>
               <option value="SECURITY">{tCommon('job_types.SECURITY')}</option>
@@ -275,26 +286,26 @@ export default function AdminAttendancePage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 mb-1">
               {t('start_date')}
             </label>
             <input
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 mb-1">
               {t('end_date')}
             </label>
             <input
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
           </div>
 
@@ -304,9 +315,9 @@ export default function AdminAttendancePage() {
                 type="checkbox"
                 checked={lateOnly}
                 onChange={(e) => setLateOnly(e.target.checked)}
-                className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+                className="w-4 h-4 text-primary-600 border-slate-300 rounded focus:ring-primary-500"
               />
-              <span className="text-sm font-medium text-gray-700">{t('show_late_only')}</span>
+              <span className="text-sm font-medium text-slate-700">{t('show_late_only')}</span>
             </label>
           </div>
         </div>
@@ -348,6 +359,6 @@ export default function AdminAttendancePage() {
           altText={t('view_photo')}
         />
       )}
-    </div>
+    </motion.div>
   );
 }

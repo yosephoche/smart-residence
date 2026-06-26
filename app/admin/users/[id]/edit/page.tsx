@@ -79,7 +79,7 @@ export default function EditUserPage() {
           <Skeleton className="h-8 w-48" />
           <Skeleton className="h-5 w-72 mt-2" />
         </div>
-        <div className="bg-white rounded-xl border-2 border-gray-200 p-6 space-y-4">
+        <div className="bg-white rounded-xl border-2 border-slate-200 p-6 space-y-4">
           <Skeleton className="h-5 w-32" />
           <Skeleton className="h-10 w-full" />
           <Skeleton className="h-5 w-28" />
@@ -119,17 +119,17 @@ export default function EditUserPage() {
       <div>
         <button
           onClick={() => router.push("/admin/users")}
-          className="text-gray-600 hover:text-gray-900 font-medium mb-4 flex items-center gap-1"
+          className="text-slate-600 hover:text-slate-900 font-medium mb-4 flex items-center gap-1"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
           {tCommon('actions.back')}
         </button>
-        <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
+        <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
           {tForm('update_user')}
         </h1>
-        <p className="text-gray-600 mt-1">
+        <p className="text-slate-600 mt-1">
           {t('subtitle')}
         </p>
       </div>

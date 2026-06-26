@@ -63,7 +63,7 @@ export default function ExpenseForm({ onSubmit, onCancel, isSubmitting, initialD
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-slate-700 mb-1">
           {t('date')} <span className="text-danger-600">*</span>
         </label>
         <input
@@ -71,19 +71,19 @@ export default function ExpenseForm({ onSubmit, onCancel, isSubmitting, initialD
           value={formData.date}
           onChange={(e) => setFormData({ ...formData, date: e.target.value })}
           max={new Date().toISOString().split("T")[0]}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+          className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500"
         />
         {errors.date && <p className="text-danger-600 text-xs mt-1">{errors.date}</p>}
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-slate-700 mb-1">
           {t('category')} <span className="text-danger-600">*</span>
         </label>
         <select
           value={formData.category}
           onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+          className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500"
         >
           <option value="">{t('select_category')}</option>
           {categories.map((cat) => (
@@ -96,7 +96,7 @@ export default function ExpenseForm({ onSubmit, onCancel, isSubmitting, initialD
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-slate-700 mb-1">
           {t('amount_rp')} <span className="text-danger-600">*</span>
         </label>
         <input
@@ -105,13 +105,13 @@ export default function ExpenseForm({ onSubmit, onCancel, isSubmitting, initialD
           onChange={(e) => setFormData({ ...formData, amount: Number(e.target.value) })}
           min="0"
           step="1"
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+          className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500"
         />
         {errors.amount && <p className="text-danger-600 text-xs mt-1">{errors.amount}</p>}
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-slate-700 mb-1">
           {t('description')} <span className="text-danger-600">*</span>
         </label>
         <input
@@ -119,13 +119,13 @@ export default function ExpenseForm({ onSubmit, onCancel, isSubmitting, initialD
           value={formData.description}
           onChange={(e) => setFormData({ ...formData, description: e.target.value })}
           maxLength={200}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+          className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500"
         />
         {errors.description && <p className="text-danger-600 text-xs mt-1">{errors.description}</p>}
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-slate-700 mb-1">
           {t('notes_optional')}
         </label>
         <textarea
@@ -133,16 +133,16 @@ export default function ExpenseForm({ onSubmit, onCancel, isSubmitting, initialD
           onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
           maxLength={500}
           rows={3}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+          className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-slate-700 mb-1">
           {t('upload_proof_optional')}
         </label>
         {existingProofUrl && !proofImage && (
-          <div className="mb-2 flex items-center gap-2 text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2">
+          <div className="mb-2 flex items-center gap-2 text-sm text-slate-600 bg-slate-50 rounded-lg px-3 py-2">
             <span>{t('current_proof')}:</span>
             <a
               href={existingProofUrl}
@@ -152,7 +152,7 @@ export default function ExpenseForm({ onSubmit, onCancel, isSubmitting, initialD
             >
               {t('view_proof')}
             </a>
-            <span className="text-gray-400">— {t('replace_proof')}</span>
+            <span className="text-slate-400">— {t('replace_proof')}</span>
           </div>
         )}
         <FileUpload

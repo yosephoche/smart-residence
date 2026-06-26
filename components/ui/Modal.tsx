@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import Button from "./Button";
 
@@ -57,58 +58,70 @@ export default function Modal({
     };
   }, [isOpen]);
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-        onClick={closeOnBackdrop ? onClose : undefined}
-      />
+    <AnimatePresence>
+      {isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* Backdrop */}
+          <motion.div
+            key="modal-backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={closeOnBackdrop ? onClose : undefined}
+          />
 
-      {/* Modal */}
-      <div
-        ref={modalRef}
-        className={cn(
-          "relative bg-white rounded-xl shadow-2xl border-2 border-gray-200 w-full animate-in zoom-in-95 slide-in-from-bottom-4 duration-200",
-          sizes[size]
-        )}
-      >
-        {/* Header */}
-        {title && (
-          <div className="flex items-center justify-between px-6 py-4 border-b-2 border-gray-100">
-            <h2 className="text-xl font-semibold text-gray-900 tracking-tight">
-              {title}
-            </h2>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 transition-colors rounded-lg p-1 hover:bg-gray-100"
-            >
-              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                  fillRule="evenodd"
-                  d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </button>
-          </div>
-        )}
+          {/* Modal panel */}
+          <motion.div
+            key="modal-panel"
+            ref={modalRef}
+            initial={{ opacity: 0, scale: 0.96, y: 8 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: 8 }}
+            transition={{ duration: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }}
+            className={cn(
+              "relative bg-white rounded-xl shadow-2xl border border-slate-200 w-full",
+              sizes[size]
+            )}
+          >
+            {/* Header */}
+            {title && (
+              <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+                <h2 className="text-xl font-semibold text-slate-900 tracking-tight">
+                  {title}
+                </h2>
+                <button
+                  onClick={onClose}
+                  className="text-slate-400 hover:text-slate-600 transition-colors rounded-lg p-1 hover:bg-slate-100"
+                >
+                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                    <path
+                      fillRule="evenodd"
+                      d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </button>
+              </div>
+            )}
 
-        {/* Content */}
-        <div className="px-6 py-4 max-h-[calc(100vh-12rem)] overflow-y-auto">
-          {children}
+            {/* Content */}
+            <div className="px-6 py-4 max-h-[calc(100vh-12rem)] overflow-y-auto">
+              {children}
+            </div>
+
+            {/* Footer */}
+            {footer && (
+              <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-100 bg-slate-50 rounded-b-xl">
+                {footer}
+              </div>
+            )}
+          </motion.div>
         </div>
-
-        {/* Footer */}
-        {footer && (
-          <div className="flex items-center justify-end gap-3 px-6 py-4 border-t-2 border-gray-100 bg-gray-50 rounded-b-xl">
-            {footer}
-          </div>
-        )}
-      </div>
-    </div>
+      )}
+    </AnimatePresence>
   );
 }
 
@@ -158,7 +171,7 @@ export function ConfirmModal({
         </>
       }
     >
-      <p className="text-gray-600">{message}</p>
+      <p className="text-slate-600">{message}</p>
     </Modal>
   );
 }

@@ -87,19 +87,19 @@ export default function PaymentHistoryPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
+        <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
           {t('history_title')}
         </h1>
-        <p className="text-gray-600 mt-1">
+        <p className="text-slate-600 mt-1">
           {t('history_subtitle')}
         </p>
       </div>
 
       {/* Statistics */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl border-2 border-gray-200 p-4 shadow-sm">
-          <p className="text-sm font-medium text-gray-600 mb-1">{t('total_payments')}</p>
-          <p className="text-3xl font-bold text-gray-900">{stats.total}</p>
+        <div className="bg-white rounded-xl border-2 border-slate-200 p-4 shadow-sm">
+          <p className="text-sm font-medium text-slate-600 mb-1">{t('total_payments')}</p>
+          <p className="text-3xl font-bold text-slate-900">{stats.total}</p>
         </div>
         <div className="bg-warning-50 rounded-xl border-2 border-warning-200 p-4 shadow-sm">
           <p className="text-sm font-medium text-warning-700 mb-1">{tCommon('status.pending')}</p>
@@ -116,7 +116,7 @@ export default function PaymentHistoryPage() {
       </div>
 
       {/* Filter Tabs */}
-      <div className="bg-white rounded-xl border-2 border-gray-200 p-2 shadow-sm">
+      <div className="bg-white rounded-xl border-2 border-slate-200 p-2 shadow-sm">
         <div className="flex flex-wrap gap-2">
           {[
             { value: "ALL" as const, label: t('all_payments'), count: stats.total },
@@ -130,7 +130,7 @@ export default function PaymentHistoryPage() {
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 statusFilter === filter.value
                   ? "bg-primary-600 text-white shadow-md"
-                  : "text-gray-700 hover:bg-gray-100"
+                  : "text-slate-700 hover:bg-slate-100"
               }`}
             >
               {filter.label}
@@ -142,9 +142,9 @@ export default function PaymentHistoryPage() {
 
       {/* Payment List */}
       {filteredPayments.length === 0 ? (
-        <div className="bg-white rounded-xl border-2 border-gray-200 p-12 text-center">
+        <div className="bg-white rounded-xl border-2 border-slate-200 p-12 text-center">
           <svg
-            className="w-16 h-16 text-gray-300 mx-auto mb-4"
+            className="w-16 h-16 text-slate-300 mx-auto mb-4"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -156,10 +156,10 @@ export default function PaymentHistoryPage() {
               d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
             />
           </svg>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+          <h3 className="text-lg font-semibold text-slate-900 mb-2">
             {t('no_payments', { status: statusFilter === "ALL" ? "" : statusFilter.toLowerCase() })}
           </h3>
-          <p className="text-gray-600 mb-6">
+          <p className="text-slate-600 mb-6">
             {statusFilter === "ALL"
               ? t('no_payments', { status: "" })
               : t('no_payments', { status: statusFilter.toLowerCase() })}

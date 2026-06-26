@@ -66,7 +66,7 @@ function CalendarLoadingSkeleton() {
   return (
     <div className="animate-pulse grid grid-cols-7 gap-1">
       {Array.from({ length: 35 }).map((_, i) => (
-        <div key={i} className="h-20 bg-gray-100 rounded-lg" />
+        <div key={i} className="h-20 bg-slate-100 rounded-lg" />
       ))}
     </div>
   );
@@ -100,7 +100,7 @@ function CalendarCell({
     <div
       className={[
         "relative min-h-[80px] rounded-lg border p-1 cursor-pointer group transition-colors",
-        isCurrentMonth ? "bg-white border-gray-100" : "bg-gray-50/50 border-gray-50",
+        isCurrentMonth ? "bg-white border-slate-100" : "bg-slate-50/50 border-gray-50",
         isToday
           ? "border-blue-300 ring-1 ring-blue-100"
           : "hover:border-blue-200 hover:bg-blue-50/40",
@@ -114,8 +114,8 @@ function CalendarCell({
           isToday
             ? "bg-blue-600 text-white"
             : isCurrentMonth
-            ? "text-gray-800"
-            : "text-gray-300",
+            ? "text-slate-800"
+            : "text-slate-300",
         ].join(" ")}
       >
         {date.getDate()}
@@ -180,21 +180,21 @@ export default function ScheduleCalendar({
     month === 11 ? onMonthChange(year + 1, 0) : onMonthChange(year, month + 1);
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+    <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
       {/* Month navigation header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
         <button
           type="button"
           onClick={prevMonth}
-          className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors text-gray-600"
+          className="p-1.5 rounded-lg hover:bg-slate-100 transition-colors text-slate-600"
         >
           <ChevronLeft className="w-4 h-4" />
         </button>
-        <h2 className="text-sm font-semibold text-gray-900 capitalize">{monthLabel}</h2>
+        <h2 className="text-sm font-semibold text-slate-900 capitalize">{monthLabel}</h2>
         <button
           type="button"
           onClick={nextMonth}
-          className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors text-gray-600"
+          className="p-1.5 rounded-lg hover:bg-slate-100 transition-colors text-slate-600"
         >
           <ChevronRight className="w-4 h-4" />
         </button>
@@ -206,7 +206,7 @@ export default function ScheduleCalendar({
           {DOW_LABELS.map((label) => (
             <div
               key={label}
-              className="text-center text-[10px] font-semibold text-gray-400 py-1"
+              className="text-center text-[10px] font-semibold text-slate-400 py-1"
             >
               {label}
             </div>
@@ -233,18 +233,18 @@ export default function ScheduleCalendar({
       </div>
 
       {/* Color legend */}
-      <div className="px-4 py-2 border-t border-gray-100 flex items-center gap-4">
+      <div className="px-4 py-2 border-t border-slate-100 flex items-center gap-4">
         <div className="flex items-center gap-1.5">
           <div className="w-2 h-2 rounded-full bg-blue-500" />
-          <span className="text-[10px] text-gray-500">{t("calendar_legend_morning")}</span>
+          <span className="text-[10px] text-slate-500">{t("calendar_legend_morning")}</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-2 h-2 rounded-full bg-amber-500" />
-          <span className="text-[10px] text-gray-500">{t("calendar_legend_afternoon")}</span>
+          <span className="text-[10px] text-slate-500">{t("calendar_legend_afternoon")}</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-2 h-2 rounded-full bg-rose-500" />
-          <span className="text-[10px] text-gray-500">{t("calendar_legend_leave")}</span>
+          <span className="text-[10px] text-slate-500">{t("calendar_legend_leave")}</span>
         </div>
       </div>
     </div>

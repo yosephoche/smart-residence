@@ -35,6 +35,20 @@ export const UPLOAD_WINDOW_LAST_DAY = 10;
 export const DEFAULT_PAGE_SIZE = 10;
 export const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
 
+// Toast Durations (ms)
+export const TOAST_DURATION = {
+  success: 3000,
+  error: 6000,
+  info: 4000,
+} as const;
+
+// Payment Status Display
+export const PAYMENT_STATUS_CONFIG = {
+  APPROVED: { label: "Lunas", color: "text-emerald-600", bg: "bg-emerald-50" },
+  PENDING:  { label: "Menunggu", color: "text-amber-600",   bg: "bg-amber-50"   },
+  REJECTED: { label: "Ditolak", color: "text-red-600",     bg: "bg-red-50"     },
+} as const;
+
 // Currency
 export const CURRENCY_SYMBOL = "Rp";
 export const CURRENCY_LOCALE = "id-ID";

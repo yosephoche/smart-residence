@@ -50,7 +50,7 @@ const MetricsGrid: React.FC<MetricsGridProps> = ({
       label: 'Status Bulan Ini',
       value: currentMonthStatus.label,
       iconColor: currentMonthStatus.color,
-      bgColor: 'bg-gray-50 dark:bg-gray-900/20'
+      bgColor: 'bg-slate-50 dark:bg-slate-900/20'
     }
   ];
 
@@ -68,7 +68,7 @@ const MetricsGrid: React.FC<MetricsGridProps> = ({
 
               {/* Label */}
               <div>
-                <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">
+                <p className="text-xs text-slate-600 dark:text-slate-400 mb-1">
                   {metric.label}
                 </p>
                 <p className={`text-sm md:text-base font-semibold ${metric.iconColor}`}>

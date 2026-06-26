@@ -50,7 +50,7 @@ export default function LeaveConfigForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-slate-700 mb-1">
           Maksimum Hari per Pengajuan
         </label>
         <input
@@ -59,16 +59,16 @@ export default function LeaveConfigForm({
           max={30}
           value={maxDays}
           onChange={(e) => setMaxDays(parseInt(e.target.value) || 1)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           required
         />
-        <p className="text-xs text-gray-500 mt-1">
+        <p className="text-xs text-slate-500 mt-1">
           Staf tidak dapat mengajukan cuti lebih dari {maxDays} hari dalam satu pengajuan
         </p>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-slate-700 mb-1">
           Minimum Hari Pengajuan Sebelumnya
         </label>
         <input
@@ -77,10 +77,10 @@ export default function LeaveConfigForm({
           max={60}
           value={minAdvance}
           onChange={(e) => setMinAdvance(parseInt(e.target.value) || 1)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           required
         />
-        <p className="text-xs text-gray-500 mt-1">
+        <p className="text-xs text-slate-500 mt-1">
           Staf harus mengajukan cuti minimal {minAdvance} hari sebelum tanggal mulai
         </p>
       </div>

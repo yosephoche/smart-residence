@@ -75,11 +75,11 @@ export function DefaultPasswordConfigForm({
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       {/* Current Default Password Display */}
-      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-        <div className="flex items-center gap-2 text-gray-700">
-          <Key className="w-5 h-5 text-gray-500" />
+      <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
+        <div className="flex items-center gap-2 text-slate-700">
+          <Key className="w-5 h-5 text-slate-500" />
           <span className="font-medium">Password Default Saat Ini:</span>
-          <code className="px-2 py-1 bg-white border border-gray-300 rounded font-mono text-sm">
+          <code className="px-2 py-1 bg-white border border-slate-300 rounded font-mono text-sm">
             {initialConfig.defaultPassword}
           </code>
         </div>
@@ -89,7 +89,7 @@ export function DefaultPasswordConfigForm({
       <div>
         <label
           htmlFor="defaultPassword"
-          className="block text-sm font-medium text-gray-700 mb-2"
+          className="block text-sm font-medium text-slate-700 mb-2"
         >
           Password Default Baru
         </label>
@@ -99,14 +99,14 @@ export function DefaultPasswordConfigForm({
             id="defaultPassword"
             {...register("defaultPassword")}
             className={`w-full px-4 py-2 pr-12 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-              errors.defaultPassword ? "border-red-500" : "border-gray-300"
+              errors.defaultPassword ? "border-red-500" : "border-slate-300"
             }`}
             placeholder="Enter new default password"
           />
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700"
           >
             {showPassword ? (
               <EyeOff className="w-5 h-5" />
@@ -123,12 +123,12 @@ export function DefaultPasswordConfigForm({
 
         {/* Character count */}
         <div className="flex items-center justify-between mt-2">
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-slate-500">
             Password akan digunakan untuk semua user baru
           </p>
           <p
             className={`text-xs ${
-              defaultPassword.length >= 6 ? "text-green-600" : "text-gray-500"
+              defaultPassword.length >= 6 ? "text-green-600" : "text-slate-500"
             }`}
           >
             {defaultPassword.length} / 100 karakter
@@ -152,7 +152,7 @@ export function DefaultPasswordConfigForm({
       )}
 
       {/* Submit Button */}
-      <div className="flex justify-end pt-4 border-t border-gray-200">
+      <div className="flex justify-end pt-4 border-t border-slate-200">
         <button
           type="submit"
           disabled={isSaving}

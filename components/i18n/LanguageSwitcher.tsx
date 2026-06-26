@@ -28,7 +28,7 @@ export default function LanguageSwitcher() {
 
   return (
     <div className="flex items-center gap-2">
-      <Languages className="h-4 w-4 text-gray-500" />
+      <Languages className="h-4 w-4 text-slate-500" />
       <div className="flex gap-1">
         {locales.map((loc) => (
           <button
@@ -38,7 +38,7 @@ export default function LanguageSwitcher() {
             className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
               locale === loc
                 ? 'bg-primary-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+                : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-gray-700 dark:text-slate-300 dark:hover:bg-gray-600'
             } disabled:opacity-50 disabled:cursor-not-allowed`}
             title={localeNames[loc]}
           >

@@ -111,7 +111,7 @@ export default function FileUpload({
   return (
     <div className="flex flex-col gap-1.5">
       {label && (
-        <label className="text-sm font-medium text-gray-700 tracking-tight">
+        <label className="text-sm font-medium text-slate-700 tracking-tight">
           {label}
           {required && <span className="text-danger-500 ml-1">*</span>}
         </label>
@@ -125,8 +125,8 @@ export default function FileUpload({
           "relative border-2 border-dashed rounded-lg transition-all duration-200",
           isDragging && !disabled && "border-primary-500 bg-primary-50",
           error && "border-danger-300",
-          !error && !isDragging && "border-gray-300",
-          disabled && "opacity-50 cursor-not-allowed bg-gray-50"
+          !error && !isDragging && "border-slate-300",
+          disabled && "opacity-50 cursor-not-allowed bg-slate-50"
         )}
       >
         <input
@@ -147,9 +147,9 @@ export default function FileUpload({
               disabled && "cursor-not-allowed"
             )}
           >
-            <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center">
+            <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center">
               <svg
-                className="w-8 h-8 text-gray-400"
+                className="w-8 h-8 text-slate-400"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -163,10 +163,10 @@ export default function FileUpload({
               </svg>
             </div>
             <div className="text-center">
-              <p className="text-sm font-medium text-gray-700">
+              <p className="text-sm font-medium text-slate-700">
                 Click to upload or drag and drop
               </p>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-slate-500 mt-1">
                 {accept.split(",").join(", ")} (max {formatFileSize(maxSize)})
               </p>
             </div>
@@ -174,7 +174,7 @@ export default function FileUpload({
         ) : (
           <div className="relative p-4">
             {previewUrl ? (
-              <div className="relative aspect-video rounded-lg overflow-hidden bg-gray-100 border-2 border-gray-200">
+              <div className="relative aspect-video rounded-lg overflow-hidden bg-slate-100 border-2 border-slate-200">
                 <Image
                   src={previewUrl}
                   alt="Preview"
@@ -183,9 +183,9 @@ export default function FileUpload({
                 />
               </div>
             ) : (
-              <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg border-2 border-gray-200">
+              <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-lg border-2 border-slate-200">
                 <svg
-                  className="w-10 h-10 text-gray-400"
+                  className="w-10 h-10 text-slate-400"
                   fill="currentColor"
                   viewBox="0 0 20 20"
                 >
@@ -196,10 +196,10 @@ export default function FileUpload({
                   />
                 </svg>
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-900">
+                  <p className="text-sm font-medium text-slate-900">
                     {value?.name}
                   </p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-slate-500">
                     {value && formatFileSize(value.size)}
                   </p>
                 </div>
@@ -210,10 +210,10 @@ export default function FileUpload({
               <button
                 type="button"
                 onClick={handleRemove}
-                className="absolute top-2 right-2 p-2 bg-white rounded-full shadow-lg border-2 border-gray-200 hover:bg-danger-50 hover:border-danger-300 transition-colors group"
+                className="absolute top-2 right-2 p-2 bg-white rounded-full shadow-lg border-2 border-slate-200 hover:bg-danger-50 hover:border-danger-300 transition-colors group"
               >
                 <svg
-                  className="w-5 h-5 text-gray-600 group-hover:text-danger-600"
+                  className="w-5 h-5 text-slate-600 group-hover:text-danger-600"
                   fill="currentColor"
                   viewBox="0 0 20 20"
                 >
@@ -243,7 +243,7 @@ export default function FileUpload({
       )}
 
       {helperText && !error && (
-        <p className="text-xs text-gray-500">{helperText}</p>
+        <p className="text-xs text-slate-500">{helperText}</p>
       )}
     </div>
   );

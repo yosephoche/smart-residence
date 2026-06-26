@@ -23,8 +23,8 @@ export function Card({
   return (
     <div
       className={cn(
-        "bg-white rounded-xl border-2 border-gray-200 shadow-sm transition-all duration-200",
-        hover && "hover:shadow-md hover:border-gray-300",
+        "bg-white rounded-xl border-2 border-slate-200 shadow-sm transition-all duration-200",
+        hover && "hover:shadow-md hover:border-slate-300",
         paddings[padding],
         className
       )}
@@ -43,7 +43,7 @@ export interface CardHeaderProps {
 export function CardHeader({ children, className, action }: CardHeaderProps) {
   return (
     <div className={cn("flex items-center justify-between mb-4", className)}>
-      <h3 className="text-lg font-semibold text-gray-900 tracking-tight">
+      <h3 className="text-lg font-semibold text-slate-900 tracking-tight">
         {children}
       </h3>
       {action && <div>{action}</div>}
@@ -57,7 +57,7 @@ export interface CardContentProps {
 }
 
 export function CardContent({ children, className }: CardContentProps) {
-  return <div className={cn("text-sm text-gray-600", className)}>{children}</div>;
+  return <div className={cn("text-sm text-slate-600", className)}>{children}</div>;
 }
 
 export interface CardFooterProps {
@@ -69,7 +69,7 @@ export function CardFooter({ children, className }: CardFooterProps) {
   return (
     <div
       className={cn(
-        "mt-4 pt-4 border-t-2 border-gray-100 flex items-center gap-3",
+        "mt-4 pt-4 border-t-2 border-slate-100 flex items-center gap-3",
         className
       )}
     >

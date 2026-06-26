@@ -82,7 +82,7 @@ export default function CreateHousePage() {
           <Skeleton className="h-8 w-40" />
           <Skeleton className="h-5 w-72 mt-2" />
         </div>
-        <div className="bg-white rounded-xl border-2 border-gray-200 p-6 space-y-4">
+        <div className="bg-white rounded-xl border-2 border-slate-200 p-6 space-y-4">
           <Skeleton className="h-5 w-36" />
           <Skeleton className="h-10 w-full" />
           <Skeleton className="h-5 w-24" />
@@ -103,10 +103,10 @@ export default function CreateHousePage() {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
+        <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
           {t('add_house')}
         </h1>
-        <p className="text-gray-600 mt-1">
+        <p className="text-slate-600 mt-1">
           {t('create_subtitle')}
         </p>
       </div>

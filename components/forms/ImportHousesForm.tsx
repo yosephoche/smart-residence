@@ -115,34 +115,34 @@ export default function ImportHousesForm({
     return (
       <div className="space-y-6">
         {/* Summary */}
-        <div className="bg-gray-50 p-4 rounded-lg">
+        <div className="bg-slate-50 p-4 rounded-lg">
           <h3 className="font-semibold text-lg mb-3">Import Summary</h3>
           <div className="grid grid-cols-3 gap-4 text-center">
             <div>
-              <div className="text-2xl font-bold text-gray-700">
+              <div className="text-2xl font-bold text-slate-700">
                 {result.summary.totalRows}
               </div>
-              <div className="text-sm text-gray-600">Total Rows</div>
+              <div className="text-sm text-slate-600">Total Rows</div>
             </div>
             <div>
               <div className="text-2xl font-bold text-green-600">
                 {result.summary.successCount}
               </div>
-              <div className="text-sm text-gray-600">Houses Created</div>
+              <div className="text-sm text-slate-600">Houses Created</div>
             </div>
             <div>
               <div className="text-2xl font-bold text-red-600">
                 {result.summary.failureCount}
               </div>
-              <div className="text-sm text-gray-600">Houses Failed</div>
+              <div className="text-sm text-slate-600">Houses Failed</div>
             </div>
           </div>
 
           {/* House Types Summary */}
           {(result.summary.houseTypesCreated > 0 ||
             result.summary.houseTypesLinked > 0) && (
-            <div className="border-t border-gray-200 pt-3 mt-3">
-              <h4 className="text-sm font-semibold text-gray-700 mb-2">
+            <div className="border-t border-slate-200 pt-3 mt-3">
+              <h4 className="text-sm font-semibold text-slate-700 mb-2">
                 House Types
               </h4>
               <div className="grid grid-cols-3 gap-4 text-center">
@@ -150,19 +150,19 @@ export default function ImportHousesForm({
                   <div className="text-xl font-bold text-green-600">
                     {result.summary.houseTypesCreated}
                   </div>
-                  <div className="text-xs text-gray-600">Created</div>
+                  <div className="text-xs text-slate-600">Created</div>
                 </div>
                 <div>
                   <div className="text-xl font-bold text-teal-600">
                     {result.summary.houseTypesLinked}
                   </div>
-                  <div className="text-xs text-gray-600">Linked Existing</div>
+                  <div className="text-xs text-slate-600">Linked Existing</div>
                 </div>
                 <div>
                   <div className="text-xl font-bold text-red-600">
                     {result.summary.houseTypeErrorCount}
                   </div>
-                  <div className="text-xs text-gray-600">Type Errors</div>
+                  <div className="text-xs text-slate-600">Type Errors</div>
                 </div>
               </div>
             </div>
@@ -171,8 +171,8 @@ export default function ImportHousesForm({
           {/* User Accounts Summary */}
           {(result.summary.usersCreated > 0 ||
             result.summary.usersLinked > 0) && (
-            <div className="border-t border-gray-200 pt-3 mt-3">
-              <h4 className="text-sm font-semibold text-gray-700 mb-2">
+            <div className="border-t border-slate-200 pt-3 mt-3">
+              <h4 className="text-sm font-semibold text-slate-700 mb-2">
                 User Accounts
               </h4>
               <div className="grid grid-cols-3 gap-4 text-center">
@@ -180,19 +180,19 @@ export default function ImportHousesForm({
                   <div className="text-xl font-bold text-blue-600">
                     {result.summary.usersCreated}
                   </div>
-                  <div className="text-xs text-gray-600">Created</div>
+                  <div className="text-xs text-slate-600">Created</div>
                 </div>
                 <div>
                   <div className="text-xl font-bold text-purple-600">
                     {result.summary.usersLinked}
                   </div>
-                  <div className="text-xs text-gray-600">Linked Existing</div>
+                  <div className="text-xs text-slate-600">Linked Existing</div>
                 </div>
                 <div>
                   <div className="text-xl font-bold text-orange-600">
                     {result.summary.userErrorCount}
                   </div>
-                  <div className="text-xs text-gray-600">User Errors</div>
+                  <div className="text-xs text-slate-600">User Errors</div>
                 </div>
               </div>
             </div>
@@ -244,28 +244,28 @@ export default function ImportHousesForm({
             <h4 className="font-semibold text-red-700">
               House Errors ({result.errors.length})
             </h4>
-            <div className="max-h-96 overflow-y-auto border border-gray-200 rounded">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50 sticky top-0">
+            <div className="max-h-96 overflow-y-auto border border-slate-200 rounded">
+              <table className="min-w-full divide-y divide-slate-200">
+                <thead className="bg-slate-50 sticky top-0">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                       Row
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                       House Number
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                       Errors
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-white divide-y divide-slate-200">
                   {result.errors.map((error, idx) => (
-                    <tr key={idx} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 text-sm text-gray-900">
+                    <tr key={idx} className="hover:bg-slate-50">
+                      <td className="px-4 py-3 text-sm text-slate-900">
                         {error.row}
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-900">
+                      <td className="px-4 py-3 text-sm text-slate-900">
                         {error.houseNumber}
                       </td>
                       <td className="px-4 py-3 text-sm text-red-600">
@@ -293,28 +293,28 @@ export default function ImportHousesForm({
               Note: Houses were NOT created for these rows due to house type
               errors.
             </div>
-            <div className="max-h-96 overflow-y-auto border border-gray-200 rounded">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50 sticky top-0">
+            <div className="max-h-96 overflow-y-auto border border-slate-200 rounded">
+              <table className="min-w-full divide-y divide-slate-200">
+                <thead className="bg-slate-50 sticky top-0">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                       Row
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                       Type Name
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                       Errors
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-white divide-y divide-slate-200">
                   {result.houseTypeErrors.map((error, idx) => (
-                    <tr key={idx} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 text-sm text-gray-900">
+                    <tr key={idx} className="hover:bg-slate-50">
+                      <td className="px-4 py-3 text-sm text-slate-900">
                         {error.row}
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-900">
+                      <td className="px-4 py-3 text-sm text-slate-900">
                         {error.typeName}
                       </td>
                       <td className="px-4 py-3 text-sm text-red-600">
@@ -342,28 +342,28 @@ export default function ImportHousesForm({
               Note: Houses were still created for these rows, but user accounts
               could not be created.
             </div>
-            <div className="max-h-96 overflow-y-auto border border-gray-200 rounded">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50 sticky top-0">
+            <div className="max-h-96 overflow-y-auto border border-slate-200 rounded">
+              <table className="min-w-full divide-y divide-slate-200">
+                <thead className="bg-slate-50 sticky top-0">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                       Row
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                       Email
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                       Errors
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-white divide-y divide-slate-200">
                   {result.userErrors.map((error, idx) => (
-                    <tr key={idx} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 text-sm text-gray-900">
+                    <tr key={idx} className="hover:bg-slate-50">
+                      <td className="px-4 py-3 text-sm text-slate-900">
                         {error.row}
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-900">
+                      <td className="px-4 py-3 text-sm text-slate-900">
                         {error.email}
                       </td>
                       <td className="px-4 py-3 text-sm text-orange-600">
@@ -399,17 +399,17 @@ export default function ImportHousesForm({
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* File upload section */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-slate-700 mb-2">
           Select CSV or XLSX File
         </label>
         <input
           type="file"
           accept=".csv,.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
           onChange={handleFileChange}
-          className="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none focus:border-blue-500 p-2"
+          className="block w-full text-sm text-slate-900 border border-slate-300 rounded-lg cursor-pointer bg-slate-50 focus:outline-none focus:border-blue-500 p-2"
         />
         {file && (
-          <p className="mt-2 text-sm text-gray-600">
+          <p className="mt-2 text-sm text-slate-600">
             Selected: <span className="font-medium">{file.name}</span> (
             {(file.size / 1024).toFixed(1)} KB)
           </p>

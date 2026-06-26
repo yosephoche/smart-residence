@@ -1,5 +1,7 @@
 "use client";
 
+import { motion } from "framer-motion";
+
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
@@ -510,7 +512,7 @@ export default function SchedulePage() {
           type="checkbox"
           checked={allPageSelected}
           onChange={toggleSelectAll}
-          className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+          className="w-4 h-4 text-primary-600 border-slate-300 rounded focus:ring-primary-500"
           aria-label="Select all on page"
         />
       ) as any,
@@ -525,7 +527,7 @@ export default function SchedulePage() {
               setSelectedScheduleIds((prev) => prev.filter((id) => id !== row.id));
             }
           }}
-          className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+          className="w-4 h-4 text-primary-600 border-slate-300 rounded focus:ring-primary-500"
           aria-label={`Select schedule ${row.id}`}
         />
       ),
@@ -556,7 +558,7 @@ export default function SchedulePage() {
       render: (_, row) => (
         <div>
           <div className="font-medium">{row.staff.name}</div>
-          <div className="text-sm text-gray-500">
+          <div className="text-sm text-slate-500">
             {tCommon(`job_types.${row.staff.staffJobType}`)}
           </div>
         </div>
@@ -568,7 +570,7 @@ export default function SchedulePage() {
       render: (_, row) => (
         <div>
           <div className="font-medium">{row.shiftTemplate.shiftName}</div>
-          <div className="text-sm text-gray-500">
+          <div className="text-sm text-slate-500">
             {row.shiftTemplate.startTime} - {row.shiftTemplate.endTime}
           </div>
         </div>
@@ -579,9 +581,9 @@ export default function SchedulePage() {
       header: tCommon('table.notes'),
       render: (_, row) =>
         row.notes ? (
-          <span className="text-sm text-gray-600">{row.notes}</span>
+          <span className="text-sm text-slate-600">{row.notes}</span>
         ) : (
-          <span className="text-gray-400">-</span>
+          <span className="text-slate-400">-</span>
         ),
     },
     {
@@ -599,25 +601,34 @@ export default function SchedulePage() {
     },
   ];
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.06, delayChildren: 0.02 } },
+  };
+  const itemVariants = {
+    hidden: { opacity: 0, y: 12 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] } },
+  };
+
   return (
-    <div className="space-y-6">
+    <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">{t('title')}</h1>
-          <p className="text-gray-500 mt-1">{t('subtitle')}</p>
+          <h1 className="text-3xl font-bold text-slate-900">{t('title')}</h1>
+          <p className="text-slate-500 mt-1">{t('subtitle')}</p>
         </div>
 
         <div className="flex items-center gap-3">
           {/* View toggle pill */}
-          <div className="flex items-center bg-gray-100 rounded-lg p-1">
+          <div className="flex items-center bg-slate-100 rounded-lg p-1">
             <button
               type="button"
               onClick={() => setViewMode("table")}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
                 viewMode === "table"
-                  ? "bg-white text-gray-900 shadow-sm"
-                  : "text-gray-500 hover:text-gray-700"
+                  ? "bg-white text-slate-900 shadow-sm"
+                  : "text-slate-500 hover:text-slate-700"
               }`}
             >
               <List className="w-4 h-4" />
@@ -628,8 +639,8 @@ export default function SchedulePage() {
               onClick={() => setViewMode("calendar")}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
                 viewMode === "calendar"
-                  ? "bg-white text-gray-900 shadow-sm"
-                  : "text-gray-500 hover:text-gray-700"
+                  ? "bg-white text-slate-900 shadow-sm"
+                  : "text-slate-500 hover:text-slate-700"
               }`}
             >
               <CalendarDays className="w-4 h-4" />
@@ -657,16 +668,16 @@ export default function SchedulePage() {
               Unduh
             </Button>
             {showExportDropdown && (
-              <div className="absolute right-0 mt-1 w-44 bg-white rounded-lg border-2 border-gray-200 shadow-lg z-10">
+              <div className="absolute right-0 mt-1 w-44 bg-white rounded-lg border-2 border-slate-200 shadow-lg z-10">
                 <button
                   onClick={() => handleExport("csv")}
-                  className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                  className="block w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
                 >
                   Export CSV
                 </button>
                 <button
                   onClick={() => handleExport("xlsx")}
-                  className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors border-t border-gray-100"
+                  className="block w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors border-t border-slate-100"
                 >
                   Export Excel (.xlsx)
                 </button>
@@ -683,8 +694,8 @@ export default function SchedulePage() {
 
       {/* Date Range Filter — table view only */}
       {viewMode === "table" && (
-        <div className="bg-white p-4 rounded-lg border border-gray-200 space-y-4">
-          <h3 className="font-semibold text-gray-900">{t('date_range')}</h3>
+        <div className="bg-white p-4 rounded-lg border border-slate-200 space-y-4">
+          <h3 className="font-semibold text-slate-900">{t('date_range')}</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
               label={t('start_date')}
@@ -782,14 +793,14 @@ export default function SchedulePage() {
         <form onSubmit={handleCreateSchedule} className="space-y-4">
           {/* Staff */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 mb-1">
               {t('staff_label')} *
             </label>
             <select
               value={createForm.staffId}
               onChange={(e) => setCreateForm({ ...createForm, staffId: e.target.value, shiftTemplateId: "" })}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             >
               <option value="">{t('select_staff')}</option>
               {staff.map((s) => (
@@ -802,7 +813,7 @@ export default function SchedulePage() {
 
           {/* Shift Template */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 mb-1">
               {t('shift_label')} *
             </label>
             <select
@@ -812,7 +823,7 @@ export default function SchedulePage() {
               }
               required
               disabled={!createForm.staffId}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent disabled:bg-gray-100"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent disabled:bg-slate-100"
             >
               <option value="">{t('select_shift')}</option>
               {availableTemplates.map((template) => (
@@ -822,10 +833,10 @@ export default function SchedulePage() {
               ))}
             </select>
             {!createForm.staffId && (
-              <p className="text-xs text-gray-500 mt-1">{t('staff_required')}</p>
+              <p className="text-xs text-slate-500 mt-1">{t('staff_required')}</p>
             )}
             {createForm.staffId && availableTemplates.length === 0 && (
-              <p className="text-xs text-gray-500 mt-1">{t('no_shifts_available')}</p>
+              <p className="text-xs text-slate-500 mt-1">{t('no_shifts_available')}</p>
             )}
           </div>
 
@@ -837,9 +848,9 @@ export default function SchedulePage() {
               onChange={(e) =>
                 setCreateForm({ ...createForm, isBulk: e.target.checked })
               }
-              className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+              className="w-4 h-4 text-primary-600 border-slate-300 rounded focus:ring-primary-500"
             />
-            <span className="text-sm font-medium text-gray-700">
+            <span className="text-sm font-medium text-slate-700">
               {tCommon('messages.assign_bulk')}
             </span>
           </label>
@@ -876,7 +887,7 @@ export default function SchedulePage() {
 
           {/* Notes */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 mb-1">
               {tCommon('labels.notes')}
             </label>
             <textarea
@@ -884,7 +895,7 @@ export default function SchedulePage() {
               onChange={(e) => setCreateForm({ ...createForm, notes: e.target.value })}
               rows={2}
               maxLength={500}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
           </div>
 
@@ -920,34 +931,34 @@ export default function SchedulePage() {
         <form onSubmit={handleCalendarAssign} className="space-y-4">
           {/* Staff multi-select checklist */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-slate-700 mb-2">
               {t('staff_label')} *
             </label>
-            <div className="max-h-52 overflow-y-auto border border-gray-200 rounded-lg divide-y divide-gray-100">
+            <div className="max-h-52 overflow-y-auto border border-slate-200 rounded-lg divide-y divide-slate-100">
               {staff.map((s) => {
                 const checked = calendarAssignForm.selectedStaffIds.includes(s.id);
                 return (
                   <label
                     key={s.id}
                     className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-colors ${
-                      checked ? "bg-blue-50" : "hover:bg-gray-50"
+                      checked ? "bg-blue-50" : "hover:bg-slate-50"
                     }`}
                   >
                     <input
                       type="checkbox"
                       checked={checked}
                       onChange={() => toggleStaffSelection(s.id)}
-                      className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+                      className="w-4 h-4 text-primary-600 border-slate-300 rounded focus:ring-primary-500"
                     />
                     <div>
-                      <p className="text-sm font-medium text-gray-800">{s.name}</p>
-                      <p className="text-xs text-gray-500">{tCommon(`job_types.${s.staffJobType}`)}</p>
+                      <p className="text-sm font-medium text-slate-800">{s.name}</p>
+                      <p className="text-xs text-slate-500">{tCommon(`job_types.${s.staffJobType}`)}</p>
                     </div>
                   </label>
                 );
               })}
               {staff.length === 0 && (
-                <p className="text-sm text-gray-400 px-3 py-4 text-center">{t('select_staff')}</p>
+                <p className="text-sm text-slate-400 px-3 py-4 text-center">{t('select_staff')}</p>
               )}
             </div>
             {calendarAssignForm.selectedStaffIds.length > 0 && (
@@ -959,7 +970,7 @@ export default function SchedulePage() {
 
           {/* Shift Template */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 mb-1">
               {t('shift_label')} *
             </label>
             <select
@@ -968,7 +979,7 @@ export default function SchedulePage() {
                 setCalendarAssignForm((prev) => ({ ...prev, shiftTemplateId: e.target.value }))
               }
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             >
               <option value="">{t('select_shift')}</option>
               {shiftTemplates.map((template) => (
@@ -1023,7 +1034,7 @@ export default function SchedulePage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 mb-1">
               {t('job_type')} *
             </label>
             <select
@@ -1032,7 +1043,7 @@ export default function SchedulePage() {
                 setAutoGenForm({ ...autoGenForm, jobType: e.target.value as JobType })
               }
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             >
               <option value="SECURITY">{tCommon('job_types.SECURITY')}</option>
               <option value="CLEANING">{tCommon('job_types.CLEANING')}</option>
@@ -1105,6 +1116,6 @@ export default function SchedulePage() {
         confirmText={bulkDeleting ? "Menghapus..." : "Hapus"}
         cancelText={tCommon('actions.cancel')}
       />
-    </div>
+    </motion.div>
   );
 }

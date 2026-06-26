@@ -30,10 +30,10 @@ export default function PaymentSuccessPage() {
           </div>
 
           {/* Success Message */}
-          <h1 className="text-3xl font-bold text-gray-900 mb-3">
+          <h1 className="text-3xl font-bold text-slate-900 mb-3">
             Payment Submitted Successfully!
           </h1>
-          <p className="text-gray-600 mb-8 max-w-md mx-auto">
+          <p className="text-slate-600 mb-8 max-w-md mx-auto">
             Your payment proof has been submitted and is now pending admin approval.
             You&apos;ll be notified once your payment is reviewed.
           </p>

@@ -118,8 +118,8 @@ export default function UserExpensesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">{t('title')}</h1>
-          <p className="text-gray-600 mt-1">{t('subtitle')}</p>
+          <h1 className="text-3xl font-bold text-slate-900">{t('title')}</h1>
+          <p className="text-slate-600 mt-1">{t('subtitle')}</p>
         </div>
       </div>
 
@@ -127,25 +127,25 @@ export default function UserExpensesPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardContent>
-            <p className="text-sm text-gray-600">{t('total_expenses')} ({tCommon('actions.filter')}ed)</p>
-            <p className="text-2xl font-bold text-gray-900">{formatCurrency(totalFiltered)}</p>
-            <p className="text-xs text-gray-500 mt-1">{filteredExpenses.length} transactions</p>
+            <p className="text-sm text-slate-600">{t('total_expenses')} ({tCommon('actions.filter')}ed)</p>
+            <p className="text-2xl font-bold text-slate-900">{formatCurrency(totalFiltered)}</p>
+            <p className="text-xs text-slate-500 mt-1">{filteredExpenses.length} transactions</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent>
-            <p className="text-sm text-gray-600">{t('total_expenses')} (All Time)</p>
-            <p className="text-2xl font-bold text-gray-900">{formatCurrency(expenses.reduce((sum, e) => sum + Number(e.amount), 0))}</p>
-            <p className="text-xs text-gray-500 mt-1">{expenses.length} transactions</p>
+            <p className="text-sm text-slate-600">{t('total_expenses')} (All Time)</p>
+            <p className="text-2xl font-bold text-slate-900">{formatCurrency(expenses.reduce((sum, e) => sum + Number(e.amount), 0))}</p>
+            <p className="text-xs text-slate-500 mt-1">{expenses.length} transactions</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent>
-            <p className="text-sm text-gray-600">Average Expense</p>
-            <p className="text-2xl font-bold text-gray-900">
+            <p className="text-sm text-slate-600">Average Expense</p>
+            <p className="text-2xl font-bold text-slate-900">
               {formatCurrency(filteredExpenses.length > 0 ? totalFiltered / filteredExpenses.length : 0)}
             </p>
-            <p className="text-xs text-gray-500 mt-1">per transaction</p>
+            <p className="text-xs text-slate-500 mt-1">per transaction</p>
           </CardContent>
         </Card>
       </div>

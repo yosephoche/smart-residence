@@ -16,6 +16,7 @@ import {
   ChevronRight,
   Save,
 } from "lucide-react";
+import { useDebounce } from "@/lib/hooks/useDebounce";
 import { usePagination } from "@/lib/hooks/usePagination";
 import {
   SUBMISSION_TYPE_LABEL,
@@ -67,6 +68,7 @@ export default function AdminSubmissionsPage() {
   const [typeFilter, setTypeFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 400);
 
   // Review panel state
   const [reviewingId, setReviewingId] = useState<string | null>(null);
@@ -93,7 +95,7 @@ export default function AdminSubmissionsPage() {
       const params = new URLSearchParams();
       if (typeFilter) params.set("type", typeFilter);
       if (statusFilter) params.set("status", statusFilter);
-      if (search) params.set("search", search);
+      if (debouncedSearch) params.set("search", debouncedSearch);
       const res = await fetch(`/api/submissions?${params}`);
       if (res.ok) {
         const data = await res.json();
@@ -104,7 +106,7 @@ export default function AdminSubmissionsPage() {
     } finally {
       setLoading(false);
     }
-  }, [typeFilter, statusFilter, search]);
+  }, [typeFilter, statusFilter, debouncedSearch]);
 
   useEffect(() => {
     fetchSubmissions();
@@ -150,10 +152,10 @@ export default function AdminSubmissionsPage() {
       {/* Page Header */}
       <div className="flex items-start justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">
+          <h1 className="text-2xl font-bold text-slate-900">
             Pengaduan & Permintaan
           </h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-sm text-slate-500 mt-1">
             Tinjau dan tanggapi pengaduan dari penghuni
           </p>
         </div>
@@ -170,22 +172,22 @@ export default function AdminSubmissionsPage() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6">
+      <div className="bg-white rounded-xl border border-slate-200 p-4 mb-6">
         <div className="flex flex-wrap gap-3">
           <div className="relative flex-1 min-w-[200px]">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Cari judul atau isi..."
-              className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
           <select
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
-            className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            className="px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
           >
             <option value="">Semua Tipe</option>
             <option value="FEEDBACK">Feedback / Kritik</option>
@@ -196,7 +198,7 @@ export default function AdminSubmissionsPage() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            className="px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
           >
             <option value="">Semua Status</option>
             <option value="PENDING">Menunggu</option>
@@ -211,7 +213,7 @@ export default function AdminSubmissionsPage() {
                 setTypeFilter("");
                 setStatusFilter("");
               }}
-              className="flex items-center gap-1.5 px-3 py-2 text-sm text-gray-500 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-2 text-sm text-slate-500 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors"
             >
               <X className="w-3.5 h-3.5" />
               Reset
@@ -221,35 +223,35 @@ export default function AdminSubmissionsPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
         {loading ? (
-          <div className="p-8 text-center text-gray-400">Memuat data...</div>
+          <div className="p-8 text-center text-slate-400">Memuat data...</div>
         ) : submissions.length === 0 ? (
           <div className="p-12 text-center">
             <MessageSquare className="w-10 h-10 text-gray-200 mx-auto mb-3" />
-            <p className="text-gray-400">Belum ada pengaduan</p>
+            <p className="text-slate-400">Belum ada pengaduan</p>
           </div>
         ) : (
           <>
             <table className="w-full">
               <thead>
-                <tr className="border-b border-gray-100 bg-gray-50">
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                <tr className="border-b border-slate-100 bg-slate-50">
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
                     Penghuni
                   </th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
                     Tipe
                   </th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
                     Judul
                   </th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
                     Tanggal
                   </th>
-                  <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
                     Aksi
                   </th>
                 </tr>
@@ -261,22 +263,22 @@ export default function AdminSubmissionsPage() {
                   return (
                     <tr
                       key={s.id}
-                      className="border-b border-gray-50 hover:bg-gray-50 transition-colors"
+                      className="border-b border-gray-50 hover:bg-slate-50 transition-colors"
                     >
                       <td className="px-4 py-3">
-                        <p className="text-sm font-medium text-gray-800">
+                        <p className="text-sm font-medium text-slate-800">
                           {s.user.name}
                         </p>
-                        <p className="text-xs text-gray-400">{s.user.email}</p>
+                        <p className="text-xs text-slate-400">{s.user.email}</p>
                       </td>
                       <td className="px-4 py-3">
-                        <span className="text-xs text-gray-600">
+                        <span className="text-xs text-slate-600">
                           {SUBMISSION_TYPE_LABEL[s.type]}
                         </span>
                       </td>
                       <td className="px-4 py-3 max-w-[220px]">
                         <p
-                          className="text-sm text-gray-800 truncate"
+                          className="text-sm text-slate-800 truncate"
                           title={s.title}
                         >
                           {s.title}
@@ -296,7 +298,7 @@ export default function AdminSubmissionsPage() {
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-slate-500">
                           {formatDate(s.createdAt)}
                         </p>
                       </td>
@@ -316,9 +318,9 @@ export default function AdminSubmissionsPage() {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100">
+              <div className="flex items-center justify-between px-4 py-3 border-t border-slate-100">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-gray-500">
+                  <span className="text-xs text-slate-500">
                     {totalItems} data
                   </span>
                   <select
@@ -326,7 +328,7 @@ export default function AdminSubmissionsPage() {
                     onChange={(e) =>
                       handlePageSizeChange(Number(e.target.value))
                     }
-                    className="text-xs border border-gray-200 rounded px-1 py-0.5"
+                    className="text-xs border border-slate-200 rounded px-1 py-0.5"
                   >
                     {[10, 25, 50, 100].map((s) => (
                       <option key={s} value={s}>
@@ -339,17 +341,17 @@ export default function AdminSubmissionsPage() {
                   <button
                     onClick={() => handlePageChange(currentPage - 1)}
                     disabled={currentPage === 1}
-                    className="p-1 rounded hover:bg-gray-100 disabled:opacity-40"
+                    className="p-1 rounded hover:bg-slate-100 disabled:opacity-40"
                   >
                     <ChevronLeft className="w-4 h-4" />
                   </button>
-                  <span className="text-xs text-gray-600 px-2">
+                  <span className="text-xs text-slate-600 px-2">
                     {currentPage} / {totalPages}
                   </span>
                   <button
                     onClick={() => handlePageChange(currentPage + 1)}
                     disabled={currentPage === totalPages}
-                    className="p-1 rounded hover:bg-gray-100 disabled:opacity-40"
+                    className="p-1 rounded hover:bg-slate-100 disabled:opacity-40"
                   >
                     <ChevronRight className="w-4 h-4" />
                   </button>
@@ -379,15 +381,15 @@ export default function AdminSubmissionsPage() {
               className="fixed right-0 top-0 h-full w-full max-w-sm bg-white z-50 shadow-2xl flex flex-col"
             >
               {/* Panel header */}
-              <div className="flex items-center justify-between p-4 border-b border-gray-100">
-                <h2 className="text-base font-bold text-gray-900">
+              <div className="flex items-center justify-between p-4 border-b border-slate-100">
+                <h2 className="text-base font-bold text-slate-900">
                   Tinjau Pengaduan
                 </h2>
                 <button
                   onClick={() => setReviewingId(null)}
-                  className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center"
+                  className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center"
                 >
-                  <X className="w-4 h-4 text-gray-500" />
+                  <X className="w-4 h-4 text-slate-500" />
                 </button>
               </div>
 
@@ -401,19 +403,19 @@ export default function AdminSubmissionsPage() {
                     >
                       {SUBMISSION_STATUS_CONFIG[reviewingSubmission.status].label}
                     </span>
-                    <span className="text-[10px] text-gray-400">
+                    <span className="text-[10px] text-slate-400">
                       {SUBMISSION_TYPE_LABEL[reviewingSubmission.type]}
                     </span>
                   </div>
-                  <h3 className="text-sm font-semibold text-gray-900 mb-1">
+                  <h3 className="text-sm font-semibold text-slate-900 mb-1">
                     {reviewingSubmission.title}
                   </h3>
-                  <p className="text-xs text-gray-500 mb-3">
+                  <p className="text-xs text-slate-500 mb-3">
                     dari <strong>{reviewingSubmission.user.name}</strong> ·{" "}
                     {formatDate(reviewingSubmission.createdAt)}
                   </p>
-                  <div className="bg-gray-50 rounded-xl p-3">
-                    <p className="text-sm text-gray-700 leading-relaxed">
+                  <div className="bg-slate-50 rounded-xl p-3">
+                    <p className="text-sm text-slate-700 leading-relaxed">
                       {reviewingSubmission.content}
                     </p>
                   </div>
@@ -421,13 +423,13 @@ export default function AdminSubmissionsPage() {
 
                 {/* Status select */}
                 <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1.5">
+                  <label className="block text-xs font-medium text-slate-700 mb-1.5">
                     Ubah Status
                   </label>
                   <select
                     value={reviewStatus}
                     onChange={(e) => setReviewStatus(e.target.value)}
-                    className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                   >
                     <option value="IN_REVIEW">Ditinjau</option>
                     <option value="RESOLVED">Selesai</option>
@@ -437,7 +439,7 @@ export default function AdminSubmissionsPage() {
 
                 {/* Admin note */}
                 <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1.5">
+                  <label className="block text-xs font-medium text-slate-700 mb-1.5">
                     Catatan / Balasan (opsional)
                   </label>
                   <textarea
@@ -446,16 +448,16 @@ export default function AdminSubmissionsPage() {
                     maxLength={500}
                     rows={4}
                     placeholder="Tuliskan balasan atau catatan untuk penghuni..."
-                    className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
                   />
-                  <p className="text-[10px] text-gray-400 mt-1 text-right">
+                  <p className="text-[10px] text-slate-400 mt-1 text-right">
                     {reviewNote.length}/500
                   </p>
                 </div>
               </div>
 
               {/* Panel footer */}
-              <div className="p-4 border-t border-gray-100">
+              <div className="p-4 border-t border-slate-100">
                 <AnimatePresence mode="wait">
                   {reviewSuccess ? (
                     <motion.div

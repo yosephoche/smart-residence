@@ -45,7 +45,7 @@ const CircularProgress: React.FC<CircularProgressProps> = ({
           fill="none"
           stroke="currentColor"
           strokeWidth={strokeWidth}
-          className="text-gray-200 dark:text-gray-700"
+          className="text-gray-200 dark:text-slate-700"
         />
 
         {/* Progress circle */}
@@ -69,10 +69,10 @@ const CircularProgress: React.FC<CircularProgressProps> = ({
       {/* Center text */}
       {showLabel && (
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <div className="text-3xl font-bold text-gray-900 dark:text-gray-900">
+          <div className="text-3xl font-bold text-slate-900 dark:text-slate-900">
             {value}
           </div>
-          <div className="text-sm text-gray-500 dark:text-gray-400">
+          <div className="text-sm text-slate-500 dark:text-slate-400">
             / {max} {label}
           </div>
         </div>

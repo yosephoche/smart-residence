@@ -41,10 +41,10 @@ const HeroSection: React.FC<HeroSectionProps> = ({
       <div className="flex flex-col items-center text-center space-y-6">
         {/* Greeting */}
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-gray-900">
+          <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-slate-900">
             Selamat Datang, {userName}
           </h1>
-          <p className="text-sm md:text-base text-gray-700 dark:text-gray-700 mt-2">
+          <p className="text-sm md:text-base text-slate-700 dark:text-slate-700 mt-2">
             Status pembayaran bulan {currentMonthLabel}
           </p>
         </div>
@@ -61,7 +61,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 
         {/* Status Badge */}
         <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-600 dark:text-gray-400">
+          <span className="text-sm text-slate-600 dark:text-slate-400">
             Status:
           </span>
           <Badge variant={status.variant} className="text-sm px-3 py-1">
@@ -70,8 +70,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({
         </div>
 
         {/* Progress Info */}
-        <div className="text-sm text-gray-600 dark:text-gray-400">
-          <span className="font-semibold text-gray-900 dark:text-gray-900">
+        <div className="text-sm text-slate-600 dark:text-slate-400">
+          <span className="font-semibold text-slate-900 dark:text-slate-900">
             {paidMonths}
           </span>{' '}
           dari 12 bulan terbayar

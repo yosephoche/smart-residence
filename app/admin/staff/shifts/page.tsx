@@ -235,8 +235,8 @@ export default function ShiftTemplatesPage() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">{t('title')}</h1>
-          <p className="text-gray-500 mt-1">{t('subtitle')}</p>
+          <h1 className="text-3xl font-bold text-slate-900">{t('title')}</h1>
+          <p className="text-slate-500 mt-1">{t('subtitle')}</p>
         </div>
         <Button onClick={() => handleOpenModal()}>
           <Plus className="w-4 h-4 mr-2" />
@@ -268,7 +268,7 @@ export default function ShiftTemplatesPage() {
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Job Type */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 mb-1">
               {t('job_type')}
             </label>
             <select
@@ -277,7 +277,7 @@ export default function ShiftTemplatesPage() {
                 setFormData({ ...formData, jobType: e.target.value as JobType })
               }
               disabled={!!editingTemplate}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent disabled:bg-gray-100"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent disabled:bg-slate-100"
             >
               <option value="SECURITY">{tCommon('job_types.SECURITY')}</option>
               <option value="CLEANING">{tCommon('job_types.CLEANING')}</option>
@@ -286,7 +286,7 @@ export default function ShiftTemplatesPage() {
               <option value="OTHER">{tCommon('job_types.OTHER')}</option>
             </select>
             {editingTemplate && (
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-slate-500 mt-1">
                 {tCommon('messages.job_type_immutable')}
               </p>
             )}

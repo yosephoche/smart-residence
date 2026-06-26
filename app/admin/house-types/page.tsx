@@ -1,5 +1,7 @@
 "use client";
 
+import { motion } from "framer-motion";
+
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -129,9 +131,9 @@ export default function HouseTypesPage() {
       sortable: true,
       render: (_, type) => (
         <div>
-          <p className="font-semibold text-gray-900 text-lg">{type.typeName}</p>
+          <p className="font-semibold text-slate-900 text-lg">{type.typeName}</p>
           {type.description && (
-            <p className="text-sm text-gray-500 mt-0.5">{type.description}</p>
+            <p className="text-sm text-slate-500 mt-0.5">{type.description}</p>
           )}
         </div>
       ),
@@ -145,7 +147,7 @@ export default function HouseTypesPage() {
           <p className="font-bold text-primary-600 text-xl">
             {formatCurrency(price)}
           </p>
-          <p className="text-xs text-gray-500">{t('per_month')}</p>
+          <p className="text-xs text-slate-500">{t('per_month')}</p>
         </div>
       ),
     },
@@ -156,8 +158,8 @@ export default function HouseTypesPage() {
         const count = houses.filter((h) => h.houseTypeId === type.id).length;
         return (
           <div className="text-center">
-            <p className="text-2xl font-bold text-gray-900">{count}</p>
-            <p className="text-xs text-gray-500">{t('houses')}</p>
+            <p className="text-2xl font-bold text-slate-900">{count}</p>
+            <p className="text-xs text-slate-500">{t('houses')}</p>
           </div>
         );
       },
@@ -213,7 +215,7 @@ export default function HouseTypesPage() {
           <Skeleton className="h-24 rounded-xl" />
           <Skeleton className="h-24 rounded-xl" />
         </div>
-        <div className="bg-white rounded-xl border-2 border-gray-200 p-4 space-y-4">
+        <div className="bg-white rounded-xl border-2 border-slate-200 p-4 space-y-4">
           <Skeleton className="h-10 w-full" />
           <Skeleton className="h-5 w-40" />
         </div>
@@ -226,15 +228,24 @@ export default function HouseTypesPage() {
     );
   }
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.06, delayChildren: 0.02 } },
+  };
+  const itemVariants = {
+    hidden: { opacity: 0, y: 12 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] } },
+  };
+
   return (
-    <div className="space-y-6">
+    <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
+          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
             {t('title')}
           </h1>
-          <p className="text-gray-600 mt-1">
+          <p className="text-slate-600 mt-1">
             {t('subtitle')}
           </p>
         </div>
@@ -260,9 +271,9 @@ export default function HouseTypesPage() {
 
       {/* Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-white rounded-xl border-2 border-gray-200 p-4 shadow-sm">
-          <p className="text-sm font-medium text-gray-600">{t('total_types')}</p>
-          <p className="text-3xl font-bold text-gray-900 mt-1">{houseTypes.length}</p>
+        <div className="bg-white rounded-xl border-2 border-slate-200 p-4 shadow-sm">
+          <p className="text-sm font-medium text-slate-600">{t('total_types')}</p>
+          <p className="text-3xl font-bold text-slate-900 mt-1">{houseTypes.length}</p>
         </div>
         <div className="bg-success-50 rounded-xl border-2 border-success-200 p-4 shadow-sm">
           <p className="text-sm font-medium text-success-700">{t('houses_using_types')}</p>
@@ -271,7 +282,7 @@ export default function HouseTypesPage() {
       </div>
 
       {/* Search */}
-      <div className="bg-white rounded-xl border-2 border-gray-200 p-4">
+      <div className="bg-white rounded-xl border-2 border-slate-200 p-4">
         <Input
           placeholder={t('search_placeholder')}
           value={searchQuery}
@@ -284,8 +295,8 @@ export default function HouseTypesPage() {
           fullWidth
         />
 
-        <div className="mt-4 pt-4 border-t-2 border-gray-100">
-          <span className="text-sm text-gray-600">
+        <div className="mt-4 pt-4 border-t-2 border-slate-100">
+          <span className="text-sm text-slate-600">
             {t('showing_count', { filtered: filteredTypes.length, total: houseTypes.length })}
           </span>
         </div>
@@ -322,6 +333,6 @@ export default function HouseTypesPage() {
         variant="danger"
         isLoading={isDeleting}
       />
-    </div>
+    </motion.div>
   );
 }

@@ -75,7 +75,7 @@ export function GeofenceConfigForm({
       <div>
         <label
           htmlFor="radiusMeters"
-          className="block text-sm font-medium text-gray-700 mb-2"
+          className="block text-sm font-medium text-slate-700 mb-2"
         >
           Radius Geofence (meter)
         </label>
@@ -86,7 +86,7 @@ export function GeofenceConfigForm({
           min={1}
           max={1000}
           className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
-            errors.radiusMeters ? "border-red-500" : "border-gray-300"
+            errors.radiusMeters ? "border-red-500" : "border-slate-300"
           }`}
         />
         {errors.radiusMeters && (
@@ -94,7 +94,7 @@ export function GeofenceConfigForm({
             {errors.radiusMeters.message}
           </p>
         )}
-        <p className="text-sm text-gray-600 mt-1">
+        <p className="text-sm text-slate-600 mt-1">
           Staff harus berada dalam radius {radiusMeters}m dari titik pusat
           untuk absen
         </p>
@@ -104,7 +104,7 @@ export function GeofenceConfigForm({
       <div>
         <label
           htmlFor="centerLat"
-          className="block text-sm font-medium text-gray-700 mb-2"
+          className="block text-sm font-medium text-slate-700 mb-2"
         >
           Latitude Pusat Kantor
         </label>
@@ -116,7 +116,7 @@ export function GeofenceConfigForm({
           min={-90}
           max={90}
           className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
-            errors.centerLat ? "border-red-500" : "border-gray-300"
+            errors.centerLat ? "border-red-500" : "border-slate-300"
           }`}
         />
         {errors.centerLat && (
@@ -130,7 +130,7 @@ export function GeofenceConfigForm({
       <div>
         <label
           htmlFor="centerLon"
-          className="block text-sm font-medium text-gray-700 mb-2"
+          className="block text-sm font-medium text-slate-700 mb-2"
         >
           Longitude Pusat Kantor
         </label>
@@ -142,7 +142,7 @@ export function GeofenceConfigForm({
           min={-180}
           max={180}
           className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
-            errors.centerLon ? "border-red-500" : "border-gray-300"
+            errors.centerLon ? "border-red-500" : "border-slate-300"
           }`}
         />
         {errors.centerLon && (
@@ -154,12 +154,12 @@ export function GeofenceConfigForm({
 
       {/* Preview Section */}
       {!errors.radiusMeters && !errors.centerLat && !errors.centerLon && (
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-          <div className="flex items-center gap-2 text-gray-700 mb-2">
-            <MapPin className="w-5 h-5 text-gray-500" />
+        <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
+          <div className="flex items-center gap-2 text-slate-700 mb-2">
+            <MapPin className="w-5 h-5 text-slate-500" />
             <span className="font-medium">Konfigurasi Saat Ini:</span>
           </div>
-          <ul className="text-sm text-gray-600 space-y-1 ml-7">
+          <ul className="text-sm text-slate-600 space-y-1 ml-7">
             <li>
               Radius:{" "}
               <span className="font-semibold text-blue-600">
@@ -177,7 +177,7 @@ export function GeofenceConfigForm({
       )}
 
       {/* Submit Button */}
-      <div className="flex justify-end pt-4 border-t border-gray-200">
+      <div className="flex justify-end pt-4 border-t border-slate-200">
         <button
           type="submit"
           disabled={isSaving}

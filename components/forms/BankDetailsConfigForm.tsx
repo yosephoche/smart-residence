@@ -99,7 +99,7 @@ export default function BankDetailsConfigForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-slate-700 mb-2">
           Nama Bank
         </label>
         <Input
@@ -112,7 +112,7 @@ export default function BankDetailsConfigForm() {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-slate-700 mb-2">
           Nomor Rekening
         </label>
         <Input
@@ -123,11 +123,11 @@ export default function BankDetailsConfigForm() {
           required
           pattern="\d+"
         />
-        <p className="text-xs text-gray-500 mt-1">Hanya angka yang diizinkan</p>
+        <p className="text-xs text-slate-500 mt-1">Hanya angka yang diizinkan</p>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-slate-700 mb-2">
           Nama Pemegang Rekening
         </label>
         <Input

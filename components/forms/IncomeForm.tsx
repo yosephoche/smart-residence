@@ -56,7 +56,7 @@ export default function IncomeForm({ onSubmit, onCancel, isSubmitting, initialDa
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-slate-700 mb-1">
           Tanggal <span className="text-danger-600">*</span>
         </label>
         <input
@@ -64,19 +64,19 @@ export default function IncomeForm({ onSubmit, onCancel, isSubmitting, initialDa
           value={formData.date}
           onChange={(e) => setFormData({ ...formData, date: e.target.value })}
           max={new Date().toISOString().split("T")[0]}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+          className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500"
         />
         {errors.date && <p className="text-danger-600 text-xs mt-1">{errors.date}</p>}
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-slate-700 mb-1">
           Kategori <span className="text-danger-600">*</span>
         </label>
         <select
           value={formData.category}
           onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+          className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500"
         >
           <option value="">Pilih Kategori</option>
           {categories.map((cat) => (
@@ -89,7 +89,7 @@ export default function IncomeForm({ onSubmit, onCancel, isSubmitting, initialDa
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-slate-700 mb-1">
           Jumlah (Rp) <span className="text-danger-600">*</span>
         </label>
         <input
@@ -98,13 +98,13 @@ export default function IncomeForm({ onSubmit, onCancel, isSubmitting, initialDa
           onChange={(e) => setFormData({ ...formData, amount: Number(e.target.value) })}
           min="0"
           step="1"
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+          className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500"
         />
         {errors.amount && <p className="text-danger-600 text-xs mt-1">{errors.amount}</p>}
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-slate-700 mb-1">
           Deskripsi <span className="text-danger-600">*</span>
         </label>
         <input
@@ -112,13 +112,13 @@ export default function IncomeForm({ onSubmit, onCancel, isSubmitting, initialDa
           value={formData.description}
           onChange={(e) => setFormData({ ...formData, description: e.target.value })}
           maxLength={200}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+          className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500"
         />
         {errors.description && <p className="text-danger-600 text-xs mt-1">{errors.description}</p>}
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-slate-700 mb-1">
           Catatan (Opsional)
         </label>
         <textarea
@@ -126,7 +126,7 @@ export default function IncomeForm({ onSubmit, onCancel, isSubmitting, initialDa
           onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
           maxLength={500}
           rows={3}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+          className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500"
         />
       </div>
 

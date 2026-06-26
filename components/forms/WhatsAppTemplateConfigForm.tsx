@@ -69,7 +69,7 @@ export default function WhatsAppTemplateConfigForm({
     <form onSubmit={handleSubmit} className="space-y-4">
       {/* Template input */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-slate-700 mb-1">
           Template Pesan
         </label>
         <textarea
@@ -77,20 +77,20 @@ export default function WhatsAppTemplateConfigForm({
           onChange={(e) => setTemplate(e.target.value)}
           rows={4}
           className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none ${
-            isOverLimit ? "border-red-400 focus:ring-red-400" : "border-gray-300"
+            isOverLimit ? "border-red-400 focus:ring-red-400" : "border-slate-300"
           }`}
           placeholder="Contoh: Halo, saya warga blok {block} no {number}, saya ingin minta bantuan"
         />
         <div className="flex items-center justify-between mt-1">
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-slate-500">
             Placeholder yang tersedia:{" "}
-            <code className="bg-gray-100 px-1 rounded font-mono">{"{block}"}</code>{" "}
+            <code className="bg-slate-100 px-1 rounded font-mono">{"{block}"}</code>{" "}
             dan{" "}
-            <code className="bg-gray-100 px-1 rounded font-mono">{"{number}"}</code>
+            <code className="bg-slate-100 px-1 rounded font-mono">{"{number}"}</code>
           </p>
           <span
             className={`text-xs font-medium ${
-              isOverLimit ? "text-red-500" : "text-gray-400"
+              isOverLimit ? "text-red-500" : "text-slate-400"
             }`}
           >
             {charCount}/500

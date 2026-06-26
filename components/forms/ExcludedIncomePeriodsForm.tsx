@@ -73,11 +73,11 @@ export default function ExcludedIncomePeriodsForm({
     <div className="space-y-5">
       {/* Current excluded periods */}
       <div>
-        <p className="text-sm font-medium text-gray-700 mb-2">
+        <p className="text-sm font-medium text-slate-700 mb-2">
           Periode yang dikecualikan ({periods.length})
         </p>
         {periods.length === 0 ? (
-          <p className="text-sm text-gray-400 italic">
+          <p className="text-sm text-slate-400 italic">
             Belum ada periode yang dikecualikan. Semua pembayaran yang disetujui akan dibuat sebagai pemasukan.
           </p>
         ) : (
@@ -107,12 +107,12 @@ export default function ExcludedIncomePeriodsForm({
 
       {/* Add period */}
       <div>
-        <p className="text-sm font-medium text-gray-700 mb-2">Tambah periode baru</p>
+        <p className="text-sm font-medium text-slate-700 mb-2">Tambah periode baru</p>
         <div className="flex items-center gap-2 flex-wrap">
           <select
             value={addMonth}
             onChange={(e) => setAddMonth(Number(e.target.value))}
-            className="px-3 py-2 text-sm bg-white border-2 border-gray-300 rounded-lg focus:border-primary-500 focus:outline-none"
+            className="px-3 py-2 text-sm bg-white border-2 border-slate-300 rounded-lg focus:border-primary-500 focus:outline-none"
           >
             {MONTH_NAMES.map((name, i) => (
               <option key={i + 1} value={i + 1}>
@@ -124,7 +124,7 @@ export default function ExcludedIncomePeriodsForm({
           <select
             value={addYear}
             onChange={(e) => setAddYear(Number(e.target.value))}
-            className="px-3 py-2 text-sm bg-white border-2 border-gray-300 rounded-lg focus:border-primary-500 focus:outline-none"
+            className="px-3 py-2 text-sm bg-white border-2 border-slate-300 rounded-lg focus:border-primary-500 focus:outline-none"
           >
             {yearOptions.map((y) => (
               <option key={y} value={y}>

@@ -134,8 +134,8 @@ export default function PaymentUploadPage() {
     return (
       <div className="max-w-2xl mx-auto space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">{t('upload_title')}</h1>
-          <p className="text-gray-600 mt-1">{t('upload_subtitle')}</p>
+          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">{t('upload_title')}</h1>
+          <p className="text-slate-600 mt-1">{t('upload_subtitle')}</p>
         </div>
         <Alert
           variant="warning"
@@ -152,14 +152,14 @@ export default function PaymentUploadPage() {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div>
-        <button onClick={() => router.push("/user/dashboard")} className="text-gray-600 hover:text-gray-900 font-medium mb-4 flex items-center gap-1">
+        <button onClick={() => router.push("/user/dashboard")} className="text-slate-600 hover:text-slate-900 font-medium mb-4 flex items-center gap-1">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
           {t('back_to_dashboard')}
         </button>
-        <h1 className="text-3xl font-bold text-gray-900 tracking-tight">{t('upload_title')}</h1>
-        <p className="text-gray-600 mt-1">{t('upload_subtitle_full')}</p>
+        <h1 className="text-3xl font-bold text-slate-900 tracking-tight">{t('upload_title')}</h1>
+        <p className="text-slate-600 mt-1">{t('upload_subtitle_full')}</p>
       </div>
 
       {error && <Alert variant="error" message={error} onClose={() => setError("")} />}

@@ -78,7 +78,7 @@ export default function ResidenceInfoConfigForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-slate-700 mb-2">
           Nama Perumahan
         </label>
         <Input
@@ -91,8 +91,8 @@ export default function ResidenceInfoConfigForm() {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Alamat Perumahan <span className="text-gray-400 font-normal">(opsional)</span>
+        <label className="block text-sm font-medium text-slate-700 mb-2">
+          Alamat Perumahan <span className="text-slate-400 font-normal">(opsional)</span>
         </label>
         <Input
           type="text"

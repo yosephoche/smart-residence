@@ -1,5 +1,7 @@
 "use client";
 
+import { motion } from "framer-motion";
+
 import { useState, useEffect, useMemo } from "react";
 import { useTranslations } from "next-intl";
 import Button from "@/components/ui/Button";
@@ -202,21 +204,21 @@ export default function UrgentContactsPage() {
       key: "order",
       header: "Urutan",
       render: (order) => (
-        <span className="text-sm font-medium text-gray-600">{order}</span>
+        <span className="text-sm font-medium text-slate-600">{order}</span>
       ),
     },
     {
       key: "serviceType",
       header: "Tipe Layanan",
       render: (serviceType) => (
-        <span className="text-sm font-medium text-gray-800">{serviceType}</span>
+        <span className="text-sm font-medium text-slate-800">{serviceType}</span>
       ),
     },
     {
       key: "name",
       header: "Nama Kontak",
       render: (name) => (
-        <span className="text-sm font-semibold text-gray-900">{name}</span>
+        <span className="text-sm font-semibold text-slate-900">{name}</span>
       ),
     },
     {
@@ -224,7 +226,7 @@ export default function UrgentContactsPage() {
       header: "Nomor WhatsApp",
       render: (phone) => (
         <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-700 font-mono">{formatPhone(phone)}</span>
+          <span className="text-sm text-slate-700 font-mono">{formatPhone(phone)}</span>
           <a
             href={buildWaLink(phone)}
             target="_blank"
@@ -244,7 +246,7 @@ export default function UrgentContactsPage() {
           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
             isActive
               ? "bg-green-100 text-green-800"
-              : "bg-gray-100 text-gray-500"
+              : "bg-slate-100 text-slate-500"
           }`}
         >
           {isActive ? "Aktif" : "Nonaktif"}
@@ -307,15 +309,24 @@ export default function UrgentContactsPage() {
 
   const activeCount = contacts.filter((c) => c.isActive).length;
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.06, delayChildren: 0.02 } },
+  };
+  const itemVariants = {
+    hidden: { opacity: 0, y: 12 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] } },
+  };
+
   return (
-    <div className="space-y-6">
+    <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
+          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
             Kontak Darurat
           </h1>
-          <p className="text-gray-600 mt-1">
+          <p className="text-slate-600 mt-1">
             Kelola kontak darurat dan layanan yang ditampilkan kepada penghuni
           </p>
         </div>
@@ -337,9 +348,9 @@ export default function UrgentContactsPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-white rounded-xl border-2 border-gray-200 p-4 shadow-sm">
-          <p className="text-sm font-medium text-gray-600">Total Kontak</p>
-          <p className="text-3xl font-bold text-gray-900 mt-1">{contacts.length}</p>
+        <div className="bg-white rounded-xl border-2 border-slate-200 p-4 shadow-sm">
+          <p className="text-sm font-medium text-slate-600">Total Kontak</p>
+          <p className="text-3xl font-bold text-slate-900 mt-1">{contacts.length}</p>
         </div>
         <div className="bg-success-50 rounded-xl border-2 border-success-200 p-4 shadow-sm">
           <p className="text-sm font-medium text-success-700">Kontak Aktif</p>
@@ -348,7 +359,7 @@ export default function UrgentContactsPage() {
       </div>
 
       {/* Search */}
-      <div className="bg-white rounded-xl border-2 border-gray-200 p-4">
+      <div className="bg-white rounded-xl border-2 border-slate-200 p-4">
         <Input
           placeholder="Cari berdasarkan nama, tipe layanan, atau nomor..."
           value={searchQuery}
@@ -360,8 +371,8 @@ export default function UrgentContactsPage() {
           }
           fullWidth
         />
-        <div className="mt-4 pt-4 border-t-2 border-gray-100">
-          <span className="text-sm text-gray-600">
+        <div className="mt-4 pt-4 border-t-2 border-slate-100">
+          <span className="text-sm text-slate-600">
             Menampilkan {filteredContacts.length} dari {contacts.length} kontak
           </span>
         </div>
@@ -391,14 +402,14 @@ export default function UrgentContactsPage() {
       {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
-            <div className="p-6 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">
+            <div className="p-6 border-b border-slate-200">
+              <h2 className="text-lg font-semibold text-slate-900">
                 {editingContact ? "Edit Kontak" : "Tambah Kontak Darurat"}
               </h2>
             </div>
             <div className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-slate-700 mb-1">
                   Tipe Layanan <span className="text-red-500">*</span>
                 </label>
                 <Input
@@ -411,7 +422,7 @@ export default function UrgentContactsPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-slate-700 mb-1">
                   Nama Kontak <span className="text-red-500">*</span>
                 </label>
                 <Input
@@ -424,7 +435,7 @@ export default function UrgentContactsPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-slate-700 mb-1">
                   Nomor WhatsApp <span className="text-red-500">*</span>
                 </label>
                 <Input
@@ -435,12 +446,12 @@ export default function UrgentContactsPage() {
                   placeholder="Contoh: 08123456789 atau 628123456789"
                   fullWidth
                 />
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-slate-500 mt-1">
                   Format Indonesia: 08xxx atau 628xxx
                 </p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-slate-700 mb-1">
                   Urutan Tampil
                 </label>
                 <Input
@@ -455,7 +466,7 @@ export default function UrgentContactsPage() {
                   placeholder="0"
                   fullWidth
                 />
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-slate-500 mt-1">
                   Angka lebih kecil muncul lebih dulu
                 </p>
               </div>
@@ -468,18 +479,18 @@ export default function UrgentContactsPage() {
                     onChange={(e) =>
                       setFormData((f) => ({ ...f, isActive: e.target.checked }))
                     }
-                    className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                    className="w-4 h-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
                   />
                   <label
                     htmlFor="isActive"
-                    className="text-sm font-medium text-gray-700"
+                    className="text-sm font-medium text-slate-700"
                   >
                     Kontak Aktif (ditampilkan kepada penghuni)
                   </label>
                 </div>
               )}
             </div>
-            <div className="p-6 border-t border-gray-200 flex justify-end gap-3">
+            <div className="p-6 border-t border-slate-200 flex justify-end gap-3">
               <Button
                 variant="ghost"
                 onClick={() => setModalOpen(false)}
@@ -510,6 +521,6 @@ export default function UrgentContactsPage() {
         variant="danger"
         isLoading={isDeleting}
       />
-    </div>
+    </motion.div>
   );
 }

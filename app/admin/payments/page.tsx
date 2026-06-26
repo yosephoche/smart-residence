@@ -1,5 +1,7 @@
 "use client";
 
+import { motion } from "framer-motion";
+
 import { useState, useMemo, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
@@ -17,8 +19,11 @@ import Badge from "@/components/ui/Badge";
 import AdminCreatePaymentForm from "@/components/forms/AdminCreatePaymentForm";
 import BulkCreatePaymentForm from "@/components/forms/BulkCreatePaymentForm";
 import { exportCSV, exportXLSX, mapPaymentsForExport, mapHousesWithStatusForExport } from "@/lib/utils/export";
+import { useDebounce } from "@/lib/hooks/useDebounce";
 import { usePagination } from "@/lib/hooks/usePagination";
 import { ImageModal } from "@/components/ui/ImageModal";
+import BulkActionsBar from "@/components/payments/BulkActionsBar";
+import WhatsAppModal from "@/components/payments/WhatsAppModal";
 
 export const dynamic = 'force-dynamic';
 
@@ -66,6 +71,7 @@ export default function AdminPaymentsPage() {
   const [filterMonth, setFilterMonth] = useState(0);
   const [filterBlock, setFilterBlock] = useState("");
   const [filterHouseNumber, setFilterHouseNumber] = useState("");
+  const debouncedHouseNumber = useDebounce(filterHouseNumber, 300);
 
   // Houses view (Paid / Unpaid pills)
   const [housesViewMode, setHousesViewMode] = useState<"PAID" | "UNPAID" | null>(null);
@@ -218,13 +224,13 @@ export default function AdminPaymentsPage() {
       result = result.filter((p) => p.house?.block === filterBlock);
     }
     // 6. House number
-    if (filterHouseNumber.trim() !== "") {
+    if (debouncedHouseNumber.trim() !== "") {
       result = result.filter((p) =>
-        p.house?.houseNumber?.toLowerCase().includes(filterHouseNumber.trim().toLowerCase())
+        p.house?.houseNumber?.toLowerCase().includes(debouncedHouseNumber.trim().toLowerCase())
       );
     }
     return result;
-  }, [payments, statusFilter, filterUserId, filterYear, filterMonth, filterDate, filterBlock, filterHouseNumber]);
+  }, [payments, statusFilter, filterUserId, filterYear, filterMonth, filterDate, filterBlock, debouncedHouseNumber]);
 
   // Houses view: filter by resident then split by paid/unpaid
   const displayedHouses = useMemo(() => {
@@ -235,15 +241,15 @@ export default function AdminPaymentsPage() {
     if (filterBlock !== "") {
       list = list.filter((h) => h.block === filterBlock);
     }
-    if (filterHouseNumber.trim() !== "") {
+    if (debouncedHouseNumber.trim() !== "") {
       list = list.filter((h) =>
-        h.houseNumber?.toLowerCase().includes(filterHouseNumber.trim().toLowerCase())
+        h.houseNumber?.toLowerCase().includes(debouncedHouseNumber.trim().toLowerCase())
       );
     }
     if (housesViewMode === "PAID")   list = list.filter((h) => h.paymentStatus !== null);
     if (housesViewMode === "UNPAID") list = list.filter((h) => h.paymentStatus === null);
     return list;
-  }, [allHousesWithStatus, housesViewMode, filterUserId, filterBlock, filterHouseNumber]);
+  }, [allHousesWithStatus, housesViewMode, filterUserId, filterBlock, debouncedHouseNumber]);
 
   // Pagination for payments table
   const {
@@ -507,7 +513,7 @@ export default function AdminPaymentsPage() {
             selectedPaymentIds.length === paginatedPayments.filter((p) => p.status === "PENDING").length
           }
           onChange={handleSelectAll}
-          className="w-4 h-4 text-primary-600 rounded border-gray-300 focus:ring-primary-500"
+          className="w-4 h-4 text-primary-600 rounded border-slate-300 focus:ring-primary-500"
         />
       ) as any,
       render: (_, payment) => (
@@ -516,7 +522,7 @@ export default function AdminPaymentsPage() {
           checked={selectedPaymentIds.includes(payment.id)}
           onChange={() => handleToggleSelect(payment.id)}
           disabled={payment.status !== "PENDING"}
-          className="w-4 h-4 text-primary-600 rounded border-gray-300 focus:ring-primary-500 disabled:opacity-30 disabled:cursor-not-allowed"
+          className="w-4 h-4 text-primary-600 rounded border-slate-300 focus:ring-primary-500 disabled:opacity-30 disabled:cursor-not-allowed"
         />
       ),
     },
@@ -533,12 +539,12 @@ export default function AdminPaymentsPage() {
               </span>
             </div>
             <div>
-              <p className="font-medium text-gray-900">{user.name}</p>
-              <p className="text-xs text-gray-500">{user.email}</p>
+              <p className="font-medium text-slate-900">{user.name}</p>
+              <p className="text-xs text-slate-500">{user.email}</p>
             </div>
           </div>
         ) : (
-          <span className="text-gray-400">{tCommon('unknown')}</span>
+          <span className="text-slate-400">{tCommon('unknown')}</span>
         );
       },
     },
@@ -549,11 +555,11 @@ export default function AdminPaymentsPage() {
         const house = payment.house;
         return house ? (
           <div>
-            <p className="font-semibold text-gray-900">{house.houseNumber}</p>
-            <p className="text-xs text-gray-500">{house.houseType?.typeName}</p>
+            <p className="font-semibold text-slate-900">{house.houseNumber}</p>
+            <p className="text-xs text-slate-500">{house.houseType?.typeName}</p>
           </div>
         ) : (
-          <span className="text-gray-400">{tCommon('unknown')}</span>
+          <span className="text-slate-400">{tCommon('unknown')}</span>
         );
       },
     },
@@ -584,10 +590,10 @@ export default function AdminPaymentsPage() {
 
         return (
           <div>
-            <p className="font-semibold text-gray-900">
+            <p className="font-semibold text-slate-900">
               {formatCurrency(displayAmount)}
             </p>
-            <p className="text-xs text-gray-500">{periodLabel}</p>
+            <p className="text-xs text-slate-500">{periodLabel}</p>
           </div>
         );
       },
@@ -597,7 +603,7 @@ export default function AdminPaymentsPage() {
       header: t('submitted'),
       sortable: true,
       render: (value) => (
-        <span className="text-sm text-gray-600">{formatDate(value)}</span>
+        <span className="text-sm text-slate-600">{formatDate(value)}</span>
       ),
     },
     {
@@ -612,13 +618,13 @@ export default function AdminPaymentsPage() {
       render: (_, payment) => {
         if (!payment.proofImagePath) {
           return (
-            <span className="text-xs text-gray-400 italic">—</span>
+            <span className="text-xs text-slate-400 italic">—</span>
           );
         }
         return (
           <button
             onClick={() => handleImageClick(payment.proofImagePath!)}
-            className="relative w-16 h-16 rounded-lg overflow-hidden border-2 border-gray-200 hover:border-primary-400 transition-all group"
+            className="relative w-16 h-16 rounded-lg overflow-hidden border-2 border-slate-200 hover:border-primary-400 transition-all group"
           >
             <Image
               src={payment.proofImagePath}
@@ -670,12 +676,12 @@ export default function AdminPaymentsPage() {
               </span>
             </div>
             <div>
-              <p className="font-medium text-gray-900">{user.name}</p>
-              <p className="text-xs text-gray-500">{user.email}</p>
+              <p className="font-medium text-slate-900">{user.name}</p>
+              <p className="text-xs text-slate-500">{user.email}</p>
             </div>
           </div>
         ) : (
-          <span className="text-gray-400">—</span>
+          <span className="text-slate-400">—</span>
         );
       },
     },
@@ -684,8 +690,8 @@ export default function AdminPaymentsPage() {
       header: t('house'),
       render: (_, house) => (
         <div>
-          <p className="font-semibold text-gray-900">{house.houseNumber}</p>
-          <p className="text-xs text-gray-500">{house.block}</p>
+          <p className="font-semibold text-slate-900">{house.houseNumber}</p>
+          <p className="text-xs text-slate-500">{house.block}</p>
         </div>
       ),
     },
@@ -694,8 +700,8 @@ export default function AdminPaymentsPage() {
       header: t('type_and_rate'),
       render: (_, house) => (
         <div>
-          <p className="font-medium text-gray-900">{house.houseType?.typeName ?? "—"}</p>
-          <p className="text-xs text-gray-500">
+          <p className="font-medium text-slate-900">{house.houseType?.typeName ?? "—"}</p>
+          <p className="text-xs text-slate-500">
             {house.houseType?.price != null ? formatCurrency(Number(house.houseType.price)) : "—"}{t('per_month')}
           </p>
         </div>
@@ -729,8 +735,17 @@ export default function AdminPaymentsPage() {
     );
   }
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.06, delayChildren: 0.02 } },
+  };
+  const itemVariants = {
+    hidden: { opacity: 0, y: 12 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] } },
+  };
+
   return (
-    <div className="space-y-6">
+    <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-6">
       {/* Success alert */}
       {successMessage && (
         <Alert
@@ -745,8 +760,8 @@ export default function AdminPaymentsPage() {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">{t('title')}</h1>
-          <p className="text-gray-600 mt-1">{t('subtitle')}</p>
+          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">{t('title')}</h1>
+          <p className="text-slate-600 mt-1">{t('subtitle')}</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="secondary" size="lg" onClick={() => setBulkCreateModalOpen(true)}>
@@ -766,10 +781,10 @@ export default function AdminPaymentsPage() {
 
       {/* Stats cards */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-        <div className="bg-white rounded-xl border-2 border-gray-200 p-4 shadow-sm">
-          <p className="text-sm font-medium text-gray-600 mb-1">{t('total_payments')}</p>
-          <p className="text-3xl font-bold text-gray-900">{monthlyStats.total}</p>
-          <p className="text-xs text-gray-400 mt-1">{monthlyStats.periodLabel}</p>
+        <div className="bg-white rounded-xl border-2 border-slate-200 p-4 shadow-sm">
+          <p className="text-sm font-medium text-slate-600 mb-1">{t('total_payments')}</p>
+          <p className="text-3xl font-bold text-slate-900">{monthlyStats.total}</p>
+          <p className="text-xs text-slate-400 mt-1">{monthlyStats.periodLabel}</p>
         </div>
         <div className="bg-warning-50 rounded-xl border-2 border-warning-200 p-4 shadow-sm">
           <p className="text-sm font-medium text-warning-700 mb-1">{t('pending')}</p>
@@ -791,69 +806,44 @@ export default function AdminPaymentsPage() {
       </div>
 
       {/* Filter bar + Export */}
-      <div className="bg-white rounded-xl border-2 border-gray-200 shadow-sm">
-        {/* Top row: status tabs + action buttons */}
-        <div className="flex flex-wrap items-center justify-between gap-2 p-3">
-          <div className="flex flex-wrap items-center gap-1.5">
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm space-y-3 p-4">
+
+        {/* Row 1 — Segmented tab control */}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-1 bg-slate-100 rounded-xl p-1">
             {[
               { value: "ALL" as const, label: t('all_payments'), count: stats.total },
               { value: "PENDING" as const, label: t('pending_review'), count: stats.pending },
               { value: "APPROVED" as const, label: t('approved'), count: stats.approved },
               { value: "REJECTED" as const, label: t('rejected'), count: stats.rejected },
-            ].map((filter) => (
-              <button
-                key={filter.value}
-                onClick={() => handleStatusFilter(filter.value)}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                  housesViewMode === null && statusFilter === filter.value
-                    ? "bg-primary-600 text-white shadow-md"
-                    : "text-gray-700 hover:bg-gray-100"
-                }`}
-              >
-                {filter.label}
-                {filter.count > 0 && (
-                  <span className="ml-1.5 text-xs opacity-75">({filter.count})</span>
-                )}
-              </button>
-            ))}
-
-            {/* Separator */}
-            <div className="h-6 w-px bg-gray-200 mx-1" />
-
-            {/* Paid / Unpaid pills */}
-            <button
-              onClick={() => enterHousesMode("PAID")}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                housesViewMode === "PAID"
-                  ? "bg-success-600 text-white shadow-md"
-                  : "text-success-700 bg-success-50 border border-success-300 hover:bg-success-100"
-              }`}
-            >
-              {t('paid')}
-              {allHousesWithStatus.length > 0 && (
-                <span className="ml-1.5 text-xs opacity-75">({paidCount})</span>
-              )}
-            </button>
-            <button
-              onClick={() => enterHousesMode("UNPAID")}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                housesViewMode === "UNPAID"
-                  ? "bg-warning-600 text-white shadow-md"
-                  : "text-warning-700 bg-warning-50 border border-warning-300 hover:bg-warning-100"
-              }`}
-            >
-              {t('unpaid')}
-              {allHousesWithStatus.length > 0 && (
-                <span className="ml-1.5 text-xs opacity-75">({unpaidCount})</span>
-              )}
-            </button>
+            ].map((tab) => {
+              const isActive = housesViewMode === null && statusFilter === tab.value;
+              return (
+                <button
+                  key={tab.value}
+                  onClick={() => handleStatusFilter(tab.value)}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                    isActive
+                      ? "bg-white text-slate-900 shadow-sm"
+                      : "text-slate-500 hover:text-slate-700"
+                  }`}
+                >
+                  {tab.label}
+                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+                    isActive ? "bg-blue-600 text-white" : "bg-slate-200 text-slate-500"
+                  }`}>
+                    {tab.count}
+                  </span>
+                </button>
+              );
+            })}
           </div>
 
+          {/* Action buttons */}
           <div className="flex items-center gap-2">
-            {/* WhatsApp message generator */}
             <button
               onClick={openWhatsappModal}
-              className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-green-700 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg hover:bg-emerald-100 transition-colors"
             >
               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
@@ -861,32 +851,30 @@ export default function AdminPaymentsPage() {
               WhatsApp
             </button>
 
-            {/* Export dropdown */}
             <div className="relative" ref={exportDropdownRef}>
-              <Button
-                variant="secondary"
-                size="md"
+              <button
                 onClick={() => setShowExportDropdown(!showExportDropdown)}
+                className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-slate-600 bg-slate-50 border border-slate-200 rounded-lg hover:bg-slate-100 transition-colors"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                 </svg>
                 {t('export')}
                 <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L10 6.414l-3.293 3.293a1 1 0 01-1.414 0z" />
+                  <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
                 </svg>
-              </Button>
+              </button>
               {showExportDropdown && (
-                <div className="absolute right-0 mt-1 w-44 bg-white rounded-lg border-2 border-gray-200 shadow-lg z-10">
+                <div className="absolute right-0 mt-1 w-44 bg-white rounded-lg border border-slate-200 shadow-lg z-10">
                   <button
                     onClick={() => handleExport("csv")}
-                    className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    className="block w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors rounded-t-lg"
                   >
                     {t('export_csv')}
                   </button>
                   <button
                     onClick={() => handleExport("xlsx")}
-                    className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors border-t border-gray-100"
+                    className="block w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors border-t border-slate-100 rounded-b-lg"
                   >
                     {t('export_xlsx')}
                   </button>
@@ -896,19 +884,62 @@ export default function AdminPaymentsPage() {
           </div>
         </div>
 
-        {/* Divider */}
-        <div className="border-t border-gray-100" />
+        {/* Row 2 — Houses view toggle (Lunas / Belum Bayar) */}
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-medium text-slate-400">Tampilkan:</span>
+          <button
+            onClick={() => {
+              if (housesViewMode === "PAID") { setHousesViewMode(null); setStatusFilter("ALL"); }
+              else enterHousesMode("PAID");
+            }}
+            className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full transition-all ${
+              housesViewMode === "PAID"
+                ? "bg-emerald-600 text-white"
+                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+            }`}
+          >
+            {t('paid')}
+            {allHousesWithStatus.length > 0 && (
+              <span className={`text-[10px] font-bold px-1 py-0.5 rounded-full ${
+                housesViewMode === "PAID" ? "bg-white/20 text-white" : "bg-slate-200 text-slate-500"
+              }`}>{paidCount}</span>
+            )}
+          </button>
+          <button
+            onClick={() => {
+              if (housesViewMode === "UNPAID") { setHousesViewMode(null); setStatusFilter("ALL"); }
+              else enterHousesMode("UNPAID");
+            }}
+            className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full transition-all ${
+              housesViewMode === "UNPAID"
+                ? "bg-amber-500 text-white"
+                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+            }`}
+          >
+            {t('unpaid')}
+            {allHousesWithStatus.length > 0 && (
+              <span className={`text-[10px] font-bold px-1 py-0.5 rounded-full ${
+                housesViewMode === "UNPAID" ? "bg-white/20 text-white" : "bg-slate-200 text-slate-500"
+              }`}>{unpaidCount}</span>
+            )}
+          </button>
+        </div>
 
-        {/* Filter grid with labels */}
-        <div className="p-3">
+        {/* Row 3 — Filter area */}
+        <div className="bg-slate-50 rounded-xl p-3 space-y-3">
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+
             {/* Penghuni */}
-            <div>
-              <label className="text-xs font-medium text-gray-500 mb-1 block">Penghuni</label>
+            <div className="lg:col-span-2">
+              <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5 block">Penghuni</label>
               <select
                 value={filterUserId}
                 onChange={(e) => setFilterUserId(e.target.value)}
-                className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:border-primary-500 focus:ring-2 focus:ring-primary-100 focus:outline-none"
+                className={`w-full px-3 py-2 text-sm rounded-lg border transition-colors focus:outline-none focus:ring-2 focus:ring-blue-100 ${
+                  filterUserId !== ""
+                    ? "border-blue-400 bg-blue-50 text-blue-700 font-medium"
+                    : "border-slate-200 bg-white text-slate-700"
+                }`}
               >
                 <option value="">{t('all_residents')}</option>
                 {users
@@ -921,11 +952,15 @@ export default function AdminPaymentsPage() {
 
             {/* Bulan */}
             <div>
-              <label className="text-xs font-medium text-gray-500 mb-1 block">Bulan</label>
+              <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5 block">Bulan</label>
               <select
                 value={filterMonth}
                 onChange={(e) => setFilterMonth(Number(e.target.value))}
-                className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:border-primary-500 focus:ring-2 focus:ring-primary-100 focus:outline-none"
+                className={`w-full px-3 py-2 text-sm rounded-lg border transition-colors focus:outline-none focus:ring-2 focus:ring-blue-100 ${
+                  filterMonth !== 0
+                    ? "border-blue-400 bg-blue-50 text-blue-700 font-medium"
+                    : "border-slate-200 bg-white text-slate-700"
+                }`}
               >
                 {housesViewMode === null && <option value={0}>{t('all_months')}</option>}
                 {INDONESIAN_MONTHS.map((name, i) => (
@@ -936,11 +971,15 @@ export default function AdminPaymentsPage() {
 
             {/* Tahun */}
             <div>
-              <label className="text-xs font-medium text-gray-500 mb-1 block">Tahun</label>
+              <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5 block">Tahun</label>
               <select
                 value={filterYear}
                 onChange={(e) => setFilterYear(Number(e.target.value))}
-                className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:border-primary-500 focus:ring-2 focus:ring-primary-100 focus:outline-none"
+                className={`w-full px-3 py-2 text-sm rounded-lg border transition-colors focus:outline-none focus:ring-2 focus:ring-blue-100 ${
+                  filterYear !== 0
+                    ? "border-blue-400 bg-blue-50 text-blue-700 font-medium"
+                    : "border-slate-200 bg-white text-slate-700"
+                }`}
               >
                 {housesViewMode === null && <option value={0}>{t('all_years')}</option>}
                 {availableYears.map((y) => (
@@ -951,11 +990,15 @@ export default function AdminPaymentsPage() {
 
             {/* Blok */}
             <div>
-              <label className="text-xs font-medium text-gray-500 mb-1 block">Blok</label>
+              <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5 block">Blok</label>
               <select
                 value={filterBlock}
                 onChange={(e) => setFilterBlock(e.target.value)}
-                className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:border-primary-500 focus:ring-2 focus:ring-primary-100 focus:outline-none"
+                className={`w-full px-3 py-2 text-sm rounded-lg border transition-colors focus:outline-none focus:ring-2 focus:ring-blue-100 ${
+                  filterBlock !== ""
+                    ? "border-blue-400 bg-blue-50 text-blue-700 font-medium"
+                    : "border-slate-200 bg-white text-slate-700"
+                }`}
               >
                 <option value="">Semua Blok</option>
                 {availableBlocks.map((b) => (
@@ -966,42 +1009,48 @@ export default function AdminPaymentsPage() {
 
             {/* No. Rumah */}
             <div>
-              <label className="text-xs font-medium text-gray-500 mb-1 block">No. Rumah</label>
+              <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5 block">No. Rumah</label>
               <input
                 type="text"
-                placeholder="Cari no. rumah..."
+                placeholder="Cari..."
                 value={filterHouseNumber}
                 onChange={(e) => setFilterHouseNumber(e.target.value)}
-                className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:border-primary-500 focus:ring-2 focus:ring-primary-100 focus:outline-none"
+                className={`w-full px-3 py-2 text-sm rounded-lg border transition-colors focus:outline-none focus:ring-2 focus:ring-blue-100 ${
+                  filterHouseNumber !== ""
+                    ? "border-blue-400 bg-blue-50 text-blue-700 font-medium placeholder:text-blue-300"
+                    : "border-slate-200 bg-white text-slate-700"
+                }`}
               />
             </div>
 
             {/* Tanggal — only in payments view */}
             {housesViewMode === null && (
-              <div>
-                <label className="text-xs font-medium text-gray-500 mb-1 block">Tanggal</label>
-                <div className="flex items-center gap-1">
+              <div className="col-span-2 md:col-span-1 lg:col-span-6">
+                <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5 block">Tanggal Spesifik</label>
+                <div className="flex items-center gap-2">
                   <input
                     type="date"
                     value={filterDate}
                     onChange={(e) => setFilterDate(e.target.value)}
                     max={new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString().slice(0, 10)}
-                    className="flex-1 min-w-0 px-2 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-100 focus:border-primary-500"
+                    className={`px-3 py-2 text-sm rounded-lg border transition-colors focus:outline-none focus:ring-2 focus:ring-blue-100 ${
+                      filterDate !== ""
+                        ? "border-blue-400 bg-blue-50 text-blue-700 font-medium"
+                        : "border-slate-200 bg-white text-slate-700"
+                    }`}
                   />
                   <button
                     onClick={() =>
-                      setFilterDate(
-                        new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString().slice(0, 10)
-                      )
+                      setFilterDate(new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString().slice(0, 10))
                     }
-                    className="px-2 py-2 text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200 rounded-lg hover:bg-blue-100 whitespace-nowrap"
+                    className="px-3 py-2 text-xs font-semibold text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 whitespace-nowrap transition-colors"
                   >
                     Hari Ini
                   </button>
                   {filterDate !== "" && (
                     <button
                       onClick={() => setFilterDate("")}
-                      className="text-gray-400 hover:text-gray-600 flex items-center"
+                      className="text-slate-400 hover:text-slate-600 flex items-center transition-colors"
                       title="Hapus filter tanggal"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1014,73 +1063,56 @@ export default function AdminPaymentsPage() {
             )}
           </div>
 
-          {/* Clear filters */}
-          <div className="flex justify-end mt-2">
-            {housesViewMode === null
-              ? (filterUserId !== "" || filterYear !== 0 || filterMonth !== 0 || filterDate !== "" || filterBlock !== "" || filterHouseNumber !== "") && (
-                  <button
-                    onClick={() => {
-                      setFilterUserId("");
-                      setFilterYear(0);
-                      setFilterMonth(0);
-                      setFilterDate("");
-                      setFilterBlock("");
-                      setFilterHouseNumber("");
-                    }}
-                    className="text-sm text-primary-600 hover:text-primary-700 underline underline-offset-2"
-                  >
-                    {t('clear_filter')}
-                  </button>
-                )
-              : (filterUserId !== "" ||
-                  filterBlock !== "" ||
-                  filterHouseNumber !== "" ||
-                  filterMonth !== new Date().getMonth() + 1 ||
-                  filterYear !== new Date().getFullYear()) && (
-                  <button
-                    onClick={() => {
-                      setFilterUserId("");
-                      setFilterBlock("");
-                      setFilterHouseNumber("");
-                      setFilterMonth(new Date().getMonth() + 1);
-                      setFilterYear(new Date().getFullYear());
-                      lastFetchedKey.current = ""; // force re-fetch for current month
-                    }}
-                    className="text-sm text-primary-600 hover:text-primary-700 underline underline-offset-2"
-                  >
-                    {t('clear_filter')}
-                  </button>
-                )}
-          </div>
+          {/* Active filter chips */}
+          {(() => {
+            const chips = [
+              filterUserId !== "" && { key: "user", label: `Penghuni: ${users.find(u => u.id === filterUserId)?.name ?? "—"}`, clear: () => setFilterUserId("") },
+              filterMonth !== 0 && { key: "month", label: INDONESIAN_MONTHS[filterMonth - 1], clear: () => setFilterMonth(0) },
+              filterYear !== 0 && { key: "year", label: String(filterYear), clear: () => setFilterYear(0) },
+              filterBlock !== "" && { key: "block", label: `Blok ${filterBlock}`, clear: () => setFilterBlock("") },
+              filterHouseNumber !== "" && { key: "house", label: `No. ${filterHouseNumber}`, clear: () => setFilterHouseNumber("") },
+              filterDate !== "" && { key: "date", label: filterDate, clear: () => setFilterDate("") },
+            ].filter(Boolean) as { key: string; label: string; clear: () => void }[];
+
+            if (chips.length === 0) return null;
+
+            const clearAll = housesViewMode === null
+              ? () => { setFilterUserId(""); setFilterYear(0); setFilterMonth(0); setFilterDate(""); setFilterBlock(""); setFilterHouseNumber(""); }
+              : () => { setFilterUserId(""); setFilterBlock(""); setFilterHouseNumber(""); setFilterMonth(new Date().getMonth() + 1); setFilterYear(new Date().getFullYear()); lastFetchedKey.current = ""; };
+
+            return (
+              <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-200">
+                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Filter aktif:</span>
+                {chips.map((chip) => (
+                  <span key={chip.key} className="flex items-center gap-1 text-[11px] font-semibold bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full">
+                    {chip.label}
+                    <button onClick={chip.clear} className="hover:text-blue-900 ml-0.5 leading-none">✕</button>
+                  </span>
+                ))}
+                <button
+                  onClick={clearAll}
+                  className="text-[11px] text-slate-400 hover:text-red-500 underline underline-offset-2 ml-1 transition-colors"
+                >
+                  {t('clear_filter')}
+                </button>
+              </div>
+            );
+          })()}
         </div>
       </div>
 
       {/* Bulk action bar */}
-      {selectedPaymentIds.length > 0 && (
-        <div className="bg-primary-50 border-2 border-primary-200 rounded-xl p-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center">
-              <svg className="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <div>
-              <p className="font-semibold text-gray-900">
-                {t('selected_count', { count: selectedPaymentIds.length })}
-              </p>
-              <p className="text-sm text-gray-600">{t('ready_bulk_approval')}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" onClick={() => setSelectedPaymentIds([])}>
-              {t('clear_selection')}
-            </Button>
-            <Button variant="primary" onClick={() => setBulkApproveModalOpen(true)}>
-              {t('approve_selected')}
-            </Button>
-          </div>
-        </div>
-      )}
+      <BulkActionsBar
+        selectedCount={selectedPaymentIds.length}
+        onClearSelection={() => setSelectedPaymentIds([])}
+        onApprove={() => setBulkApproveModalOpen(true)}
+        labels={{
+          selectedCount: t('selected_count', { count: selectedPaymentIds.length }),
+          readyApproval: t('ready_bulk_approval'),
+          clearSelection: t('clear_selection'),
+          approveSelected: t('approve_selected'),
+        }}
+      />
 
       {/* Conditional table: houses view or payment list */}
       {housesViewMode !== null ? (
@@ -1212,82 +1244,18 @@ export default function AdminPaymentsPage() {
         variant="primary"
       />
 
-      {/* WhatsApp Message Generator Modal */}
-      <Modal
+      <WhatsAppModal
         isOpen={whatsappModalOpen}
         onClose={() => setWhatsappModalOpen(false)}
-        title="Generator Pesan WhatsApp"
-        size="lg"
-      >
-        {/* Tab switcher */}
-        <div className="flex gap-1 bg-gray-100 rounded-lg p-1 mb-4">
-          {(["today", "unpaid"] as const).map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setWhatsappTab(tab)}
-              className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${
-                whatsappTab === tab
-                  ? "bg-white text-gray-900 shadow-sm"
-                  : "text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              {tab === "today" ? "Pembayaran Hari Ini" : "Belum Bayar Bulan Ini"}
-            </button>
-          ))}
-        </div>
-
-        {isLoadingWA ? (
-          <div className="flex items-center justify-center py-12">
-            <svg className="animate-spin w-8 h-8 text-green-600" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-            </svg>
-          </div>
-        ) : (
-          <>
-            <textarea
-              readOnly
-              value={whatsappTab === "today" ? whatsappTodayMsg : whatsappUnpaidMsg}
-              rows={12}
-              className="w-full px-3 py-3 text-sm font-mono bg-gray-50 border border-gray-200 rounded-lg resize-none focus:outline-none"
-            />
-            <button
-              onClick={() =>
-                handleCopyWA(
-                  whatsappTab === "today" ? whatsappTodayMsg : whatsappUnpaidMsg,
-                  whatsappTab
-                )
-              }
-              className={`w-full mt-3 py-3 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 transition-all active:scale-[0.98] ${
-                (whatsappTab === "today" && isCopiedToday) ||
-                (whatsappTab === "unpaid" && isCopiedUnpaid)
-                  ? "bg-emerald-500 text-white"
-                  : "bg-blue-600 text-white hover:bg-blue-700"
-              }`}
-            >
-              {(whatsappTab === "today" && isCopiedToday) ||
-              (whatsappTab === "unpaid" && isCopiedUnpaid) ? (
-                <>
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  Disalin!
-                </>
-              ) : (
-                <>
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-                  </svg>
-                  Salin Pesan
-                </>
-              )}
-            </button>
-            <p className="text-xs text-gray-400 text-center mt-2">
-              Tanda *bintang* akan tampil tebal di WhatsApp.
-            </p>
-          </>
-        )}
-      </Modal>
-    </div>
+        isLoading={isLoadingWA}
+        tab={whatsappTab}
+        onTabChange={setWhatsappTab}
+        todayMsg={whatsappTodayMsg}
+        unpaidMsg={whatsappUnpaidMsg}
+        isCopiedToday={isCopiedToday}
+        isCopiedUnpaid={isCopiedUnpaid}
+        onCopy={handleCopyWA}
+      />
+    </motion.div>
   );
 }
