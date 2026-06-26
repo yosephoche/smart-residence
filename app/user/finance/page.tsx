@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { subMonths } from 'date-fns';
 import {
   TrendingUp,
   TrendingDown,
@@ -66,8 +65,10 @@ export default function FinancePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [typeFilter, setTypeFilter] = useState<TransactionType>('all');
 
-  // Default date range: last 3 months
-  const [startDate, setStartDate] = useState<Date | undefined>(subMonths(new Date(), 3));
+  // Default date range: current month
+  const [startDate, setStartDate] = useState<Date | undefined>(
+    new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+  );
   const [endDate, setEndDate] = useState<Date | undefined>(new Date());
 
   const fetchTransactions = React.useCallback(async () => {
