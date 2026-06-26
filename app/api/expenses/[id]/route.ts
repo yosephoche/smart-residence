@@ -20,11 +20,12 @@ export const GET = auth(async (req, { params }) => {
   return NextResponse.json(serializePrismaJson(expense));
 });
 
-// PUT /api/expenses/[id] - Update expense (admin only)
+// PUT /api/expenses/[id] - Update expense (admin or pengurus)
 export const PUT = auth(async (req, { params }) => {
   const session = req.auth;
-  if (session?.user?.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden - Admin only" }, { status: 403 });
+  const canManageExpenses = session?.user?.role === "ADMIN" || session?.user?.isPengurus === true;
+  if (!canManageExpenses) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   try {
@@ -74,11 +75,12 @@ export const PUT = auth(async (req, { params }) => {
   }
 });
 
-// DELETE /api/expenses/[id] - Delete expense (admin only)
+// DELETE /api/expenses/[id] - Delete expense (admin or pengurus)
 export const DELETE = auth(async (req, { params }) => {
   const session = req.auth;
-  if (session?.user?.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden - Admin only" }, { status: 403 });
+  const canManageExpenses = session?.user?.role === "ADMIN" || session?.user?.isPengurus === true;
+  if (!canManageExpenses) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   try {

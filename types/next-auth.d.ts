@@ -7,6 +7,7 @@ declare module "next-auth" {
     role: "ADMIN" | "USER" | "STAFF";
     staffJobType?: "SECURITY" | "CLEANING" | "GARDENING" | "MAINTENANCE" | "OTHER";
     isFirstLogin: boolean;
+    isPengurus: boolean;
   }
 
   interface Session {
@@ -17,6 +18,7 @@ declare module "next-auth" {
       role: "ADMIN" | "USER" | "STAFF";
       staffJobType?: "SECURITY" | "CLEANING" | "GARDENING" | "MAINTENANCE" | "OTHER";
       isFirstLogin: boolean;
+      isPengurus: boolean;
     } & DefaultSession["user"];
   }
 }
@@ -27,5 +29,6 @@ declare module "next-auth/jwt" {
     role?: "ADMIN" | "USER" | "STAFF";
     staffJobType?: "SECURITY" | "CLEANING" | "GARDENING" | "MAINTENANCE" | "OTHER";
     isFirstLogin?: boolean;
+    isPengurus?: boolean;
   }
 }

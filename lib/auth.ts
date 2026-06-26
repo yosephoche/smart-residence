@@ -43,6 +43,7 @@ export const {
           role: user.role,
           staffJobType: user.staffJobType ?? undefined,
           isFirstLogin: user.isFirstLogin,
+          isPengurus: user.isPengurus,
         };
       },
     }),
@@ -60,6 +61,7 @@ export const {
         token.role = user.role;
         token.staffJobType = user.staffJobType ?? undefined;
         token.isFirstLogin = user.isFirstLogin;
+        token.isPengurus = user.isPengurus;
       }
       return token;
     },

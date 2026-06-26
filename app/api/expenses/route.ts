@@ -26,11 +26,12 @@ export const GET = auth(async (req) => {
   return NextResponse.json(serializePrismaJson(expenses));
 });
 
-// POST /api/expenses - Create new expense (admin only)
+// POST /api/expenses - Create new expense (admin or pengurus)
 export const POST = auth(async (req) => {
   const session = req.auth;
-  if (session?.user?.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden - Admin only" }, { status: 403 });
+  const canManageExpenses = session?.user?.role === "ADMIN" || session?.user?.isPengurus === true;
+  if (!canManageExpenses) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   try {

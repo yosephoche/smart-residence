@@ -25,6 +25,7 @@ interface User {
   email: string;
   role: string;
   isFirstLogin: boolean;
+  isPengurus: boolean;
   createdAt: string;
   houses?: Array<{
     id: string;
@@ -96,6 +97,33 @@ export default function UsersPage() {
   const handleDeleteClick = (user: User) => {
     setUserToDelete(user);
     setDeleteModalOpen(true);
+  };
+
+  const handleTogglePengurus = async (user: User) => {
+    const newValue = !user.isPengurus;
+    try {
+      const res = await fetch(`/api/users/${user.id}/pengurus`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isPengurus: newValue }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        setErrorMessage(data.error || "Gagal mengubah status pengurus");
+        setTimeout(() => setErrorMessage(""), 5000);
+        return;
+      }
+      setSuccessMessage(
+        newValue
+          ? `"${user.name}" ditandai sebagai Pengurus`
+          : `"${user.name}" dihapus dari daftar Pengurus`
+      );
+      setTimeout(() => setSuccessMessage(""), 4000);
+      fetchUsers();
+    } catch {
+      setErrorMessage("Network error - gagal mengubah status pengurus");
+      setTimeout(() => setErrorMessage(""), 5000);
+    }
   };
 
   const handleResetPasswordClick = (user: User) => {
@@ -208,12 +236,18 @@ export default function UsersPage() {
     {
       key: "isFirstLogin",
       header: tCommon('table.status'),
-      render: (value) =>
-        value ? (
-          <Badge variant="warning" size="sm">{tCommon('status.first_login')}</Badge>
-        ) : (
-          <Badge variant="success" size="sm">{tCommon('status.active')}</Badge>
-        ),
+      render: (value, user) => (
+        <div className="flex flex-col gap-1">
+          {value ? (
+            <Badge variant="warning" size="sm">{tCommon('status.first_login')}</Badge>
+          ) : (
+            <Badge variant="success" size="sm">{tCommon('status.active')}</Badge>
+          )}
+          {user.isPengurus && (
+            <Badge variant="info" size="sm">Pengurus</Badge>
+          )}
+        </div>
+      ),
     },
     {
       key: "createdAt",
@@ -240,6 +274,19 @@ export default function UsersPage() {
             </svg>
             Reset Password
           </Button>
+          {user.role === "USER" && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleTogglePengurus(user)}
+              className={user.isPengurus ? "text-blue-600 hover:bg-blue-50" : "text-slate-500 hover:bg-slate-50"}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+              </svg>
+              {user.isPengurus ? "Cabut Pengurus" : "Jadikan Pengurus"}
+            </Button>
+          )}
           <Button variant="ghost" size="sm" onClick={() => handleDeleteClick(user)} className="text-danger-600 hover:bg-danger-50">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

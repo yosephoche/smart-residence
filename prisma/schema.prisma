@@ -89,6 +89,7 @@ model User {
   phone          String?
   address        String?
   isFirstLogin   Boolean         @default(true)
+  isPengurus     Boolean         @default(false)
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
   houses         House[]

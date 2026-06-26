@@ -3,8 +3,9 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { motion } from 'framer-motion';
-import { Home, CreditCard, Upload, User } from 'lucide-react';
+import { Home, CreditCard, Upload, User, Wallet } from 'lucide-react';
 
 interface TabItem {
   id: string;
@@ -13,35 +14,28 @@ interface TabItem {
   href: string;
 }
 
-const tabs: TabItem[] = [
-  {
-    id: 'home',
-    label: 'Beranda',
-    icon: Home,
-    href: '/user/dashboard',
-  },
-  {
-    id: 'payments',
-    label: 'Bayar',
-    icon: CreditCard,
-    href: '/user/payments',
-  },
-  {
-    id: 'upload',
-    label: 'Upload',
-    icon: Upload,
-    href: '/user/upload',
-  },
-  {
-    id: 'profile',
-    label: 'Profil',
-    icon: User,
-    href: '/user/profile',
-  },
+const baseTabs: TabItem[] = [
+  { id: 'home', label: 'Beranda', icon: Home, href: '/user/dashboard' },
+  { id: 'payments', label: 'Bayar', icon: CreditCard, href: '/user/payments' },
+  { id: 'upload', label: 'Upload', icon: Upload, href: '/user/upload' },
+  { id: 'profile', label: 'Profil', icon: User, href: '/user/profile' },
 ];
+
+const pengurusTab: TabItem = {
+  id: 'kas',
+  label: 'Kas',
+  icon: Wallet,
+  href: '/user/kas',
+};
 
 const UserBottomNav: React.FC = () => {
   const pathname = usePathname();
+  const { data: session } = useSession();
+
+  const isPengurus = session?.user?.isPengurus === true;
+  const tabs = isPengurus
+    ? [baseTabs[0], baseTabs[1], pengurusTab, baseTabs[2], baseTabs[3]]
+    : baseTabs;
 
   const getActiveTab = () => {
     const activeTab = tabs.find((tab) => pathname === tab.href);
@@ -68,17 +62,13 @@ const UserBottomNav: React.FC = () => {
               role="tab"
               aria-selected={isActive}
               aria-label={tab.label}
-              className="relative flex flex-col items-center gap-0.5 py-1 px-3 min-w-[60px]"
+              className="relative flex flex-col items-center gap-0.5 py-1 px-3 min-w-[50px]"
             >
               {isActive && (
                 <motion.div
                   layoutId="tab-indicator"
                   className="absolute -top-2 left-0 right-0 mx-auto w-8 h-1 bg-blue-600 rounded-full"
-                  transition={{
-                    type: 'spring',
-                    stiffness: 400,
-                    damping: 30,
-                  }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 30 }}
                 />
               )}
               <motion.div
@@ -86,9 +76,7 @@ const UserBottomNav: React.FC = () => {
                   scale: isActive ? 1 : 0.9,
                   color: isActive ? '#2563EB' : '#94A3B8',
                 }}
-                transition={{
-                  duration: 0.2,
-                }}
+                transition={{ duration: 0.2 }}
                 className="flex items-center justify-center"
               >
                 <Icon className="w-5 h-5" />

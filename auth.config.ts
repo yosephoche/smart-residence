@@ -23,6 +23,7 @@ export const authConfig: NextAuthConfig = {
       session.user.role = token.role;
       session.user.staffJobType = token.staffJobType;
       session.user.isFirstLogin = token.isFirstLogin;
+      session.user.isPengurus = token.isPengurus ?? false;
       return session;
     },
     authorized({ request: { nextUrl }, auth: session }) {

@@ -20,6 +20,7 @@ export async function getAllUsers(filters?: { role?: "ADMIN" | "USER" | "STAFF" 
       staffJobType: true,
       phone: true,
       isFirstLogin: true,
+      isPengurus: true,
       createdAt: true,
       updatedAt: true,
       houses: {
