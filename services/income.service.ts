@@ -24,8 +24,12 @@ export async function getIncomes({
 } = {}) {
   return prisma.income.findMany({
     where: {
-      ...(startDate ? { date: { gte: startDate } } : {}),
-      ...(endDate ? { date: { lte: endDate } } : {}),
+      ...(startDate || endDate ? {
+        date: {
+          ...(startDate ? { gte: startDate } : {}),
+          ...(endDate ? { lte: endDate } : {}),
+        },
+      } : {}),
       ...(category ? { category } : {}),
       ...(createdBy ? { createdBy } : {}),
     },
@@ -140,28 +144,21 @@ export async function getIncomeStats({
   startDate?: Date;
   endDate?: Date;
 } = {}) {
+  const dateFilter = startDate || endDate ? {
+    date: {
+      ...(startDate ? { gte: startDate } : {}),
+      ...(endDate ? { lte: endDate } : {}),
+    },
+  } : {};
+
   const [total, totalAmount, byCategory] = await Promise.all([
-    prisma.income.count({
-      where: {
-        ...(startDate ? { date: { gte: startDate } } : {}),
-        ...(endDate ? { date: { lte: endDate } } : {}),
-      },
-    }),
-    prisma.income.aggregate({
-      _sum: { amount: true },
-      where: {
-        ...(startDate ? { date: { gte: startDate } } : {}),
-        ...(endDate ? { date: { lte: endDate } } : {}),
-      },
-    }),
+    prisma.income.count({ where: dateFilter }),
+    prisma.income.aggregate({ _sum: { amount: true }, where: dateFilter }),
     prisma.income.groupBy({
       by: ["category"],
       _sum: { amount: true },
       _count: true,
-      where: {
-        ...(startDate ? { date: { gte: startDate } } : {}),
-        ...(endDate ? { date: { lte: endDate } } : {}),
-      },
+      where: dateFilter,
     }),
   ]);
 
