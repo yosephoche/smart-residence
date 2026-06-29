@@ -4,11 +4,12 @@ import { getIncomes, createIncome } from "@/services/income.service";
 import { IncomeCategory } from "@prisma/client";
 import { serializePrismaJson } from "@/lib/utils/prisma-serializer";
 
-// GET /api/income - List incomes with optional filters (admin only)
+// GET /api/income - List incomes with optional filters (admin or pengurus)
 export const GET = auth(async (req) => {
   const session = req.auth;
-  if (session?.user?.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden - Admin only" }, { status: 403 });
+  const canRead = session?.user?.role === "ADMIN" || session?.user?.isPengurus === true;
+  if (!canRead) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   const url = new URL(req.url);

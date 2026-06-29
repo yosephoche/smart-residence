@@ -219,6 +219,83 @@ export function mapIncomesForExport(incomes: Income[]): {
   return { headers, rows };
 }
 
+export interface MonthlyReportData {
+  month: number;
+  year: number;
+  incomes: Income[];
+  expenses: Expense[];
+}
+
+export async function exportMonthlyReport(data: MonthlyReportData): Promise<void> {
+  const xlsx = await import("xlsx");
+  const { month, year, incomes, expenses } = data;
+
+  const MONTH_NAMES = [
+    "Januari","Februari","Maret","April","Mei","Juni",
+    "Juli","Agustus","September","Oktober","November","Desember",
+  ];
+  const monthName = MONTH_NAMES[month - 1] ?? `Bulan ${month}`;
+  const title = `Laporan Keuangan ${monthName} ${year}`;
+
+  const totalIncome = incomes.reduce((s, i) => s + Number(i.amount), 0);
+  const totalExpense = expenses.reduce((s, e) => s + Number(e.amount), 0);
+  const balance = totalIncome - totalExpense;
+
+  const wb = xlsx.utils.book_new();
+
+  // --- Sheet 1: Ringkasan ---
+  const summaryData = [
+    [title],
+    [],
+    ["RINGKASAN KEUANGAN"],
+    ["Periode", `${monthName} ${year}`],
+    ["Total Pemasukan", formatCurrency(totalIncome)],
+    ["Total Pengeluaran", formatCurrency(totalExpense)],
+    ["Saldo", formatCurrency(balance)],
+    [],
+    ["Jumlah Transaksi Pemasukan", incomes.length],
+    ["Jumlah Transaksi Pengeluaran", expenses.length],
+  ];
+  const wsSummary = xlsx.utils.aoa_to_sheet(summaryData);
+  wsSummary["!cols"] = [{ wch: 30 }, { wch: 20 }];
+  xlsx.utils.book_append_sheet(wb, wsSummary, "Ringkasan");
+
+  // --- Sheet 2: Pengeluaran ---
+  const expenseHeaders = ["No", "Tanggal", "Kategori", "Deskripsi", "Jumlah (Rp)", "Catatan", "Dicatat Oleh"];
+  const expenseRows = expenses.map((e, i) => [
+    i + 1,
+    formatDate(e.date),
+    getExpenseCategoryLabel(e.category),
+    e.description,
+    Number(e.amount),
+    e.notes || "-",
+    e.creator?.name ?? "-",
+  ]);
+  const expenseTotalRow = ["", "", "", "TOTAL", totalExpense, "", ""];
+  const wsExpense = xlsx.utils.aoa_to_sheet([expenseHeaders, ...expenseRows, expenseTotalRow]);
+  wsExpense["!cols"] = [{ wch: 4 }, { wch: 12 }, { wch: 16 }, { wch: 36 }, { wch: 18 }, { wch: 24 }, { wch: 18 }];
+  xlsx.utils.book_append_sheet(wb, wsExpense, "Pengeluaran");
+
+  // --- Sheet 3: Pemasukan ---
+  const incomeHeaders = ["No", "Tanggal", "Kategori", "Deskripsi", "Jumlah (Rp)", "Catatan", "Dicatat Oleh"];
+  const incomeRows = incomes.map((i, idx) => [
+    idx + 1,
+    formatDate(i.date),
+    getIncomeCategoryLabel(i.category),
+    i.description,
+    Number(i.amount),
+    i.notes || "-",
+    i.creator?.name ?? "-",
+  ]);
+  const incomeTotalRow = ["", "", "", "TOTAL", totalIncome, "", ""];
+  const wsIncome = xlsx.utils.aoa_to_sheet([incomeHeaders, ...incomeRows, incomeTotalRow]);
+  wsIncome["!cols"] = [{ wch: 4 }, { wch: 12 }, { wch: 16 }, { wch: 36 }, { wch: 18 }, { wch: 24 }, { wch: 18 }];
+  xlsx.utils.book_append_sheet(wb, wsIncome, "Pemasukan");
+
+  const filename = `Laporan_Keuangan_${monthName}_${year}.xlsx`;
+  xlsx.writeFile(wb, filename);
+}
+
 interface Attendance {
   id: string;
   clockInAt: string | Date;
