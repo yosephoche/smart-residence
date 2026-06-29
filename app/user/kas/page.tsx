@@ -423,7 +423,7 @@ export default function KasPage() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="fixed inset-0 bg-black/50 z-40"
+              className="fixed inset-0 bg-black/50 z-[55]"
               onClick={closeForm}
             />
             <motion.div
@@ -432,7 +432,7 @@ export default function KasPage() {
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", stiffness: 320, damping: 32 }}
-              className="fixed bottom-0 inset-x-0 mx-auto w-full max-w-md bg-white rounded-t-3xl z-50 max-h-[92vh] flex flex-col"
+              className="fixed bottom-0 inset-x-0 mx-auto w-full max-w-md bg-white rounded-t-3xl z-[60] max-h-[92vh] flex flex-col"
             >
               {/* Drag handle */}
               <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
@@ -654,7 +654,7 @@ export default function KasPage() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="fixed inset-0 bg-black/50 z-40"
+              className="fixed inset-0 bg-black/50 z-[55]"
               onClick={() => setShowDownloadSheet(false)}
             />
             <motion.div
@@ -663,7 +663,7 @@ export default function KasPage() {
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", stiffness: 320, damping: 32 }}
-              className="fixed bottom-0 inset-x-0 mx-auto w-full max-w-md bg-white rounded-t-3xl z-50"
+              className="fixed bottom-0 inset-x-0 mx-auto w-full max-w-md bg-white rounded-t-3xl z-[60]"
             >
               <div className="flex justify-center pt-3 pb-1">
                 <div className="w-10 h-1 bg-slate-200 rounded-full" />
@@ -759,7 +759,7 @@ export default function KasPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/50 z-40"
+              className="fixed inset-0 bg-black/50 z-[55]"
               onClick={() => setDeleteConfirmId(null)}
             />
             <motion.div
@@ -768,7 +768,7 @@ export default function KasPage() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.92, y: 20 }}
               transition={{ type: "spring", stiffness: 400, damping: 30 }}
-              className="fixed inset-0 z-50 flex items-center justify-center px-6"
+              className="fixed inset-0 z-[60] flex items-center justify-center px-6"
             >
               <div className="bg-white rounded-3xl p-6 w-full max-w-xs shadow-2xl">
                 <div className="w-12 h-12 rounded-2xl bg-red-50 flex items-center justify-center mb-4">
