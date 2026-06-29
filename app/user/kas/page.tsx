@@ -458,7 +458,7 @@ export default function KasPage() {
               </div>
 
               {/* Form body */}
-              <div className="flex-1 overflow-y-auto px-5 pb-5 space-y-4">
+              <div className="flex-1 overflow-y-auto px-5 pb-4 space-y-4">
                 {/* Date */}
                 <div>
                   <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5 flex items-center gap-1">
@@ -617,7 +617,10 @@ export default function KasPage() {
                   )}
                 </div>
 
-                {/* Submit button */}
+              </div>
+
+              {/* Submit button — pinned outside scroll area */}
+              <div className="flex-shrink-0 px-5 pt-3 pb-6 border-t border-slate-100">
                 <button
                   onClick={handleSubmit}
                   disabled={isSubmitting}
