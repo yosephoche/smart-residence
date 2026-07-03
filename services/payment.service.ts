@@ -62,8 +62,24 @@ export async function createPayment(
   userId: string,
   houseId: string,
   amountMonths: number,
-  proofImagePath: string
+  proofImagePath: string,
+  explicitMonths?: YearMonth[]
 ) {
+  // Admin path: explicit month list overrides auto allocation
+  if (explicitMonths) {
+    const seen = new Set<string>();
+    explicitMonths = explicitMonths.filter(({ year, month }) => {
+      const key = `${year}-${month}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+    if (explicitMonths.length < 1 || explicitMonths.length > 12) {
+      throw new Error("Jumlah bulan harus antara 1 dan 12");
+    }
+    amountMonths = explicitMonths.length;
+  }
+
   // READ PHASE: perform all reads outside the transaction to avoid pgbouncer
   // recycling the connection mid-transaction (interactive transactions require
   // a persistent connection, which pgbouncer doesn't guarantee).
@@ -90,9 +106,12 @@ export async function createPayment(
   });
   // When billing start is enabled, allocate to oldest unpaid (arrears) months
   // first, then fill forward. Otherwise keep legacy consecutive-months behavior.
+  // Explicit months (admin) bypass both allocation strategies.
   const billing = await getCachedBillingStartConfig();
   let coveredMonths: YearMonth[];
-  if (billing.enabled) {
+  if (explicitMonths) {
+    coveredMonths = explicitMonths;
+  } else if (billing.enabled) {
     const excludedPeriods = await getCachedExcludedIncomePeriods();
     const unpaidMonths = computeUnpaidMonths({
       billingStart: billing,
