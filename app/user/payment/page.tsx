@@ -24,6 +24,14 @@ interface UploadWindowConfig {
   endDay: number;
 }
 
+interface ArrearsInfo {
+  enabled: boolean;
+  unpaidMonths: Array<{ year: number; month: number }>;
+  excludedPeriods: Array<{ year: number; month: number }>;
+  monthlyRate: number;
+  totalArrears: number;
+}
+
 export default function PaymentUploadPage() {
   const t = useTranslations('payments.user');
   const tCommon = useTranslations('common');
@@ -35,8 +43,10 @@ export default function PaymentUploadPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [occupiedMonths, setOccupiedMonths] = useState<Array<{ year: number; month: number }>>([]);
   const [uploadWindowConfig, setUploadWindowConfig] = useState<UploadWindowConfig | null>(null);
+  const [arrears, setArrears] = useState<ArrearsInfo | null>(null);
   const fetchingHouseRef = useRef(false);
   const fetchingOccupiedMonthsRef = useRef(false);
+  const fetchingArrearsRef = useRef(false);
 
   const isOutsideUploadWindow = useMemo(() => {
     if (!uploadWindowConfig || !uploadWindowConfig.enabled) return false;
@@ -81,6 +91,17 @@ export default function PaymentUploadPage() {
       .then((data) => setOccupiedMonths(data))
       .catch((err) => console.error("Failed to fetch occupied months:", err))
       .finally(() => { fetchingOccupiedMonthsRef.current = false; });
+  }, [houseId]);
+
+  useEffect(() => {
+    if (!houseId || fetchingArrearsRef.current) return;
+
+    fetchingArrearsRef.current = true;
+    fetch(`/api/payments/unpaid-months?houseId=${houseId}`)
+      .then((r) => r.json())
+      .then((data) => setArrears(data))
+      .catch((err) => console.error("Failed to fetch unpaid months:", err))
+      .finally(() => { fetchingArrearsRef.current = false; });
   }, [houseId]);
 
   const handleSubmit = async (data: PaymentUploadFormData) => {
@@ -181,6 +202,7 @@ export default function PaymentUploadPage() {
           isSubmitting={isSubmitting}
           occupiedMonths={occupiedMonths}
           isOutsideUploadWindow={isOutsideUploadWindow}
+          arrears={arrears}
         />
       </Card>
 

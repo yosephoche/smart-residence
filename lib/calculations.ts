@@ -69,6 +69,88 @@ export function computeNextStartMonth(
   return { year, month };
 }
 
+export interface YearMonth {
+  year: number;
+  month: number;
+}
+
+function containsMonth(list: YearMonth[], target: YearMonth): boolean {
+  return list.some((m) => m.year === target.year && m.month === target.month);
+}
+
+function nextMonth({ year, month }: YearMonth): YearMonth {
+  return month >= 12 ? { year: year + 1, month: 1 } : { year, month: month + 1 };
+}
+
+/**
+ * Compute the ordered (oldest-first) list of owed-but-unpaid months for a house.
+ * Iterates from billingStart through upTo (inclusive), skipping months that are
+ * already occupied (PENDING/APPROVED payment) or excluded from billing.
+ * Returns [] when billingStart is null (feature disabled) or starts after upTo.
+ */
+export function computeUnpaidMonths(params: {
+  billingStart: YearMonth | null;
+  occupiedMonths: YearMonth[];
+  excludedPeriods: YearMonth[];
+  upTo?: YearMonth;
+}): YearMonth[] {
+  const { billingStart, occupiedMonths, excludedPeriods } = params;
+  if (!billingStart) return [];
+
+  const now = new Date();
+  const upTo = params.upTo ?? { year: now.getFullYear(), month: now.getMonth() + 1 };
+
+  const unpaid: YearMonth[] = [];
+  let cursor: YearMonth = { year: billingStart.year, month: billingStart.month };
+  let guard = 0;
+  while (
+    (cursor.year < upTo.year || (cursor.year === upTo.year && cursor.month <= upTo.month)) &&
+    guard < 240
+  ) {
+    if (!containsMonth(occupiedMonths, cursor) && !containsMonth(excludedPeriods, cursor)) {
+      unpaid.push(cursor);
+    }
+    cursor = nextMonth(cursor);
+    guard++;
+  }
+  return unpaid;
+}
+
+/**
+ * Allocate a payment to months, oldest arrears first: take the first N unpaid
+ * months, then fill any remaining quota by walking forward from the current
+ * month, skipping already-selected, occupied, and excluded months.
+ */
+export function selectPaymentMonths(params: {
+  amountMonths: number;
+  unpaidMonths: YearMonth[];
+  occupiedMonths: YearMonth[];
+  excludedPeriods: YearMonth[];
+  now?: YearMonth;
+}): YearMonth[] {
+  const { amountMonths, unpaidMonths, occupiedMonths, excludedPeriods } = params;
+
+  const selected = unpaidMonths.slice(0, amountMonths);
+  if (selected.length >= amountMonths) return selected;
+
+  const today = new Date();
+  let cursor: YearMonth =
+    params.now ?? { year: today.getFullYear(), month: today.getMonth() + 1 };
+  let guard = 0;
+  while (selected.length < amountMonths && guard < 240) {
+    if (
+      !containsMonth(selected, cursor) &&
+      !containsMonth(occupiedMonths, cursor) &&
+      !containsMonth(excludedPeriods, cursor)
+    ) {
+      selected.push(cursor);
+    }
+    cursor = nextMonth(cursor);
+    guard++;
+  }
+  return selected;
+}
+
 /**
  * Compute the list of (year, month) covered by a payment starting from startMonth.
  * startMonth.month is 1-based (1 = January … 12 = December).

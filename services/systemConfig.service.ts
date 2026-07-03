@@ -342,6 +342,60 @@ export async function getExcludedIncomePeriodsConfig(): Promise<ExcludedIncomePe
   }
 }
 
+// Billing start configuration (arrears anchor month)
+export interface BillingStartConfig {
+  enabled: boolean;
+  year: number;
+  month: number;
+}
+
+const DEFAULT_BILLING_START: BillingStartConfig = {
+  enabled: false,
+  year: new Date().getFullYear(),
+  month: 1,
+};
+
+/**
+ * Get the billing start configuration from the database.
+ * When enabled, arrears (tunggakan) are computed from this month onward.
+ * Falls back to disabled if no config exists.
+ */
+export async function getBillingStartConfig(): Promise<BillingStartConfig> {
+  try {
+    const config = await prisma.systemConfig.findUnique({
+      where: { key: "billing_start" },
+    });
+
+    if (!config) {
+      return DEFAULT_BILLING_START;
+    }
+
+    const value = config.value as unknown as BillingStartConfig;
+    return {
+      enabled: value.enabled ?? DEFAULT_BILLING_START.enabled,
+      year: value.year ?? DEFAULT_BILLING_START.year,
+      month: value.month ?? DEFAULT_BILLING_START.month,
+    };
+  } catch (error) {
+    console.error("Error fetching billing start config:", error);
+    return DEFAULT_BILLING_START;
+  }
+}
+
+/**
+ * Set billing start configuration
+ */
+export async function setBillingStartConfig(
+  config: BillingStartConfig,
+  updatedBy: string
+): Promise<void> {
+  await setConfig("billing_start", config, updatedBy);
+
+  // Invalidate cache
+  const { invalidateBillingStartCache } = await import("@/lib/cache/billing-start");
+  invalidateBillingStartCache();
+}
+
 // Default leave configuration values
 const DEFAULT_LEAVE_CONFIG = {
   maxDaysPerRequest: 3,

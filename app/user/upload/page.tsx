@@ -22,7 +22,7 @@ import Image from "next/image";
 import { useAuth } from "@/lib/auth-client";
 import { formatCurrency } from "@/lib/utils";
 import { toast } from "sonner";
-import { computeCoveredMonths, formatPaymentMonth } from "@/lib/calculations";
+import { computeCoveredMonths, selectPaymentMonths, formatPaymentMonth } from "@/lib/calculations";
 
 interface House {
   id: string;
@@ -43,6 +43,14 @@ interface BankDetails {
   bankName: string;
   accountNumber: string;
   accountName: string;
+}
+
+interface ArrearsInfo {
+  enabled: boolean;
+  unpaidMonths: Array<{ year: number; month: number }>;
+  excludedPeriods: Array<{ year: number; month: number }>;
+  monthlyRate: number;
+  totalArrears: number;
 }
 
 const containerVariants = {
@@ -87,7 +95,9 @@ export default function UploadScreen() {
   const [occupiedMonths, setOccupiedMonths] = useState<
     Array<{ year: number; month: number }>
   >([]);
+  const [arrears, setArrears] = useState<ArrearsInfo | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const arrearsDefaultApplied = useRef(false);
 
   // Derived from selectedHouseId
   const house = houses.find((h) => h.id === selectedHouseId) ?? null;
@@ -146,26 +156,51 @@ export default function UploadScreen() {
     fetchData();
   }, [user?.id]);
 
-  // Fetch occupied months whenever the selected house changes
+  // Fetch occupied months + arrears whenever the selected house changes
   useEffect(() => {
     if (!selectedHouseId) {
       setOccupiedMonths([]);
+      setArrears(null);
+      arrearsDefaultApplied.current = false;
       return;
     }
     fetch(`/api/payments/occupied-months?houseId=${selectedHouseId}`)
       .then((r) => r.json())
       .then(setOccupiedMonths)
       .catch((err) => console.error("Error fetching occupied months:", err));
+    fetch(`/api/payments/unpaid-months?houseId=${selectedHouseId}`)
+      .then((r) => r.json())
+      .then(setArrears)
+      .catch((err) => console.error("Error fetching unpaid months:", err));
   }, [selectedHouseId]);
 
-  // Compute covered months based on selected month and amount
+  const hasArrears = !!arrears?.enabled && arrears.unpaidMonths.length > 0;
+
+  // Default the month count to cover all arrears (once per selected house)
+  useEffect(() => {
+    if (hasArrears && !arrearsDefaultApplied.current) {
+      arrearsDefaultApplied.current = true;
+      setAmountMonths(Math.min(arrears!.unpaidMonths.length, 12));
+    }
+  }, [hasArrears, arrears]);
+
+  // Compute covered months: oldest arrears first when enabled,
+  // otherwise consecutive from the selected start month (legacy)
   const coveredMonths = useMemo(() => {
+    if (arrears?.enabled) {
+      return selectPaymentMonths({
+        amountMonths,
+        unpaidMonths: arrears.unpaidMonths,
+        occupiedMonths,
+        excludedPeriods: arrears.excludedPeriods,
+      });
+    }
     if (!selectedMonth) return [];
     return computeCoveredMonths(
       { year: selectedMonth.value.year, month: selectedMonth.value.month },
       amountMonths,
     );
-  }, [selectedMonth, amountMonths]);
+  }, [arrears, selectedMonth, amountMonths, occupiedMonths]);
 
   // Check for conflicts with occupied months
   const hasOverlap = useMemo(() => {
@@ -199,7 +234,8 @@ export default function UploadScreen() {
   };
 
   const handleSubmit = async () => {
-    if (!selectedFile || !selectedMonth || !house || hasOverlap) return;
+    if (!selectedFile || !house || hasOverlap) return;
+    if (!arrears?.enabled && !selectedMonth) return;
 
     setIsSubmitting(true);
 
@@ -222,15 +258,19 @@ export default function UploadScreen() {
           setIsSubmitted(false);
           setSelectedFile(null);
           setAmountMonths(1);
-          // Refresh available months and occupied months
+          // Refresh available months, occupied months, and arrears
           Promise.all([
             fetch("/api/payments/available-months").then((r) => r.json()),
             fetch(`/api/payments/occupied-months?houseId=${house.id}`).then(
               (r) => r.json(),
             ),
-          ]).then(([monthsData, occupiedData]) => {
+            fetch(`/api/payments/unpaid-months?houseId=${house.id}`).then(
+              (r) => r.json(),
+            ),
+          ]).then(([monthsData, occupiedData, arrearsData]) => {
             setAvailableMonths(monthsData);
             setOccupiedMonths(occupiedData);
+            setArrears(arrearsData);
             if (monthsData.length > 0) {
               setSelectedMonth(monthsData[0]);
             }
@@ -380,6 +420,36 @@ export default function UploadScreen() {
         )}
       </AnimatePresence>
 
+      {/* Arrears Warning */}
+      {hasArrears && !pendingPayment && (
+        <motion.div variants={itemVariants}>
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <AlertCircle className="w-4 h-4 text-amber-500" />
+              <p className="text-xs font-medium text-amber-600 uppercase tracking-wider">
+                Tunggakan {arrears!.unpaidMonths.length} Bulan
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-1.5 mb-2">
+              {arrears!.unpaidMonths.map((um) => (
+                <span
+                  key={`arrears-${um.year}-${um.month}`}
+                  className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700"
+                >
+                  {formatPaymentMonth(um)}
+                </span>
+              ))}
+            </div>
+            <p className="text-sm font-bold text-amber-900 mb-1">
+              {formatCurrency(arrears!.totalArrears)}
+            </p>
+            <p className="text-xs text-amber-700">
+              Pembayaran akan menutupi bulan tertunggak terlebih dahulu.
+            </p>
+          </div>
+        </motion.div>
+      )}
+
       {/* Month Amount Stepper */}
       <motion.div variants={itemVariants}>
         <div className="bg-white rounded-2xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)]">
@@ -430,34 +500,36 @@ export default function UploadScreen() {
         </div>
       </motion.div>
 
-      {/* Month Selector */}
-      <motion.div
-        variants={itemVariants}
-        className="bg-white rounded-2xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)]"
-      >
-        <div className="flex items-center gap-2 mb-3">
-          <Calendar className="w-4 h-4 text-slate-400" />
-          <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">
-            Bulan Mulai
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {availableMonths.slice(0, 4).map((month) => (
-            <button
-              key={month.label}
-              onClick={() => !pendingPayment && setSelectedMonth(month)}
-              disabled={!!pendingPayment}
-              className={`text-xs font-medium px-3 py-2 rounded-lg transition-colors duration-200 disabled:opacity-40 disabled:cursor-not-allowed ${
-                selectedMonth?.label === month.label
-                  ? "bg-blue-600 text-white"
-                  : "bg-slate-50 text-slate-600 hover:bg-slate-100"
-              }`}
-            >
-              {month.label}
-            </button>
-          ))}
-        </div>
-      </motion.div>
+      {/* Month Selector — hidden when arrears mode allocates months automatically */}
+      {!arrears?.enabled && (
+        <motion.div
+          variants={itemVariants}
+          className="bg-white rounded-2xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)]"
+        >
+          <div className="flex items-center gap-2 mb-3">
+            <Calendar className="w-4 h-4 text-slate-400" />
+            <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">
+              Bulan Mulai
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {availableMonths.slice(0, 4).map((month) => (
+              <button
+                key={month.label}
+                onClick={() => !pendingPayment && setSelectedMonth(month)}
+                disabled={!!pendingPayment}
+                className={`text-xs font-medium px-3 py-2 rounded-lg transition-colors duration-200 disabled:opacity-40 disabled:cursor-not-allowed ${
+                  selectedMonth?.label === month.label
+                    ? "bg-blue-600 text-white"
+                    : "bg-slate-50 text-slate-600 hover:bg-slate-100"
+                }`}
+              >
+                {month.label}
+              </button>
+            ))}
+          </div>
+        </motion.div>
+      )}
 
       {/* Covered Months Preview */}
       {coveredMonths.length > 0 && (
@@ -474,13 +546,20 @@ export default function UploadScreen() {
                 const isOccupied = occupiedMonths.some(
                   (om) => om.year === m.year && om.month === m.month,
                 );
+                const isArrearsMonth =
+                  hasArrears &&
+                  arrears!.unpaidMonths.some(
+                    (um) => um.year === m.year && um.month === m.month,
+                  );
                 return (
                   <span
                     key={`${m.year}-${m.month}`}
                     className={`text-[10px] font-semibold px-2 py-1 rounded-full ${
                       isOccupied
                         ? "bg-red-100 text-red-700"
-                        : "bg-blue-100 text-blue-700"
+                        : isArrearsMonth
+                          ? "bg-amber-100 text-amber-700"
+                          : "bg-blue-100 text-blue-700"
                     }`}
                   >
                     {formatPaymentMonth(m)}

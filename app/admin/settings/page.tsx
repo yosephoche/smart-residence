@@ -11,7 +11,8 @@ import BankDetailsConfigForm from "@/components/forms/BankDetailsConfigForm";
 import ResidenceInfoConfigForm from "@/components/forms/ResidenceInfoConfigForm";
 import WhatsAppTemplateConfigForm from "@/components/forms/WhatsAppTemplateConfigForm";
 import ExcludedIncomePeriodsForm from "@/components/forms/ExcludedIncomePeriodsForm";
-import { Settings, AlertCircle, CheckCircle, Key, MapPin, CreditCard, Building2, MessageSquare, CalendarX, CalendarRange } from "lucide-react";
+import { BillingStartConfigForm } from "@/components/forms/BillingStartConfigForm";
+import { Settings, AlertCircle, CheckCircle, Key, MapPin, CreditCard, Building2, MessageSquare, CalendarX, CalendarRange, CalendarClock } from "lucide-react";
 import LeaveConfigForm from "@/components/forms/LeaveConfigForm";
 
 export const dynamic = 'force-dynamic';
@@ -51,6 +52,11 @@ export default function SettingsPage() {
     maxDaysPerRequest: number;
     minAdvanceDays: number;
   } | null>(null);
+  const [billingStartConfig, setBillingStartConfig] = useState<{
+    enabled: boolean;
+    year: number;
+    month: number;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
   const [alert, setAlert] = useState<{
     type: "success" | "error";
@@ -63,7 +69,7 @@ export default function SettingsPage() {
 
   const fetchConfigs = async () => {
     try {
-      const [uploadResponse, passwordResponse, geofenceResponse, waTemplateResponse, excludedPeriodsResponse, leaveConfigResponse] =
+      const [uploadResponse, passwordResponse, geofenceResponse, waTemplateResponse, excludedPeriodsResponse, leaveConfigResponse, billingStartResponse] =
         await Promise.all([
           fetch("/api/system-config/upload-window"),
           fetch("/api/system-config/default-password"),
@@ -71,6 +77,7 @@ export default function SettingsPage() {
           fetch("/api/system-config/whatsapp-template"),
           fetch("/api/system-config/excluded-income-periods"),
           fetch("/api/system-config/leave-config"),
+          fetch("/api/system-config/billing-start"),
         ]);
 
       if (!uploadResponse.ok || !passwordResponse.ok || !geofenceResponse.ok) {
@@ -100,6 +107,11 @@ export default function SettingsPage() {
       if (leaveConfigResponse.ok) {
         const lcData = await leaveConfigResponse.json();
         setLeaveConfig(lcData);
+      }
+
+      if (billingStartResponse.ok) {
+        const bsData = await billingStartResponse.json();
+        setBillingStartConfig(bsData);
       }
     } catch (error) {
       console.error("Error fetching configs:", error);
@@ -506,6 +518,53 @@ export default function SettingsPage() {
             <li>Pembayaran yang di-approve untuk bulan yang dikecualikan tidak akan membuat catatan pemasukan</li>
             <li>Jika sebagian bulan dikecualikan, pemasukan akan dihitung proporsional</li>
             <li>Gunakan Bulk Create di halaman Pembayaran untuk memasukkan data historis</li>
+          </ul>
+        </div>
+      </div>
+
+      {/* Billing Start / Arrears Configuration */}
+      <div className="bg-white rounded-lg shadow border border-slate-200 mt-6">
+        <div className="p-6 border-b border-slate-200">
+          <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
+            <CalendarClock className="w-5 h-5" />
+            Pelacakan Tunggakan (Bulan Mulai Tagihan)
+          </h2>
+          <p className="text-sm text-slate-600 mt-1">
+            Atur bulan awal perhitungan tunggakan warga dan alokasi pembayaran ke bulan tertunggak
+          </p>
+        </div>
+
+        <div className="p-6">
+          {loading ? (
+            <div className="animate-pulse space-y-4">
+              <div className="h-12 bg-gray-200 rounded"></div>
+              <div className="h-12 bg-gray-200 rounded w-1/2"></div>
+            </div>
+          ) : billingStartConfig ? (
+            <BillingStartConfigForm
+              initialConfig={billingStartConfig}
+              onSaveSuccess={(config) => {
+                setBillingStartConfig(config);
+                setAlert({ type: "success", message: "Konfigurasi tunggakan berhasil disimpan" });
+                setTimeout(() => setAlert(null), 5000);
+              }}
+              onSaveError={handleSaveError}
+            />
+          ) : (
+            <div className="text-center py-8 text-slate-500">Gagal memuat konfigurasi</div>
+          )}
+        </div>
+
+        <div className="p-6 bg-orange-50 border-t border-orange-200">
+          <h3 className="font-medium text-orange-900 mb-2 flex items-center gap-2">
+            <AlertCircle className="w-4 h-4" />
+            Informasi Penting
+          </h3>
+          <ul className="text-sm text-orange-800 space-y-1 ml-6 list-disc">
+            <li>Jika diaktifkan, bulan yang belum dibayar sejak bulan mulai tagihan dihitung sebagai tunggakan</li>
+            <li>Pembayaran user otomatis dialokasikan ke bulan tertunggak paling lama terlebih dahulu</li>
+            <li>Bulan dalam Periode Pengecualian Pemasukan (pre-launch) tidak dihitung tunggakan</li>
+            <li>Jika dinonaktifkan, pembayaran dialokasikan mulai bulan berjalan seperti biasa</li>
           </ul>
         </div>
       </div>

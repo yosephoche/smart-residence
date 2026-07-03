@@ -463,7 +463,9 @@
       "all_blocks": "All Blocks",
       "no_occupied_houses": "No occupied houses found",
       "resident_info": "Resident Info",
-      "no_resident": "No resident assigned"
+      "no_resident": "No resident assigned",
+      "arrears_title": "You have {count} month(s) in arrears",
+      "arrears_pay_oldest_note": "Your payment will cover the oldest unpaid months first."
     }
   },
   "expenses": {

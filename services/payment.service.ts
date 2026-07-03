@@ -1,6 +1,14 @@
 import { prisma } from "@/lib/prisma";
-import { computeNextStartMonth, computeCoveredMonths, formatPaymentMonth } from "@/lib/calculations";
+import {
+  computeNextStartMonth,
+  computeCoveredMonths,
+  computeUnpaidMonths,
+  selectPaymentMonths,
+  formatPaymentMonth,
+  type YearMonth,
+} from "@/lib/calculations";
 import { getCachedExcludedIncomePeriods } from "@/lib/cache/excluded-income-periods";
+import { getCachedBillingStartConfig } from "@/lib/cache/billing-start";
 
 const paymentMonthsInclude = {
   orderBy: [{ year: "asc" as const }, { month: "asc" as const }],
@@ -80,8 +88,27 @@ export async function createPayment(
     },
     select: { year: true, month: true },
   });
-  const startMonth = computeNextStartMonth(occupiedMonths);
-  const coveredMonths = computeCoveredMonths(startMonth, amountMonths);
+  // When billing start is enabled, allocate to oldest unpaid (arrears) months
+  // first, then fill forward. Otherwise keep legacy consecutive-months behavior.
+  const billing = await getCachedBillingStartConfig();
+  let coveredMonths: YearMonth[];
+  if (billing.enabled) {
+    const excludedPeriods = await getCachedExcludedIncomePeriods();
+    const unpaidMonths = computeUnpaidMonths({
+      billingStart: billing,
+      occupiedMonths,
+      excludedPeriods,
+    });
+    coveredMonths = selectPaymentMonths({
+      amountMonths,
+      unpaidMonths,
+      occupiedMonths,
+      excludedPeriods,
+    });
+  } else {
+    const startMonth = computeNextStartMonth(occupiedMonths);
+    coveredMonths = computeCoveredMonths(startMonth, amountMonths);
+  }
 
   // Check for conflicts: any target month already has a PENDING or APPROVED payment for this house
   const conflicts = await prisma.paymentMonth.findMany({
@@ -157,6 +184,47 @@ export async function getOccupiedMonthsForHouse(houseId: string) {
     select: { year: true, month: true },
   });
   return rows;
+}
+
+export async function getUnpaidMonthsForHouse(houseId: string): Promise<{
+  enabled: boolean;
+  unpaidMonths: YearMonth[];
+  excludedPeriods: YearMonth[];
+  monthlyRate: number;
+  totalArrears: number;
+}> {
+  const billing = await getCachedBillingStartConfig();
+  if (!billing.enabled) {
+    return { enabled: false, unpaidMonths: [], excludedPeriods: [], monthlyRate: 0, totalArrears: 0 };
+  }
+
+  const house = await prisma.house.findUnique({
+    where: { id: houseId },
+    include: { houseType: true },
+  });
+  if (!house?.houseType) {
+    throw new Error("House or house type not found");
+  }
+
+  const [occupiedMonths, excludedPeriods] = await Promise.all([
+    getOccupiedMonthsForHouse(houseId),
+    getCachedExcludedIncomePeriods(),
+  ]);
+
+  const unpaidMonths = computeUnpaidMonths({
+    billingStart: billing,
+    occupiedMonths,
+    excludedPeriods,
+  });
+
+  const monthlyRate = Number(house.houseType.price);
+  return {
+    enabled: true,
+    unpaidMonths,
+    excludedPeriods,
+    monthlyRate,
+    totalArrears: unpaidMonths.length * monthlyRate,
+  };
 }
 
 export async function approvePayment(paymentId: string, approvedBy: string) {

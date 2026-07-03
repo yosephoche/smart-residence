@@ -1,16 +1,24 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { paymentUploadSchema, PaymentUploadFormData } from "@/lib/validations/payment.schema";
 import Button from "@/components/ui/Button";
 import FileUpload from "@/components/ui/FileUpload";
 import { formatCurrency } from "@/lib/utils";
-import { calculateTotalPayment, getMonthOptions, computeNextStartMonth, computeCoveredMonths, formatPaymentMonth } from "@/lib/calculations";
+import { calculateTotalPayment, getMonthOptions, computeNextStartMonth, computeCoveredMonths, selectPaymentMonths, formatPaymentMonth } from "@/lib/calculations";
 import { useTranslations } from "next-intl";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
+
+interface ArrearsInfo {
+  enabled: boolean;
+  unpaidMonths: Array<{ year: number; month: number }>;
+  excludedPeriods: Array<{ year: number; month: number }>;
+  monthlyRate: number;
+  totalArrears: number;
+}
 
 interface PaymentUploadFormProps {
   monthlyRate: number;
@@ -20,6 +28,7 @@ interface PaymentUploadFormProps {
   isSubmitting?: boolean;
   occupiedMonths: Array<{ year: number; month: number }>;
   isOutsideUploadWindow: boolean;
+  arrears?: ArrearsInfo | null;
 }
 
 export default function PaymentUploadForm({
@@ -30,6 +39,7 @@ export default function PaymentUploadForm({
   isSubmitting = false,
   occupiedMonths,
   isOutsideUploadWindow,
+  arrears,
 }: PaymentUploadFormProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [showQris, setShowQris] = useState(false);
@@ -40,6 +50,7 @@ export default function PaymentUploadForm({
     handleSubmit,
     control,
     watch,
+    setValue,
     formState: { errors },
   } = useForm<PaymentUploadFormData>({
     resolver: zodResolver(paymentUploadSchema),
@@ -52,12 +63,30 @@ export default function PaymentUploadForm({
   const selectedMonths = watch("amountMonths");
   const totalAmount = selectedMonths ? calculateTotalPayment(monthlyRate, selectedMonths) : 0;
 
+  const hasArrears = !!arrears?.enabled && arrears.unpaidMonths.length > 0;
+
+  // Default the month count to cover all arrears (once, when arrears data arrives)
+  const arrearsDefaultApplied = useRef(false);
+  useEffect(() => {
+    if (hasArrears && !arrearsDefaultApplied.current) {
+      arrearsDefaultApplied.current = true;
+      setValue("amountMonths", Math.min(arrears!.unpaidMonths.length, 12));
+    }
+  }, [hasArrears, arrears, setValue]);
+
   const nextStartMonth = useMemo(() => computeNextStartMonth(occupiedMonths), [occupiedMonths]);
 
-  const previewMonths = useMemo(
-    () => computeCoveredMonths(nextStartMonth, selectedMonths),
-    [nextStartMonth, selectedMonths]
-  );
+  const previewMonths = useMemo(() => {
+    if (arrears?.enabled) {
+      return selectPaymentMonths({
+        amountMonths: selectedMonths,
+        unpaidMonths: arrears.unpaidMonths,
+        occupiedMonths,
+        excludedPeriods: arrears.excludedPeriods,
+      });
+    }
+    return computeCoveredMonths(nextStartMonth, selectedMonths);
+  }, [arrears, nextStartMonth, selectedMonths, occupiedMonths]);
 
   const overlappingMonths = useMemo(() => {
     return previewMonths.filter((pm) =>
@@ -88,6 +117,34 @@ export default function PaymentUploadForm({
           <p className="text-2xl font-bold text-primary-900">{formatCurrency(monthlyRate)}</p>
         </div>
       </div>
+
+      {/* Arrears Warning */}
+      {hasArrears && (
+        <div className="bg-amber-50 border-2 border-amber-200 rounded-xl p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <svg className="w-5 h-5 text-amber-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+            </svg>
+            <p className="text-sm font-semibold text-amber-800">
+              {t('arrears_title', { count: arrears!.unpaidMonths.length })}
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-1.5 mb-2">
+            {arrears!.unpaidMonths.map((um) => (
+              <span
+                key={`arrears-${um.year}-${um.month}`}
+                className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 border border-amber-300"
+              >
+                {formatPaymentMonth(um)}
+              </span>
+            ))}
+          </div>
+          <p className="text-sm font-bold text-amber-900 mb-1">
+            {formatCurrency(arrears!.totalArrears)}
+          </p>
+          <p className="text-xs text-amber-700">{t('arrears_pay_oldest_note')}</p>
+        </div>
+      )}
 
       {/* Month Selection */}
       <div className="flex flex-col gap-1.5">
@@ -144,12 +201,17 @@ export default function PaymentUploadForm({
             const isOccupied = occupiedMonths.some(
               (om) => om.year === pm.year && om.month === pm.month
             );
+            const isArrearsMonth =
+              hasArrears &&
+              arrears!.unpaidMonths.some((um) => um.year === pm.year && um.month === pm.month);
             return (
               <span
                 key={`${pm.year}-${pm.month}`}
                 className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium ${
                   isOccupied
                     ? "bg-danger-100 text-danger-800 border border-danger-300"
+                    : isArrearsMonth
+                    ? "bg-amber-100 text-amber-800 border border-amber-300"
                     : "bg-primary-100 text-primary-800 border border-primary-300"
                 }`}
               >

@@ -464,7 +464,9 @@
       "all_blocks": "Semua Blok",
       "no_occupied_houses": "Tidak ada rumah berpenghuni",
       "resident_info": "Info Penghuni",
-      "no_resident": "Tidak ada penghuni"
+      "no_resident": "Tidak ada penghuni",
+      "arrears_title": "Anda memiliki tunggakan {count} bulan",
+      "arrears_pay_oldest_note": "Pembayaran akan menutupi bulan tertunggak terlebih dahulu."
     }
   },
   "expenses": {

@@ -69,6 +69,13 @@ interface UrgentContact {
   order: number;
 }
 
+interface ArrearsInfo {
+  enabled: boolean;
+  unpaidMonths: Array<{ year: number; month: number }>;
+  monthlyRate: number;
+  totalArrears: number;
+}
+
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
@@ -104,6 +111,28 @@ export function HomeScreen() {
     "Halo, saya warga Sakura Village blok {block} no {number}, saya ingin minta bantuannya",
   );
   const [isLoading, setIsLoading] = useState(true);
+  const [arrearsByHouse, setArrearsByHouse] = useState<Record<string, ArrearsInfo>>({});
+
+  useEffect(() => {
+    if (houses.length === 0) return;
+
+    const fetchArrears = async () => {
+      const results = await Promise.allSettled(
+        houses.map((h) =>
+          fetch(`/api/payments/unpaid-months?houseId=${h.id}`).then((r) => r.json()),
+        ),
+      );
+      const map: Record<string, ArrearsInfo> = {};
+      results.forEach((res, i) => {
+        if (res.status === "fulfilled" && res.value?.enabled) {
+          map[houses[i].id] = res.value;
+        }
+      });
+      setArrearsByHouse(map);
+    };
+
+    fetchArrears();
+  }, [houses]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -296,6 +325,57 @@ export function HomeScreen() {
             </motion.div>
           );
         })
+      )}
+
+      {/* Arrears (Tunggakan) Warning */}
+      {houses.some((h) => (arrearsByHouse[h.id]?.unpaidMonths.length ?? 0) > 0) && (
+        <motion.div
+          variants={itemVariants}
+          className="bg-amber-50 border border-amber-200 rounded-2xl p-4"
+        >
+          <div className="flex items-center gap-2 mb-3">
+            <AlertCircle className="w-4 h-4 text-amber-500" />
+            <p className="text-xs font-medium text-amber-600 uppercase tracking-wider">
+              Tunggakan Pembayaran
+            </p>
+          </div>
+          <div className="space-y-3">
+            {houses
+              .filter((h) => (arrearsByHouse[h.id]?.unpaidMonths.length ?? 0) > 0)
+              .map((h) => {
+                const info = arrearsByHouse[h.id];
+                return (
+                  <div key={h.id}>
+                    {houses.length > 1 && (
+                      <p className="text-[11px] font-semibold text-amber-700 mb-1">
+                        Blok {h.block} No. {h.houseNumber}
+                      </p>
+                    )}
+                    <div className="flex flex-wrap gap-1.5 mb-1.5">
+                      {info.unpaidMonths.map((um) => (
+                        <span
+                          key={`${h.id}-${um.year}-${um.month}`}
+                          className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-amber-100 text-amber-700"
+                        >
+                          {formatPaymentMonth(um)}
+                        </span>
+                      ))}
+                    </div>
+                    <p className="text-sm font-bold text-amber-900">
+                      {info.unpaidMonths.length} bulan · {formatCurrency(info.totalArrears)}
+                    </p>
+                  </div>
+                );
+              })}
+          </div>
+          <button
+            onClick={() => router.push("/user/upload")}
+            className="w-full mt-3 bg-amber-500 text-white rounded-2xl p-3 flex items-center justify-center gap-2 font-semibold text-sm active:scale-[0.98] transition-transform duration-150"
+          >
+            <UploadIcon className="w-4 h-4" />
+            Bayar Tunggakan
+          </button>
+        </motion.div>
       )}
 
       {/* On-Duty Security Staff */}

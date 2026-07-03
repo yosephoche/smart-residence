@@ -2,9 +2,11 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Wallet, X, CheckCircle, Clock, XCircle } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Wallet, X, CheckCircle, Clock, XCircle, AlertCircle, Upload as UploadIcon } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { formatPaymentMonth } from '@/lib/calculations';
+import { useAuth } from '@/lib/auth-client';
 import { toast } from 'sonner';
 import Image from 'next/image';
 
@@ -18,6 +20,14 @@ interface Payment {
   rejectionNote?: string | null;
   paymentMonths?: Array<{ year: number; month: number }>;
   house?: { houseNumber: string; block?: string; houseType?: { typeName: string } };
+}
+
+interface HouseArrears {
+  houseId: string;
+  houseNumber: string;
+  block: string;
+  unpaidMonths: Array<{ year: number; month: number }>;
+  totalArrears: number;
 }
 
 const containerVariants = {
@@ -42,12 +52,15 @@ const INDONESIAN_MONTHS = [
 ];
 
 export default function PaymentsScreen() {
+  const { user } = useAuth();
+  const router = useRouter();
   const [payments, setPayments] = useState<Payment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
   const [imageFullscreen, setImageFullscreen] = useState(false);
   const [filterYear, setFilterYear] = useState(new Date().getFullYear());
   const [filterMonth, setFilterMonth] = useState(new Date().getMonth() + 1);
+  const [arrearsList, setArrearsList] = useState<HouseArrears[]>([]);
 
   useEffect(() => {
     fetch('/api/payments')
@@ -56,6 +69,40 @@ export default function PaymentsScreen() {
       .catch(() => toast.error('Gagal memuat data pembayaran', { duration: 6000 }))
       .finally(() => setIsLoading(false));
   }, []);
+
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const fetchArrears = async () => {
+      try {
+        const houses = await fetch(`/api/houses?userId=${user.id}`).then((r) => r.json());
+        if (!Array.isArray(houses) || houses.length === 0) return;
+
+        const results = await Promise.allSettled(
+          houses.map((h: { id: string }) =>
+            fetch(`/api/payments/unpaid-months?houseId=${h.id}`).then((r) => r.json()),
+          ),
+        );
+        const list: HouseArrears[] = [];
+        results.forEach((res, i) => {
+          if (res.status === 'fulfilled' && res.value?.enabled && res.value.unpaidMonths.length > 0) {
+            list.push({
+              houseId: houses[i].id,
+              houseNumber: houses[i].houseNumber,
+              block: houses[i].block,
+              unpaidMonths: res.value.unpaidMonths,
+              totalArrears: res.value.totalArrears,
+            });
+          }
+        });
+        setArrearsList(list);
+      } catch {
+        // Arrears info is supplementary — fail silently
+      }
+    };
+
+    fetchArrears();
+  }, [user?.id]);
 
   const availableYears = useMemo(() => {
     const years = new Set<number>();
@@ -119,6 +166,47 @@ export default function PaymentsScreen() {
             </span>
           </div>
         </motion.div>
+
+        {/* Arrears Summary */}
+        {arrearsList.length > 0 && (
+          <motion.div variants={itemVariants} className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <AlertCircle className="w-4 h-4 text-amber-500" />
+              <p className="text-xs font-medium text-amber-600 uppercase tracking-wider">Tunggakan Pembayaran</p>
+            </div>
+            <div className="space-y-3">
+              {arrearsList.map((a) => (
+                <div key={a.houseId}>
+                  {arrearsList.length > 1 && (
+                    <p className="text-[11px] font-semibold text-amber-700 mb-1">
+                      Blok {a.block} No. {a.houseNumber}
+                    </p>
+                  )}
+                  <div className="flex flex-wrap gap-1.5 mb-1.5">
+                    {a.unpaidMonths.map((um) => (
+                      <span
+                        key={`${a.houseId}-${um.year}-${um.month}`}
+                        className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-amber-100 text-amber-700"
+                      >
+                        {formatPaymentMonth(um)}
+                      </span>
+                    ))}
+                  </div>
+                  <p className="text-sm font-bold text-amber-900">
+                    {a.unpaidMonths.length} bulan · {formatCurrency(a.totalArrears)}
+                  </p>
+                </div>
+              ))}
+            </div>
+            <button
+              onClick={() => router.push('/user/upload')}
+              className="w-full mt-3 bg-amber-500 text-white rounded-2xl p-3 flex items-center justify-center gap-2 font-semibold text-sm active:scale-[0.98] transition-transform duration-150"
+            >
+              <UploadIcon className="w-4 h-4" />
+              Bayar Sekarang
+            </button>
+          </motion.div>
+        )}
 
         {/* Filter Row */}
         <motion.div variants={itemVariants} className="flex items-center gap-2">
