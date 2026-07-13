@@ -23,6 +23,7 @@ interface House {
   houseNumber: string;
   block: string;
   userId: string | null;
+  mergedIntoHouseId?: string | null;
   houseType?: { typeName: string; price: unknown } | null;
 }
 
@@ -78,7 +79,7 @@ export default function BulkCreatePaymentForm({ users, onSuccess, onCancel }: Pr
     fetch("/api/houses")
       .then((r) => r.json())
       .then((data: House[]) => {
-        setHouses(data.filter((h) => h.userId !== null));
+        setHouses(data.filter((h) => h.userId !== null && !h.mergedIntoHouseId));
         setIsLoadingHouses(false);
       })
       .catch(() => setIsLoadingHouses(false));

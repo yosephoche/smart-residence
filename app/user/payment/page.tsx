@@ -15,6 +15,7 @@ export const dynamic = 'force-dynamic';
 interface House {
   id: string;
   houseNumber: string;
+  mergedIntoHouseId?: string | null;
   houseType?: { typeName: string; price: number };
 }
 
@@ -71,8 +72,10 @@ export default function PaymentUploadPage() {
     fetchingHouseRef.current = true;
     fetch(`/api/houses?userId=${userId}`)
       .then((r) => r.json())
-      .then((data) => {
-        if (data.length > 0) setHouse(data[0]);
+      .then((data: House[]) => {
+        // Prefer a non-merged house — merged houses are billed via the primary
+        const payable = data.find((h) => !h.mergedIntoHouseId) ?? data[0];
+        if (payable) setHouse(payable);
         setIsLoading(false);
       })
       .catch((err) => console.error("Failed to fetch house:", err))

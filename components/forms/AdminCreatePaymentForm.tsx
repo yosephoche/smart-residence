@@ -32,6 +32,7 @@ interface HouseWithUser {
   houseNumber: string;
   block: string;
   userId: string | null;
+  mergedIntoHouseId?: string | null;
   houseType?: { typeName: string; price: unknown };
   user?: HouseUser | null;
 }
@@ -67,8 +68,11 @@ export default function AdminCreatePaymentForm({
     fetch("/api/houses?includeUser=true")
       .then((r) => r.json())
       .then((data: HouseWithUser[]) => {
-        // Only keep houses that have an assigned resident
-        setAllHouses(data.filter((h) => h.userId !== null));
+        // Only keep houses that have an assigned resident and are not merged
+        // into another house (secondary houses are billed via the primary)
+        setAllHouses(
+          data.filter((h) => h.userId !== null && !h.mergedIntoHouseId)
+        );
         setIsLoadingHouses(false);
       })
       .catch(() => {

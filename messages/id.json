@@ -307,6 +307,14 @@
       "renter_name": "Nama Penyewa",
       "renter_name_placeholder": "mis., John Doe",
       "renter_name_help": "Masukkan nama lengkap orang yang menyewa rumah ini",
+      "merge_section": "Gabung Rumah",
+      "merge_label": "Gabungkan ke Rumah Utama",
+      "merge_none": "Tidak digabung",
+      "merge_help": "Jika penghuni memiliki 2 rumah yang digabung jadi satu hunian, pilih rumah utama. Tagihan & tunggakan rumah ini akan ditanggung rumah utama.",
+      "merge_requires_resident": "Tambahkan penghuni terlebih dahulu untuk menggabungkan rumah",
+      "merge_no_candidates": "Penghuni ini tidak memiliki rumah lain yang bisa dijadikan rumah utama",
+      "merge_primary_note": "Rumah ini adalah rumah utama dari: {houses}. Lepaskan gabungan dari rumah tersebut jika ingin mengubah.",
+      "merged_badge": "Gabung ke {house}",
       "update_house": "Perbarui",
       "create_house": "Simpan"
     }

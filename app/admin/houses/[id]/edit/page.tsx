@@ -75,6 +75,7 @@ export default function EditHousePage() {
         block: data.block,
         houseTypeId: data.houseTypeId,
         userId: data.userId || undefined,
+        mergedIntoHouseId: data.mergedIntoHouseId || null,
       }),
     });
 

@@ -85,11 +85,20 @@ export async function createPayment(
   // a persistent connection, which pgbouncer doesn't guarantee).
   const house = await prisma.house.findUnique({
     where: { id: houseId },
-    include: { houseType: true },
+    include: {
+      houseType: true,
+      mergedInto: { select: { block: true, houseNumber: true } },
+    },
   });
 
   if (!house?.houseType) {
     throw new Error("House or house type not found");
+  }
+
+  if (house.mergedInto) {
+    throw new Error(
+      `Rumah ini digabung ke rumah ${house.mergedInto.block}-${house.mergedInto.houseNumber}. Pembayaran dilakukan melalui rumah utama.`
+    );
   }
 
   // Server-side price calculation — never trusts client
@@ -211,6 +220,7 @@ export async function getUnpaidMonthsForHouse(houseId: string): Promise<{
   excludedPeriods: YearMonth[];
   monthlyRate: number;
   totalArrears: number;
+  mergedInto?: { id: string; block: string; houseNumber: string };
 }> {
   const billing = await getCachedBillingStartConfig();
   if (!billing.enabled) {
@@ -219,10 +229,25 @@ export async function getUnpaidMonthsForHouse(houseId: string): Promise<{
 
   const house = await prisma.house.findUnique({
     where: { id: houseId },
-    include: { houseType: true },
+    include: {
+      houseType: true,
+      mergedInto: { select: { id: true, block: true, houseNumber: true } },
+    },
   });
   if (!house?.houseType) {
     throw new Error("House or house type not found");
+  }
+
+  // Merged (secondary) house: billing is covered entirely by the primary house
+  if (house.mergedInto) {
+    return {
+      enabled: true,
+      unpaidMonths: [],
+      excludedPeriods: [],
+      monthlyRate: 0,
+      totalArrears: 0,
+      mergedInto: house.mergedInto,
+    };
   }
 
   const [occupiedMonths, excludedPeriods] = await Promise.all([
@@ -452,18 +477,10 @@ export async function getUnpaidHousesThisMonth() {
   });
   const paidHouseIds = new Set(paidRows.map((r) => r.payment.houseId));
 
-  // Find user IDs who own any paid house — so all their houses get excluded
-  const paidHousesOwners = await prisma.house.findMany({
-    where: { id: { in: [...paidHouseIds] }, userId: { not: null } },
-    select: { userId: true },
-  });
-  const paidUserIds = new Set(
-    paidHousesOwners.map((h) => h.userId).filter((id): id is string => id !== null)
-  );
-
-  // All occupied houses (assigned to a user)
+  // All occupied houses (assigned to a user), excluding merged (secondary)
+  // houses — their billing is carried by the primary house.
   const occupiedHouses = await prisma.house.findMany({
-    where: { userId: { not: null } },
+    where: { userId: { not: null }, mergedIntoHouseId: null },
     include: {
       user: { select: { id: true, name: true, email: true } },
       houseType: true,
@@ -471,10 +488,7 @@ export async function getUnpaidHousesThisMonth() {
     orderBy: { houseNumber: "asc" },
   });
 
-  // Filter out houses where the owner already has any payment this month
-  return occupiedHouses.filter(
-    (h) => !paidHouseIds.has(h.id) && !paidUserIds.has(h.userId!)
-  );
+  return occupiedHouses.filter((h) => !paidHouseIds.has(h.id));
 }
 
 export async function bulkCreatePayments(
@@ -495,7 +509,10 @@ export async function bulkCreatePayments(
         // Fetch house + house type + resident
         const house = await tx.house.findUnique({
           where: { id: houseId },
-          include: { houseType: true },
+          include: {
+            houseType: true,
+            mergedInto: { select: { block: true, houseNumber: true } },
+          },
         });
 
         if (!house?.houseType) {
@@ -504,6 +521,12 @@ export async function bulkCreatePayments(
 
         if (!house.userId) {
           throw new Error("Rumah belum ditempati oleh penghuni");
+        }
+
+        if (house.mergedInto) {
+          throw new Error(
+            `Rumah ini digabung ke rumah ${house.mergedInto.block}-${house.mergedInto.houseNumber}. Pembayaran dilakukan melalui rumah utama.`
+          );
         }
 
         const totalAmount = Number(house.houseType.price) * months.length;
@@ -587,38 +610,28 @@ export async function getHousePaymentStatusForMonth(year: number, month: number)
     }
   }
 
-  // 2. Propagate status to all houses owned by users who already have a payment
-  const paidHouseIds2 = [...statusMap.keys()];
-  const paidHousesOwners = await prisma.house.findMany({
-    where: { id: { in: paidHouseIds2 }, userId: { not: null } },
-    select: { userId: true, id: true },
-  });
-  // Build user → best status (APPROVED beats PENDING)
-  const userStatusMap = new Map<string, string>();
-  for (const { userId, id } of paidHousesOwners) {
-    if (!userId) continue;
-    const houseStatus = statusMap.get(id);
-    if (!houseStatus) continue;
-    if (userStatusMap.get(userId) !== "APPROVED") {
-      userStatusMap.set(userId, houseStatus);
-    }
-  }
-
-  // 3. All occupied houses
+  // 2. All occupied houses (include merge info so secondary houses can
+  //    inherit their primary house's status)
   const occupiedHouses = await prisma.house.findMany({
     where: { userId: { not: null } },
     include: {
       user: { select: { id: true, name: true, email: true } },
       houseType: true,
+      mergedInto: { select: { id: true, block: true, houseNumber: true } },
     },
     orderBy: { houseNumber: "asc" },
   });
 
-  // 4. Annotate each house with its payment status for the given month
-  //    A house inherits its user's best status if the house itself has no direct payment
+  // 3. Annotate each house with its payment status for the given month.
+  //    A merged (secondary) house inherits the primary house's status.
   return occupiedHouses.map((h) => ({
     ...h,
-    paymentStatus: (statusMap.get(h.id) ?? userStatusMap.get(h.userId!) ?? null) as "PENDING" | "APPROVED" | null,
+    paymentStatus: (statusMap.get(h.id) ??
+      (h.mergedIntoHouseId ? statusMap.get(h.mergedIntoHouseId) : null) ??
+      null) as "PENDING" | "APPROVED" | null,
+    mergedIntoLabel: h.mergedInto
+      ? `${h.mergedInto.block}-${h.mergedInto.houseNumber}`
+      : null,
   }));
 }
 

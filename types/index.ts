@@ -25,6 +25,12 @@ export interface HouseType {
 }
 
 // House
+export interface HouseMergeRef {
+  id: string;
+  block: string;
+  houseNumber: string;
+}
+
 export interface House {
   id: string;
   houseNumber: string;
@@ -33,6 +39,9 @@ export interface House {
   userId?: string;
   isRented?: boolean;
   renterName?: string;
+  mergedIntoHouseId?: string | null;
+  mergedInto?: HouseMergeRef | null;
+  mergedHouses?: HouseMergeRef[];
   houseType?: HouseType;
   user?: User;
 }

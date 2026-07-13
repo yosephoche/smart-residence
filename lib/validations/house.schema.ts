@@ -14,6 +14,7 @@ export const houseFormSchema = z
     userId: z.string().optional(),
     isRented: z.boolean().optional().default(false),
     renterName: z.string().optional(),
+    mergedIntoHouseId: z.string().optional(),
   })
   .refine(
     (data) => {

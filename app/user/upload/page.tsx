@@ -28,6 +28,7 @@ interface House {
   id: string;
   houseNumber: string;
   block: string;
+  mergedIntoHouseId?: string | null;
   houseType?: {
     typeName: string;
     price: number;
@@ -135,7 +136,10 @@ export default function UploadScreen() {
         const allPays = Array.isArray(paymentsData) ? paymentsData : [];
         setAllPayments(allPays);
 
-        const records: House[] = Array.isArray(houseData) ? houseData : [];
+        // Exclude merged (secondary) houses — payments go through the primary
+        const records: House[] = (Array.isArray(houseData) ? houseData : []).filter(
+          (h: House) => !h.mergedIntoHouseId
+        );
         setHouses(records);
         if (records.length === 1) setSelectedHouseId(records[0].id);
         setAvailableMonths(monthsData);

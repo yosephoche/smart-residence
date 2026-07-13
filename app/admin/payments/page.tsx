@@ -55,6 +55,7 @@ interface AnnotatedHouse {
   user?: { id: string; name: string; email: string } | null;
   houseType?: { typeName: string; price: unknown } | null;
   paymentStatus: "PENDING" | "APPROVED" | null;
+  mergedIntoLabel?: string | null;
 }
 
 export default function AdminPaymentsPage() {
@@ -692,6 +693,11 @@ export default function AdminPaymentsPage() {
         <div>
           <p className="font-semibold text-slate-900">{house.houseNumber}</p>
           <p className="text-xs text-slate-500">{house.block}</p>
+          {house.mergedIntoLabel && (
+            <span className="inline-block text-[10px] font-semibold px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 mt-0.5">
+              Gabung ke {house.mergedIntoLabel}
+            </span>
+          )}
         </div>
       ),
     },

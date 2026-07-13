@@ -27,6 +27,8 @@ interface House {
   id: string;
   houseNumber: string;
   block: string;
+  mergedIntoHouseId?: string | null;
+  mergedInto?: { id: string; block: string; houseNumber: string } | null;
   houseType?: {
     typeName: string;
     price: number;
@@ -215,8 +217,16 @@ export function HomeScreen() {
     return hasPending ? "PENDING" : "UNPAID";
   };
 
-  const anyHousePending = houses.some((h) => getHouseStatus(h) === "PENDING");
-  const anyHouseUnpaid = houses.some((h) => getHouseStatus(h) === "UNPAID");
+  // Merged (secondary) house follows its primary house's status
+  const resolveHouseStatus = (h: House): "APPROVED" | "PENDING" | "UNPAID" => {
+    const primary = h.mergedIntoHouseId
+      ? houses.find((x) => x.id === h.mergedIntoHouseId)
+      : null;
+    return getHouseStatus(primary ?? h);
+  };
+
+  const anyHousePending = houses.some((h) => resolveHouseStatus(h) === "PENDING");
+  const anyHouseUnpaid = houses.some((h) => resolveHouseStatus(h) === "UNPAID");
 
   // Current month financials (last item = current month)
   const currentMonthData = financialData[financialData.length - 1];
@@ -270,12 +280,22 @@ export function HomeScreen() {
         </motion.div>
       ) : (
         houses.map((h, index) => {
-          const houseStatus = getHouseStatus(h);
-          const houseStatusConfig = {
-            APPROVED: { label: "Lunas", color: "text-emerald-600", bg: "bg-emerald-50" },
-            PENDING: { label: "Menunggu", color: "text-amber-600", bg: "bg-amber-50" },
-            UNPAID: { label: "Belum Bayar", color: "text-red-600", bg: "bg-red-50" },
-          }[houseStatus];
+          const houseStatus = resolveHouseStatus(h);
+          const houseStatusConfig = h.mergedIntoHouseId
+            ? {
+                label: `Gabung dgn ${
+                  h.mergedInto
+                    ? `${h.mergedInto.block}-${h.mergedInto.houseNumber}`
+                    : "rumah utama"
+                }`,
+                color: "text-slate-500",
+                bg: "bg-slate-100",
+              }
+            : {
+                APPROVED: { label: "Lunas", color: "text-emerald-600", bg: "bg-emerald-50" },
+                PENDING: { label: "Menunggu", color: "text-amber-600", bg: "bg-amber-50" },
+                UNPAID: { label: "Belum Bayar", color: "text-red-600", bg: "bg-red-50" },
+              }[houseStatus];
           return (
             <motion.div
               key={h.id}

@@ -6,11 +6,17 @@ import { getCachedDefaultPasswordConfig } from "@/lib/cache/default-password";
 import { createHouseType } from "./houseType.service";
 import { validateEmail } from "@/lib/utils/import";
 
+const mergeInfoInclude = {
+  mergedInto: { select: { id: true, block: true, houseNumber: true } },
+  mergedHouses: { select: { id: true, block: true, houseNumber: true } },
+} as const;
+
 export async function getAllHouses(userId?: string, includeUser = false) {
   return prisma.house.findMany({
     where: userId ? { userId } : undefined,
     include: {
       houseType: true,
+      ...mergeInfoInclude,
       ...(includeUser && { user: { select: { id: true, name: true, email: true } } }),
     },
     orderBy: { houseNumber: "asc" },
@@ -31,7 +37,7 @@ export async function getAvailableHouses() {
 export async function getHouseById(id: string) {
   return prisma.house.findUnique({
     where: { id },
-    include: { houseType: true },
+    include: { houseType: true, ...mergeInfoInclude },
   });
 }
 
@@ -65,12 +71,66 @@ export async function updateHouse(
     userId?: string | null;
     isRented?: boolean;
     renterName?: string | null;
+    mergedIntoHouseId?: string | null;
   }
 ) {
+  const current = await prisma.house.findUnique({
+    where: { id },
+    include: { mergedHouses: { select: { id: true } } },
+  });
+  if (!current) {
+    throw new Error("Rumah tidak ditemukan");
+  }
+
+  const nextUserId =
+    updates.userId !== undefined ? updates.userId : current.userId;
+  const nextMergedIntoId =
+    updates.mergedIntoHouseId !== undefined
+      ? updates.mergedIntoHouseId
+      : current.mergedIntoHouseId;
+
+  // Changing owner while other houses are merged into this one would break
+  // the same-owner invariant — require unmerge first.
+  if (
+    updates.userId !== undefined &&
+    updates.userId !== current.userId &&
+    current.mergedHouses.length > 0
+  ) {
+    throw new Error(
+      "Rumah ini menjadi rumah utama dari rumah lain. Lepaskan gabungan terlebih dahulu sebelum mengganti penghuni."
+    );
+  }
+
+  if (nextMergedIntoId) {
+    if (nextMergedIntoId === id) {
+      throw new Error("Rumah tidak bisa digabung ke dirinya sendiri");
+    }
+    if (current.mergedHouses.length > 0) {
+      throw new Error(
+        "Rumah ini menjadi rumah utama dari rumah lain sehingga tidak bisa digabung. Lepaskan gabungan tersebut terlebih dahulu."
+      );
+    }
+    const target = await prisma.house.findUnique({
+      where: { id: nextMergedIntoId },
+      select: { userId: true, mergedIntoHouseId: true },
+    });
+    if (!target) {
+      throw new Error("Rumah tujuan gabung tidak ditemukan");
+    }
+    if (!nextUserId || target.userId !== nextUserId) {
+      throw new Error(
+        "Rumah hanya bisa digabung ke rumah lain milik penghuni yang sama"
+      );
+    }
+    if (target.mergedIntoHouseId) {
+      throw new Error("Rumah tujuan sudah digabung ke rumah lain");
+    }
+  }
+
   return prisma.house.update({
     where: { id },
     data: updates,
-    include: { houseType: true },
+    include: { houseType: true, ...mergeInfoInclude },
   });
 }
 

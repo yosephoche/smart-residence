@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslations } from "next-intl";
@@ -47,6 +47,7 @@ export default function HouseForm({
           userId: house.userId || "",
           isRented: house.isRented || false,
           renterName: house.renterName || "",
+          mergedIntoHouseId: house.mergedIntoHouseId || "",
         }
       : undefined,
   });
@@ -54,6 +55,43 @@ export default function HouseForm({
   const selectedHouseTypeId = watch("houseTypeId");
   const selectedHouseType = houseTypes.find((t) => t.id === selectedHouseTypeId);
   const isRented = watch("isRented");
+  const selectedUserId = watch("userId");
+
+  // Merge candidates: other houses owned by the selected resident that are
+  // not themselves merged into another house
+  const isPrimaryHouse = (house?.mergedHouses?.length ?? 0) > 0;
+  const [mergeCandidates, setMergeCandidates] = useState<House[]>([]);
+
+  useEffect(() => {
+    if (!isEditMode || !selectedUserId || isPrimaryHouse) {
+      setMergeCandidates([]);
+      return;
+    }
+    let cancelled = false;
+    fetch(`/api/houses?userId=${selectedUserId}`)
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data: House[]) => {
+        if (cancelled) return;
+        setMergeCandidates(
+          (Array.isArray(data) ? data : []).filter(
+            (h) => h.id !== house?.id && !h.mergedIntoHouseId
+          )
+        );
+      })
+      .catch(() => {
+        if (!cancelled) setMergeCandidates([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isEditMode, selectedUserId, isPrimaryHouse, house?.id]);
+
+  // Reset merge selection when resident changes away from the original owner
+  useEffect(() => {
+    if (isEditMode && selectedUserId !== (house?.userId || "")) {
+      setValue("mergedIntoHouseId", "");
+    }
+  }, [isEditMode, selectedUserId, house?.userId, setValue]);
 
   // Clear renterName when unchecked
   useEffect(() => {
@@ -169,6 +207,42 @@ export default function HouseForm({
             fullWidth
             required
           />
+        </div>
+      )}
+
+      {isEditMode && (
+        <div className="flex flex-col gap-1.5">
+          <label className="text-sm font-medium text-slate-700 tracking-tight">
+            {t('merge_label')}
+          </label>
+          {isPrimaryHouse ? (
+            <p className="text-xs text-amber-600 bg-amber-50 border-2 border-amber-200 rounded-lg p-3">
+              {t('merge_primary_note', {
+                houses: (house?.mergedHouses ?? [])
+                  .map((h) => `${h.block}-${h.houseNumber}`)
+                  .join(", "),
+              })}
+            </p>
+          ) : !selectedUserId ? (
+            <p className="text-xs text-slate-500">{t('merge_requires_resident')}</p>
+          ) : mergeCandidates.length === 0 ? (
+            <p className="text-xs text-slate-500">{t('merge_no_candidates')}</p>
+          ) : (
+            <>
+              <select
+                {...register("mergedIntoHouseId")}
+                className="w-full px-4 py-2.5 text-sm text-slate-900 bg-white border-2 border-slate-300 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:border-primary-500 focus:ring-primary-100"
+              >
+                <option value="">{t('merge_none')}</option>
+                {mergeCandidates.map((h) => (
+                  <option key={h.id} value={h.id}>
+                    {h.block} - {h.houseNumber}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-slate-500">{t('merge_help')}</p>
+            </>
+          )}
         </div>
       )}
 

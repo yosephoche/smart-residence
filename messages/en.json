@@ -306,6 +306,14 @@
       "renter_name": "Renter Name",
       "renter_name_placeholder": "e.g., John Doe",
       "renter_name_help": "Enter the full name of the person renting this house",
+      "merge_section": "Merge House",
+      "merge_label": "Merge into Primary House",
+      "merge_none": "Not merged",
+      "merge_help": "If the resident owns 2 houses combined into one dwelling, pick the primary house. This house's billing & arrears will be covered by the primary house.",
+      "merge_requires_resident": "Assign a resident first to merge this house",
+      "merge_no_candidates": "This resident has no other house that can serve as the primary house",
+      "merge_primary_note": "This house is the primary house of: {houses}. Unmerge those houses first to change this.",
+      "merged_badge": "Merged into {house}",
       "update_house": "Update House",
       "create_house": "Create House"
     }

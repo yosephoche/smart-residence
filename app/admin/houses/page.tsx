@@ -25,6 +25,7 @@ export const dynamic = 'force-dynamic';
 
 export default function HousesPage() {
   const t = useTranslations('houses');
+  const tForm = useTranslations('houses.form');
   const tCommon = useTranslations('common');
   const router = useRouter();
   const [houses, setHouses] = useState<House[]>([]);
@@ -183,6 +184,13 @@ export default function HousesPage() {
         <div>
           <p className="font-semibold text-slate-900 text-lg">{house.houseNumber}</p>
           <p className="text-xs text-slate-500">{t('block')} {house.block}</p>
+          {house.mergedInto && (
+            <Badge variant="default" className="mt-1">
+              {tForm('merged_badge', {
+                house: `${house.mergedInto.block}-${house.mergedInto.houseNumber}`,
+              })}
+            </Badge>
+          )}
         </div>
       ),
     },

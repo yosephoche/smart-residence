@@ -118,16 +118,19 @@ model HouseType {
 }
 
 model House {
-  id          String     @id @default(cuid())
-  houseNumber String
-  block       String
-  houseTypeId String
-  userId     String?
-  isRented    Boolean    @default(false)
-  renterName  String?
-  houseType   HouseType  @relation(fields: [houseTypeId], references: [id])
-  user        User?      @relation(fields: [userId], references: [id])
-  payments    Payment[]
+  id                String     @id @default(cuid())
+  houseNumber       String
+  block             String
+  houseTypeId       String
+  userId            String?
+  isRented          Boolean    @default(false)
+  renterName        String?
+  mergedIntoHouseId String?
+  houseType         HouseType  @relation(fields: [houseTypeId], references: [id])
+  user              User?      @relation(fields: [userId], references: [id])
+  mergedInto        House?     @relation("HouseMerge", fields: [mergedIntoHouseId], references: [id])
+  mergedHouses      House[]    @relation("HouseMerge")
+  payments          Payment[]
 }
 
 model Payment {
