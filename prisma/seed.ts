@@ -3,7 +3,36 @@ import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
+/**
+ * This seed wipes every table before inserting demo data, and it is wired to
+ * package.json#prisma.seed — which means `prisma db seed`, `prisma migrate
+ * reset`, and any `prisma migrate dev` that decides to reset will all run it.
+ * The deployment targets a live database with no staging copy, so the wipe is
+ * gated behind an explicit opt-in rather than left one stray command away.
+ */
+function assertSeedingAllowed() {
+  if (process.env.ALLOW_DB_SEED === "yes") return;
+
+  console.error(
+    [
+      "",
+      "🛑 Seed dibatalkan.",
+      "",
+      "Script ini MENGHAPUS SELURUH ISI DATABASE (user, rumah, pembayaran,",
+      "pemasukan, pengeluaran, absensi, konfigurasi) sebelum mengisi data demo.",
+      "Database produksi tidak punya salinan staging.",
+      "",
+      "Jika memang ingin menjalankannya pada database kosong:",
+      "  ALLOW_DB_SEED=yes npx prisma db seed",
+      "",
+    ].join("\n")
+  );
+  process.exit(1);
+}
+
 async function main() {
+  assertSeedingAllowed();
+
   // Clear existing data (order matters due to foreign keys)
   await prisma.paymentMonth.deleteMany();
   await prisma.income.deleteMany();
