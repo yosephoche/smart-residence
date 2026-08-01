@@ -12,7 +12,8 @@ import ResidenceInfoConfigForm from "@/components/forms/ResidenceInfoConfigForm"
 import WhatsAppTemplateConfigForm from "@/components/forms/WhatsAppTemplateConfigForm";
 import ExcludedIncomePeriodsForm from "@/components/forms/ExcludedIncomePeriodsForm";
 import { BillingStartConfigForm } from "@/components/forms/BillingStartConfigForm";
-import { Settings, AlertCircle, CheckCircle, Key, MapPin, CreditCard, Building2, MessageSquare, CalendarX, CalendarRange, CalendarClock } from "lucide-react";
+import TelegramBotConfigForm from "@/components/forms/TelegramBotConfigForm";
+import { Settings, AlertCircle, CheckCircle, Key, MapPin, CreditCard, Building2, MessageSquare, CalendarX, CalendarRange, CalendarClock, Send } from "lucide-react";
 import LeaveConfigForm from "@/components/forms/LeaveConfigForm";
 
 export const dynamic = 'force-dynamic';
@@ -657,6 +658,65 @@ export default function SettingsPage() {
               Rekening yang ditampilkan adalah rekening tujuan transfer IPL
             </li>
           </ul>
+        </div>
+      </div>
+
+      {/* Telegram Bot Notification Configuration */}
+      <div className="bg-white rounded-lg shadow border border-slate-200 mt-6">
+        <div className="p-6 border-b border-slate-200">
+          <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
+            <Send className="w-5 h-5" />
+            Notifikasi Bot Telegram
+          </h2>
+          <p className="text-sm text-slate-600 mt-1">
+            Terima notifikasi bukti pembayaran baru dan setujui langsung dari Telegram
+          </p>
+        </div>
+
+        <div className="p-6">
+          {loading ? (
+            <div className="animate-pulse space-y-4">
+              <div className="h-12 bg-gray-200 rounded"></div>
+              <div className="h-12 bg-gray-200 rounded"></div>
+              <div className="h-12 bg-gray-200 rounded"></div>
+            </div>
+          ) : (
+            <TelegramBotConfigForm />
+          )}
+        </div>
+
+        <div className="p-6 bg-sky-50 border-t border-sky-200">
+          <h3 className="font-medium text-sky-900 mb-2 flex items-center gap-2">
+            <AlertCircle className="w-4 h-4" />
+            Langkah Setup
+          </h3>
+          <ol className="text-sm text-sky-800 space-y-1 ml-6 list-decimal">
+            <li>
+              Buat bot lewat @BotFather di Telegram, lalu simpan token-nya ke environment
+              variable <code>TELEGRAM_BOT_TOKEN</code>
+            </li>
+            <li>
+              Isi <code>TELEGRAM_WEBHOOK_SECRET</code> dengan string acak, lalu jalankan{' '}
+              <code>npm run telegram:setup</code>
+            </li>
+            <li>
+              Buat grup admin, tambahkan bot ke dalamnya, dan jadikan bot sebagai admin grup
+              agar bisa membaca tombol
+            </li>
+            <li>
+              Kirim <code>/chatid</code> di grup tersebut, salin nilainya ke kolom Chat ID di
+              atas, lalu simpan
+            </li>
+            <li>
+              Buat kode, kirim <code>/link &lt;kode&gt;</code> sebagai chat pribadi ke bot agar
+              tombol Setujui/Tolak dikenali sebagai aksi Anda
+            </li>
+          </ol>
+          <p className="text-sm text-sky-800 mt-3">
+            <span className="font-medium">Catatan privasi:</span> gambar bukti transfer
+            dikirim ke grup memakai URL publik Cloudinary. Siapa pun yang memiliki link
+            tersebut dapat membukanya, jadi batasi keanggotaan grup hanya untuk pengurus.
+          </p>
         </div>
       </div>
     </motion.div>

@@ -1,6 +1,7 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { auth } from "@/lib/auth";
 import { getPayments, createPayment } from "@/services/payment.service";
+import { dispatchPaymentUploaded } from "@/lib/notifications";
 import {
   validateUploadedFile,
   saveUploadedFile,
@@ -113,6 +114,12 @@ export const POST = auth(async (req) => {
       amountMonths,
       proofImagePath,
     );
+
+    // Runs after the response is sent so the resident never waits on the bot.
+    if (payment) {
+      after(() => dispatchPaymentUploaded(payment.id));
+    }
+
     return NextResponse.json(serializePrismaJson(payment), { status: 201 });
   } catch (err: any) {
     return NextResponse.json(

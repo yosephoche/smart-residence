@@ -1,6 +1,7 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { auth } from "@/lib/auth";
 import { bulkApprovePayments } from "@/services/payment.service";
+import { dispatchBulkDecided } from "@/lib/notifications";
 import { serializePrismaJson } from "@/lib/utils/prisma-serializer";
 
 export const POST = auth(async (req) => {
@@ -24,6 +25,13 @@ export const POST = auth(async (req) => {
     }
 
     const result = await bulkApprovePayments(paymentIds, session.user.id);
+
+    // Keep the bot notifications in sync so no admin acts on them twice.
+    const approvedIds = result.succeeded.map((payment: { id: string }) => payment.id);
+    const adminName = session.user.name ?? "admin";
+    if (approvedIds.length > 0) {
+      after(() => dispatchBulkDecided(approvedIds, adminName, "APPROVED"));
+    }
 
     return NextResponse.json(serializePrismaJson(result));
   } catch (error) {

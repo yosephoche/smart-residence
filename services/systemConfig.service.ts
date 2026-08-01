@@ -446,6 +446,62 @@ export async function setLeaveConfig(
   invalidateLeaveConfigCache();
 }
 
+// Default Telegram bot configuration values
+const DEFAULT_TELEGRAM_BOT = {
+  enabled: false,
+  groupChatId: "",
+  notifyOnUpload: true,
+};
+
+export interface TelegramBotConfig {
+  enabled: boolean;
+  /** Chat id of the admin group notifications are sent to. Not a secret. */
+  groupChatId: string;
+  notifyOnUpload: boolean;
+}
+
+/**
+ * Get the Telegram bot configuration from the database
+ * Falls back to default if no config exists
+ *
+ * The bot token and webhook secret live in env vars, never here.
+ */
+export async function getTelegramBotConfig(): Promise<TelegramBotConfig> {
+  try {
+    const config = await prisma.systemConfig.findUnique({
+      where: { key: "telegram_bot" },
+    });
+
+    if (!config) {
+      return DEFAULT_TELEGRAM_BOT;
+    }
+
+    const value = config.value as unknown as TelegramBotConfig;
+    return {
+      enabled: value.enabled ?? DEFAULT_TELEGRAM_BOT.enabled,
+      groupChatId: value.groupChatId ?? DEFAULT_TELEGRAM_BOT.groupChatId,
+      notifyOnUpload: value.notifyOnUpload ?? DEFAULT_TELEGRAM_BOT.notifyOnUpload,
+    };
+  } catch (error) {
+    console.error("Error fetching telegram bot config:", error);
+    return DEFAULT_TELEGRAM_BOT;
+  }
+}
+
+/**
+ * Set Telegram bot configuration
+ */
+export async function setTelegramBotConfig(
+  config: TelegramBotConfig,
+  updatedBy: string
+): Promise<void> {
+  await setConfig("telegram_bot", config, updatedBy);
+
+  // Invalidate cache
+  const { invalidateTelegramBotCache } = await import("@/lib/cache/telegram-bot");
+  invalidateTelegramBotCache();
+}
+
 /**
  * Set WhatsApp message template configuration
  */
