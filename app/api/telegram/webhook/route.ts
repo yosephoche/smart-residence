@@ -21,6 +21,9 @@ function isValidSecret(received: string | null): boolean {
   return timingSafeEqual(a, b);
 }
 
+// /laporan builds an XLSX inline, which outlasts the default budget.
+export const maxDuration = 60;
+
 export async function POST(request: NextRequest) {
   if (!isValidSecret(request.headers.get("x-telegram-bot-api-secret-token"))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

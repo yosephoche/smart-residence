@@ -83,6 +83,66 @@ export async function callTelegram<T = unknown>(
   return payload.result as T;
 }
 
+/**
+ * Same contract as callTelegram but for methods that carry a file. The
+ * Content-Type header is deliberately omitted so fetch can add the multipart
+ * boundary itself.
+ */
+async function callTelegramForm<T = unknown>(method: string, form: FormData): Promise<T> {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  if (!token) {
+    throw new Error("TELEGRAM_BOT_TOKEN is not configured");
+  }
+
+  const response = await fetch(`${API_BASE}/bot${token}/${method}`, {
+    method: "POST",
+    body: form,
+  });
+
+  const payload = (await response.json()) as TelegramApiResult<T>;
+
+  if (!payload.ok) {
+    throw new Error(
+      `Telegram ${method} failed (${payload.error_code}): ${payload.description}`
+    );
+  }
+
+  return payload.result as T;
+}
+
+const XLSX_MIME =
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+
+/**
+ * Upload a generated file. `callTelegram` would JSON-stringify the bytes away,
+ * so document sends go through the multipart path instead.
+ */
+export async function sendDocument(
+  chatId: string | number,
+  file: Buffer | Uint8Array,
+  filename: string,
+  caption?: string,
+  options: Record<string, unknown> = {}
+): Promise<TelegramMessage> {
+  const form = new FormData();
+  form.append("chat_id", String(chatId));
+  form.append("document", new Blob([new Uint8Array(file)], { type: XLSX_MIME }), filename);
+
+  if (caption) {
+    form.append("caption", caption);
+    form.append("parse_mode", "HTML");
+  }
+
+  // FormData only carries strings and blobs, so structured options such as
+  // reply_markup have to be serialised.
+  for (const [key, value] of Object.entries(options)) {
+    if (value === undefined || value === null) continue;
+    form.append(key, typeof value === "string" ? value : JSON.stringify(value));
+  }
+
+  return callTelegramForm<TelegramMessage>("sendDocument", form);
+}
+
 export async function sendMessage(
   chatId: string | number,
   text: string,

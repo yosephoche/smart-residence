@@ -1,6 +1,7 @@
 import { formatCurrency } from "@/lib/utils";
 import { formatPaymentMonth } from "@/lib/calculations";
 import { escapeHtml, type InlineKeyboardButton } from "./client";
+import { monthNameId, type MonthlyReportTotals } from "@/lib/reports/monthly-report";
 import type { PaymentNotification } from "@/lib/notifications/types";
 
 /**
@@ -120,4 +121,58 @@ export function buildRejectPrompt(paymentId: string, payment: PaymentNotificatio
 export function extractPaymentIdFromPrompt(text: string): string | null {
   const match = text.match(/\[#([a-z0-9]+)\]/i);
   return match ? match[1] : null;
+}
+
+export const CALLBACK_REPORT = "rpt";
+
+const SHORT_MONTH_NAMES = [
+  "Jan", "Feb", "Mar", "Apr", "Mei", "Jun",
+  "Jul", "Agu", "Sep", "Okt", "Nov", "Des",
+];
+
+/**
+ * Month picker for /laporan — the 12 most recent months, newest first.
+ * callback_data "rpt:2026-07" is 11 bytes, far inside Telegram's 64-byte cap.
+ */
+export function buildReportMonthKeyboard(now: Date): InlineKeyboardButton[][] {
+  const buttons: InlineKeyboardButton[] = [];
+
+  for (let offset = 0; offset < 12; offset += 1) {
+    const cursor = new Date(now.getFullYear(), now.getMonth() - offset, 1);
+    const year = cursor.getFullYear();
+    const month = cursor.getMonth() + 1;
+
+    buttons.push({
+      text: `${SHORT_MONTH_NAMES[month - 1]} ${year}`,
+      callback_data: `${CALLBACK_REPORT}:${year}-${String(month).padStart(2, "0")}`,
+    });
+  }
+
+  const rows: InlineKeyboardButton[][] = [];
+  for (let i = 0; i < buttons.length; i += 3) {
+    rows.push(buttons.slice(i, i + 3));
+  }
+  return rows;
+}
+
+export function buildReportCaption(
+  year: number,
+  month: number,
+  totals: MonthlyReportTotals,
+  at: Date
+): string {
+  const lines = [
+    `📊 <b>Laporan Keuangan ${monthNameId(month)} ${year}</b>`,
+    "",
+    `💰 Pemasukan: <b>${formatCurrency(totals.totalIncome)}</b> (${totals.incomeCount} transaksi)`,
+    `💸 Pengeluaran: <b>${formatCurrency(totals.totalExpense)}</b> (${totals.expenseCount} transaksi)`,
+    `🧾 Saldo: <b>${formatCurrency(totals.balance)}</b>`,
+  ];
+
+  if (totals.incomeCount === 0 && totals.expenseCount === 0) {
+    lines.push("", "<i>Belum ada transaksi pada periode ini.</i>");
+  }
+
+  lines.push("", `<i>Dibuat ${formatWita(at)} WITA</i>`);
+  return lines.join("\n");
 }

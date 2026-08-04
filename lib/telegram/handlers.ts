@@ -14,6 +14,7 @@ import {
   answerCallbackQuery,
   editMessage,
   escapeHtml,
+  sendDocument,
   sendMessage,
   sendPhoto,
   type TelegramCallbackQuery,
@@ -23,14 +24,23 @@ import {
 import {
   CALLBACK_APPROVE,
   CALLBACK_REJECT,
+  CALLBACK_REPORT,
   buildActionKeyboard,
   buildApprovedMessage,
   buildRejectPrompt,
   buildRejectedMessage,
+  buildReportCaption,
+  buildReportMonthKeyboard,
   buildUploadMessage,
   extractPaymentIdFromPrompt,
   formatWita,
 } from "./messages";
+import { getMonthlyReportData } from "@/services/report.service";
+import {
+  buildMonthlyReportBuffer,
+  monthlyReportFilename,
+  summarizeMonthlyReport,
+} from "@/lib/reports/monthly-report";
 import type { PaymentNotification } from "@/lib/notifications/types";
 
 const PENDING_LIST_LIMIT = 10;
@@ -45,6 +55,7 @@ const HELP_MESSAGE = [
   "/link &lt;kode&gt; — hubungkan akun admin",
   "/pending — daftar pembayaran menunggu verifikasi",
   "/stats — ringkasan keuangan dan status pembayaran",
+  "/laporan [bulan] [tahun] — laporan keuangan bulanan (XLSX)",
   "/unlink — putuskan akun Telegram ini",
   "/help — tampilkan pesan ini",
 ].join("\n");
@@ -144,6 +155,9 @@ async function handleMessage(message: TelegramMessage): Promise<void> {
       return;
     case "/stats":
       await handleStats(message);
+      return;
+    case "/laporan":
+      await handleReport(message, args);
       return;
     case "/chatid":
       await sendMessage(
@@ -283,9 +297,116 @@ async function handleStats(message: TelegramMessage): Promise<void> {
   );
 }
 
+const REPORT_USAGE = [
+  "Format: <code>/laporan [bulan] [tahun]</code>",
+  "",
+  "Contoh:",
+  "<code>/laporan</code> — pilih bulan lewat tombol",
+  "<code>/laporan 7</code> — Juli tahun ini",
+  "<code>/laporan 7 2026</code> — Juli 2026",
+  "<code>/laporan 2026-07</code> — Juli 2026",
+].join("\n");
+
+/** Accepts "7", "7 2026" and "2026-07"; null means the input was unusable. */
+function parseReportArgs(args: string[], now: Date): { year: number; month: number } | null {
+  const compact = args[0]?.match(/^(\d{4})-(\d{1,2})$/);
+  const month = compact ? Number(compact[2]) : Number(args[0]);
+  const year = compact ? Number(compact[1]) : args[1] ? Number(args[1]) : now.getFullYear();
+
+  if (!Number.isInteger(month) || month < 1 || month > 12) return null;
+  if (!Number.isInteger(year) || year < 2000 || year > now.getFullYear() + 1) return null;
+
+  return { year, month };
+}
+
+async function sendReportDocument(
+  chatId: number | string,
+  year: number,
+  month: number
+): Promise<void> {
+  // Acknowledge first: the workbook build takes a few seconds and a silent bot
+  // invites a second request.
+  await sendMessage(chatId, "⏳ Menyusun laporan…");
+
+  try {
+    const data = await getMonthlyReportData(year, month);
+    const buffer = await buildMonthlyReportBuffer(data);
+    const caption = buildReportCaption(year, month, summarizeMonthlyReport(data), new Date());
+
+    await sendDocument(chatId, buffer, monthlyReportFilename(month, year), caption);
+  } catch (error) {
+    // The webhook swallows handler errors, so without this the admin would be
+    // left staring at "Menyusun laporan…".
+    console.error("[telegram] report generation failed:", error);
+    await sendMessage(chatId, "❌ Gagal menyusun laporan. Coba lagi beberapa saat.");
+  }
+}
+
+async function handleReport(message: TelegramMessage, args: string[]): Promise<void> {
+  const admin = await resolveAdminFromTelegram(message.from!.id);
+  if (!admin) {
+    await sendMessage(message.chat.id, NOT_LINKED_MESSAGE);
+    return;
+  }
+
+  // A full financial report is more sensitive than the /stats summary, so it
+  // follows the stricter /pending chat rule.
+  if (!(await isAllowedChat(message))) {
+    await sendMessage(message.chat.id, "Grup ini tidak diizinkan menggunakan bot.");
+    return;
+  }
+
+  if (args.length === 0) {
+    await sendMessage(message.chat.id, "📊 Pilih bulan laporan:", {
+      reply_markup: { inline_keyboard: buildReportMonthKeyboard(new Date()) },
+    });
+    return;
+  }
+
+  const parsed = parseReportArgs(args, new Date());
+  if (!parsed) {
+    await sendMessage(message.chat.id, `❌ Periode tidak dikenali.\n\n${REPORT_USAGE}`);
+    return;
+  }
+
+  await sendReportDocument(message.chat.id, parsed.year, parsed.month);
+}
+
+async function handleReportCallback(
+  query: TelegramCallbackQuery,
+  payload: string
+): Promise<void> {
+  // A callback may only be answered once, so every rejection path has to run
+  // before the acknowledgement that clears the button spinner.
+  const admin = await resolveAdminFromTelegram(query.from.id);
+  if (!admin) {
+    await answerCallbackQuery(query.id, NOT_LINKED_MESSAGE, true);
+    return;
+  }
+
+  if (!(await isAllowedChat(query.message))) {
+    await answerCallbackQuery(query.id, "Chat ini tidak diizinkan.", true);
+    return;
+  }
+
+  const parsed = parseReportArgs([payload], new Date());
+  if (!parsed || !query.message) {
+    await answerCallbackQuery(query.id, "Periode tidak dikenali.", true);
+    return;
+  }
+
+  await answerCallbackQuery(query.id, "Menyusun laporan…");
+  await sendReportDocument(query.message.chat.id, parsed.year, parsed.month);
+}
+
 async function handleCallbackQuery(query: TelegramCallbackQuery): Promise<void> {
   const data = query.data ?? "";
   const [action, paymentId] = data.split(":");
+
+  if (action === CALLBACK_REPORT) {
+    await handleReportCallback(query, paymentId ?? "");
+    return;
+  }
 
   if (action !== CALLBACK_APPROVE && action !== CALLBACK_REJECT) {
     await answerCallbackQuery(query.id, "Aksi tidak dikenal.");
