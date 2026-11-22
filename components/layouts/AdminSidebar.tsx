@@ -137,6 +137,11 @@ export default function AdminSidebar({ onClose }: { onClose?: () => void } = {})
           href: "/admin/staff/leave",
           icon: <CalendarRange className="w-4 h-4" />,
         },
+        {
+          name: t('navigation.admin.manual_attendance'),
+          href: "/admin/staff/manual-attendance",
+          icon: <ClipboardList className="w-4 h-4" />,
+        },
       ],
     },
     {

@@ -11,6 +11,19 @@ import { getCachedTelegramBotConfig } from "@/lib/cache/telegram-bot";
 import { dispatchPaymentDecided } from "@/lib/notifications";
 import { redeemLinkCode, resolveAdminFromTelegram, unlinkTelegram } from "./auth";
 import {
+  copySchedulePreview,
+  copyScheduleCancel,
+  copyScheduleCommit,
+  getScheduleCopyOperation,
+} from "@/services/staffSchedule.service";
+import {
+  approveManualAttendanceRequest,
+  getAllManualAttendanceRequests,
+  getManualAttendanceRequestById,
+  rejectManualAttendanceRequest,
+} from "@/services/manualAttendanceRequest.service";
+import { ManualAttendanceStatus } from "@prisma/client";
+import {
   answerCallbackQuery,
   editMessage,
   escapeHtml,
@@ -25,6 +38,8 @@ import {
   CALLBACK_APPROVE,
   CALLBACK_REJECT,
   CALLBACK_REPORT,
+  CALLBACK_COPY_SCHEDULE_APPROVE,
+  CALLBACK_COPY_SCHEDULE_CANCEL,
   buildActionKeyboard,
   buildApprovedMessage,
   buildRejectPrompt,
@@ -32,8 +47,17 @@ import {
   buildReportCaption,
   buildReportMonthKeyboard,
   buildUploadMessage,
+  buildCopyScheduleKeyboard,
+  buildCopySchedulePreviewMessage,
+  buildCopyScheduleResultMessage,
   extractPaymentIdFromPrompt,
   formatWita,
+  CALLBACK_MANUAL_ATTENDANCE_APPROVE,
+  CALLBACK_MANUAL_ATTENDANCE_REJECT,
+  buildManualAttendanceKeyboard,
+  buildManualAttendanceRequestMessage,
+  buildManualAttendanceResultMessage,
+  type ManualAttendanceRequestNotification,
 } from "./messages";
 import { getMonthlyReportData } from "@/services/report.service";
 import {
@@ -56,6 +80,8 @@ const HELP_MESSAGE = [
   "/pending — daftar pembayaran menunggu verifikasi",
   "/stats — ringkasan keuangan dan status pembayaran",
   "/laporan [bulan] [tahun] — laporan keuangan bulanan (XLSX)",
+  "/copyjadwal [bulan] [tahun] — copy jadwal staf bulan tsb (default: bulan ini) ke bulan berikutnya, dengan preview & approve",
+  "/absenmanual — daftar pengajuan absen manual yang menunggu persetujuan",
   "/unlink — putuskan akun Telegram ini",
   "/help — tampilkan pesan ini",
 ].join("\n");
@@ -158,6 +184,12 @@ async function handleMessage(message: TelegramMessage): Promise<void> {
       return;
     case "/laporan":
       await handleReport(message, args);
+      return;
+    case "/copyjadwal":
+      await handleCopySchedule(message, args);
+      return;
+    case "/absenmanual":
+      await handlePendingManualAttendance(message);
       return;
     case "/chatid":
       await sendMessage(
@@ -399,12 +431,369 @@ async function handleReportCallback(
   await sendReportDocument(query.message.chat.id, parsed.year, parsed.month);
 }
 
+/**
+ * /copyjadwal defaults to "this month → next month" (the primary use case),
+ * but accepts the same [bulan] [tahun] / "YYYY-MM" forms as /laporan to copy
+ * a different already-built month instead.
+ */
+async function handleCopySchedule(message: TelegramMessage, args: string[]): Promise<void> {
+  const admin = await resolveAdminFromTelegram(message.from!.id);
+  if (!admin) {
+    await sendMessage(message.chat.id, NOT_LINKED_MESSAGE);
+    return;
+  }
+
+  if (!(await isAllowedChat(message))) {
+    await sendMessage(message.chat.id, "Grup ini tidak diizinkan menggunakan bot.");
+    return;
+  }
+
+  const now = new Date();
+  const parsedSource = args.length > 0 ? parseReportArgs(args, now) : null;
+  if (args.length > 0 && !parsedSource) {
+    await sendMessage(message.chat.id, `❌ Periode tidak dikenali.\n\n${REPORT_USAGE}`);
+    return;
+  }
+
+  const sourceYear = parsedSource?.year ?? now.getFullYear();
+  const sourceMonth = parsedSource?.month ?? now.getMonth() + 1;
+
+  // Next calendar month after the source — Date's month rollover handles
+  // December → January across the year boundary for free.
+  const targetCursor = new Date(sourceYear, sourceMonth, 1);
+  const targetYear = targetCursor.getFullYear();
+  const targetMonth = targetCursor.getMonth() + 1;
+
+  await sendMessage(message.chat.id, "⏳ Membuat preview copy jadwal…");
+
+  try {
+    const preview = await copySchedulePreview(
+      sourceYear,
+      sourceMonth,
+      targetYear,
+      targetMonth,
+      admin.id
+    );
+
+    const text = buildCopySchedulePreviewMessage(
+      sourceYear,
+      sourceMonth,
+      targetYear,
+      targetMonth,
+      preview.summary,
+      preview.expiresAt
+    );
+
+    const sent = await sendMessage(message.chat.id, text, {
+      reply_markup: { inline_keyboard: buildCopyScheduleKeyboard(preview.operationId) },
+    });
+
+    // Keep the chat/message id so a commit can rewrite this exact message,
+    // same UX as payment approve/reject.
+    await prisma.scheduleCopyOperation.update({
+      where: { id: preview.operationId },
+      data: { telegramChatId: String(message.chat.id), telegramMessageId: String(sent.message_id) },
+    });
+  } catch (error: any) {
+    console.error("[telegram] copy-schedule preview failed:", error);
+    await sendMessage(message.chat.id, `❌ ${escapeHtml(error.message || "Gagal membuat preview.")}`);
+  }
+}
+
+async function handleCopyScheduleCallback(
+  query: TelegramCallbackQuery,
+  action: string,
+  operationId: string
+): Promise<void> {
+  const admin = await resolveAdminFromTelegram(query.from.id);
+  if (!admin) {
+    await answerCallbackQuery(query.id, NOT_LINKED_MESSAGE, true);
+    return;
+  }
+
+  if (!(await isAllowedChat(query.message))) {
+    await answerCallbackQuery(query.id, "Chat ini tidak diizinkan.", true);
+    return;
+  }
+
+  const operation = await getScheduleCopyOperation(operationId);
+  if (!operation) {
+    await answerCallbackQuery(query.id, "Operasi copy jadwal tidak ditemukan.", true);
+    return;
+  }
+
+  // Idempotency: a double tap (or a decision already made from elsewhere)
+  // on a destructive overwrite must be a no-op, not a second execution.
+  if (operation.status === "COMMITTED" || operation.status === "CANCELLED") {
+    await answerCallbackQuery(
+      query.id,
+      operation.status === "COMMITTED" ? "Sudah dijalankan sebelumnya." : "Sudah dibatalkan sebelumnya.",
+      true
+    );
+    return;
+  }
+
+  if (action === CALLBACK_COPY_SCHEDULE_CANCEL) {
+    await copyScheduleCancel(operationId);
+    await answerCallbackQuery(query.id, "Dibatalkan.");
+    if (query.message) {
+      await editMessage(query.message.chat.id, query.message.message_id, "❌ Copy jadwal dibatalkan.");
+    }
+    return;
+  }
+
+  try {
+    const result = await copyScheduleCommit(operationId, admin.id);
+
+    if (result.alreadyCommitted) {
+      await answerCallbackQuery(query.id, "Sudah dijalankan sebelumnya.", true);
+      return;
+    }
+
+    await answerCallbackQuery(query.id, "✅ Jadwal berhasil dicopy.");
+    if (query.message) {
+      await editMessage(
+        query.message.chat.id,
+        query.message.message_id,
+        buildCopyScheduleResultMessage(result.createdCount, result.updatedCount, admin.name, new Date())
+      );
+    }
+  } catch (error: any) {
+    // STALE (data drifted since preview) and expired previews land here —
+    // reported back to the admin instead of silently committing drifted data.
+    console.error("[telegram] copy-schedule commit failed:", error);
+    await answerCallbackQuery(query.id, `❌ ${error.message || "Gagal menjalankan copy jadwal."}`, true);
+  }
+}
+
+function toManualAttendanceNotification(
+  request: NonNullable<Awaited<ReturnType<typeof getManualAttendanceRequestById>>>
+): ManualAttendanceRequestNotification {
+  return {
+    id: request.id,
+    staffName: request.staff.name,
+    jobType: request.staff.staffJobType ?? "-",
+    date: request.date,
+    shiftName: request.schedule.shiftTemplate.shiftName,
+    clockInAt: request.clockInAt,
+    clockOutAt: request.clockOutAt,
+    reason: request.reason,
+    createdAt: request.createdAt,
+  };
+}
+
+/**
+ * Pushed to the admin group right after a staff member submits a manual
+ * attendance request — mirrors the payment-upload notification, with its
+ * own chat/message id tracked so a decision (web or Telegram) can rewrite
+ * this exact message later.
+ */
+export async function notifyManualAttendanceRequestCreated(requestId: string): Promise<void> {
+  const config = await getCachedTelegramBotConfig();
+  if (!config.enabled || !config.groupChatId) return;
+
+  const request = await getManualAttendanceRequestById(requestId);
+  if (!request) return;
+
+  try {
+    const notification = toManualAttendanceNotification(request);
+    const sent = await sendMessage(config.groupChatId, buildManualAttendanceRequestMessage(notification), {
+      reply_markup: { inline_keyboard: buildManualAttendanceKeyboard(requestId) },
+    });
+
+    await prisma.manualAttendanceRequest.update({
+      where: { id: requestId },
+      data: { telegramChatId: config.groupChatId, telegramMessageId: String(sent.message_id) },
+    });
+  } catch (error) {
+    console.error("[telegram] manual-attendance notification failed:", error);
+  }
+}
+
+/**
+ * Called after a web-dashboard approve/reject so the group notification
+ * (if one was sent) stops showing stale Approve/Reject buttons instead of
+ * silently drifting from the real status.
+ */
+export async function syncManualAttendanceDecision(
+  requestId: string,
+  adminName: string,
+  decision: "APPROVED" | "REJECTED",
+  rejectionNote?: string | null
+): Promise<void> {
+  const tracked = await prisma.manualAttendanceRequest.findUnique({
+    where: { id: requestId },
+    select: { telegramChatId: true, telegramMessageId: true },
+  });
+  if (!tracked?.telegramChatId || !tracked.telegramMessageId) return;
+
+  const request = await getManualAttendanceRequestById(requestId);
+  if (!request) return;
+
+  try {
+    const notification = toManualAttendanceNotification(request);
+    const text = buildManualAttendanceResultMessage(
+      notification,
+      decision,
+      adminName,
+      request.reviewedAt ?? new Date(),
+      rejectionNote ?? undefined
+    );
+    await editMessage(tracked.telegramChatId, tracked.telegramMessageId, text);
+  } catch (error) {
+    console.error("[telegram] manual-attendance notification failed:", error);
+  }
+}
+
+async function handlePendingManualAttendance(message: TelegramMessage): Promise<void> {
+  const admin = await resolveAdminFromTelegram(message.from!.id);
+  if (!admin) {
+    await sendMessage(message.chat.id, NOT_LINKED_MESSAGE);
+    return;
+  }
+
+  if (!(await isAllowedChat(message))) {
+    await sendMessage(message.chat.id, "Grup ini tidak diizinkan menggunakan bot.");
+    return;
+  }
+
+  const requests = await getAllManualAttendanceRequests({ status: ManualAttendanceStatus.PENDING });
+
+  if (requests.length === 0) {
+    await sendMessage(message.chat.id, "✅ Tidak ada pengajuan absen manual yang menunggu.");
+    return;
+  }
+
+  await sendMessage(message.chat.id, `📋 <b>${requests.length} pengajuan absen manual menunggu</b>`);
+
+  for (const request of requests.slice(0, PENDING_LIST_LIMIT)) {
+    const notification = toManualAttendanceNotification(request);
+    const sent = await sendMessage(message.chat.id, buildManualAttendanceRequestMessage(notification), {
+      reply_markup: { inline_keyboard: buildManualAttendanceKeyboard(request.id) },
+    });
+
+    // Only back-fill the tracked message id if this request has none yet —
+    // the original creation-time notification (if any) stays authoritative.
+    if (!request.telegramMessageId) {
+      await prisma.manualAttendanceRequest.update({
+        where: { id: request.id },
+        data: { telegramChatId: String(message.chat.id), telegramMessageId: String(sent.message_id) },
+      });
+    }
+  }
+}
+
+async function handleManualAttendanceCallback(
+  query: TelegramCallbackQuery,
+  action: string,
+  requestId: string
+): Promise<void> {
+  const admin = await resolveAdminFromTelegram(query.from.id);
+  if (!admin) {
+    await answerCallbackQuery(query.id, NOT_LINKED_MESSAGE, true);
+    return;
+  }
+
+  if (!(await isAllowedChat(query.message))) {
+    await answerCallbackQuery(query.id, "Chat ini tidak diizinkan.", true);
+    return;
+  }
+
+  const request = await getManualAttendanceRequestById(requestId);
+  if (!request) {
+    await answerCallbackQuery(query.id, "Pengajuan tidak ditemukan.", true);
+    return;
+  }
+
+  const notification = toManualAttendanceNotification(request);
+
+  if (request.status !== ManualAttendanceStatus.PENDING) {
+    const decision = request.status === ManualAttendanceStatus.APPROVED ? "APPROVED" : "REJECTED";
+    await answerCallbackQuery(
+      query.id,
+      `Pengajuan ini sudah ${decision === "APPROVED" ? "disetujui" : "ditolak"}.`,
+      true
+    );
+    await rewriteManualAttendanceMessage(
+      query,
+      notification,
+      decision,
+      request.reviewer?.name ?? "admin",
+      request.reviewedAt ?? new Date(),
+      request.rejectionNote
+    );
+    return;
+  }
+
+  if (action === CALLBACK_MANUAL_ATTENDANCE_APPROVE) {
+    try {
+      await approveManualAttendanceRequest(requestId, admin.id);
+    } catch (error: any) {
+      await answerCallbackQuery(query.id, `❌ ${error.message || "Gagal menyetujui."}`, true);
+      return;
+    }
+    await answerCallbackQuery(query.id, "✅ Absen manual disetujui.");
+    await rewriteManualAttendanceMessage(query, notification, "APPROVED", admin.name, new Date());
+    return;
+  }
+
+  try {
+    await rejectManualAttendanceRequest(requestId, admin.id);
+  } catch (error: any) {
+    await answerCallbackQuery(query.id, `❌ ${error.message || "Gagal menolak."}`, true);
+    return;
+  }
+  await answerCallbackQuery(query.id, "❌ Absen manual ditolak.");
+  await rewriteManualAttendanceMessage(query, notification, "REJECTED", admin.name, new Date());
+}
+
+/**
+ * Rewrite the tracked notification message (if any) plus the clicked
+ * message when it differs — same dual-rewrite shape as payment decisions,
+ * since a decision may be made from a /absenmanual listing rather than the
+ * original creation-time notification.
+ */
+async function rewriteManualAttendanceMessage(
+  query: TelegramCallbackQuery,
+  notification: ManualAttendanceRequestNotification,
+  decision: "APPROVED" | "REJECTED",
+  adminName: string,
+  at: Date,
+  rejectionNote?: string | null
+): Promise<void> {
+  const text = buildManualAttendanceResultMessage(notification, decision, adminName, at, rejectionNote ?? undefined);
+
+  const request = await prisma.manualAttendanceRequest.findUnique({
+    where: { id: notification.id },
+    select: { telegramChatId: true, telegramMessageId: true },
+  });
+
+  if (request?.telegramChatId && request.telegramMessageId) {
+    await editMessage(request.telegramChatId, request.telegramMessageId, text);
+  }
+
+  const clickedId = query.message?.message_id;
+  if (clickedId && query.message && String(clickedId) !== request?.telegramMessageId) {
+    await editMessage(query.message.chat.id, clickedId, text);
+  }
+}
+
 async function handleCallbackQuery(query: TelegramCallbackQuery): Promise<void> {
   const data = query.data ?? "";
   const [action, paymentId] = data.split(":");
 
   if (action === CALLBACK_REPORT) {
     await handleReportCallback(query, paymentId ?? "");
+    return;
+  }
+
+  if (action === CALLBACK_COPY_SCHEDULE_APPROVE || action === CALLBACK_COPY_SCHEDULE_CANCEL) {
+    await handleCopyScheduleCallback(query, action, paymentId ?? "");
+    return;
+  }
+
+  if (action === CALLBACK_MANUAL_ATTENDANCE_APPROVE || action === CALLBACK_MANUAL_ATTENDANCE_REJECT) {
+    await handleManualAttendanceCallback(query, action, paymentId ?? "");
     return;
   }
 

@@ -21,10 +21,10 @@ interface Attendance {
   clockInAt: string;
   clockOutAt: string | null;
   lateMinutes: number | null;
-  clockInPhoto: string;
+  clockInPhoto: string | null;
   clockOutPhoto: string | null;
-  clockInLat: number;
-  clockInLon: number;
+  clockInLat: number | null;
+  clockInLon: number | null;
   clockOutLat: number | null;
   clockOutLon: number | null;
   staff: {
@@ -164,24 +164,28 @@ export default function AdminAttendancePage() {
       render: (_, row) => (
         <div className="space-y-1">
           <div className="text-sm">{formatDateTime(row.clockInAt)}</div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setSelectedImage(row.clockInPhoto)}
-              className="text-primary-600 hover:text-primary-700"
-              title={t('view_photo')}
-            >
-              <ImageIcon className="w-4 h-4" />
-            </button>
-            <a
-              href={`https://www.google.com/maps?q=${row.clockInLat},${row.clockInLon}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-primary-600 hover:text-primary-700"
-              title={t('view_location')}
-            >
-              <MapPin className="w-4 h-4" />
-            </a>
-          </div>
+          {row.clockInPhoto && row.clockInLat != null && row.clockInLon != null ? (
+            <div className="flex gap-2">
+              <button
+                onClick={() => setSelectedImage(row.clockInPhoto!)}
+                className="text-primary-600 hover:text-primary-700"
+                title={t('view_photo')}
+              >
+                <ImageIcon className="w-4 h-4" />
+              </button>
+              <a
+                href={`https://www.google.com/maps?q=${row.clockInLat},${row.clockInLon}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary-600 hover:text-primary-700"
+                title={t('view_location')}
+              >
+                <MapPin className="w-4 h-4" />
+              </a>
+            </div>
+          ) : (
+            <Badge variant="default">Manual</Badge>
+          )}
         </div>
       ),
     },

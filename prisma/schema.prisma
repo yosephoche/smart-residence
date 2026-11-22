@@ -79,6 +79,19 @@ enum ShiftReportType {
   SHIFT_END
 }
 
+enum ScheduleCopyStatus {
+  PREVIEW
+  COMMITTED
+  CANCELLED
+  STALE
+}
+
+enum ManualAttendanceStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 model User {
   id             String          @id @default(cuid())
   name           String
@@ -108,8 +121,12 @@ model User {
   urgentContacts       UrgentContact[]
   staffLeaves          StaffLeave[]    @relation("StaffLeaves")
   reviewedLeaves       StaffLeave[]    @relation("LeaveReviewer")
+  manualAttendanceRequests         ManualAttendanceRequest[] @relation("ManualAttendanceStaff")
+  reviewedManualAttendanceRequests ManualAttendanceRequest[] @relation("ManualAttendanceReviewer")
   submissions          Submission[]    @relation("UserSubmissions")
   reviewedSubmissions  Submission[]    @relation("SubmissionReviewer")
+  scheduleCopyOperationsCreated   ScheduleCopyOperation[] @relation("ScheduleCopyCreator")
+  scheduleCopyOperationsCommitted ScheduleCopyOperation[] @relation("ScheduleCopyCommitter")
 }
 
 model HouseType {
@@ -217,10 +234,11 @@ model Attendance {
   scheduleId      String?
   lateMinutes     Int?
 
-  // Clock IN data
-  clockInLat      Float
-  clockInLon      Float
-  clockInPhoto    String
+  // Clock IN data — nullable because a manually-approved (backfilled) entry
+  // has no live GPS fix or photo (see ManualAttendanceRequest).
+  clockInLat      Float?
+  clockInLon      Float?
+  clockInPhoto    String?
 
   // Clock OUT data (nullable)
   clockOutLat     Float?
@@ -233,6 +251,7 @@ model Attendance {
   staff           User       @relation(fields: [staffId], references: [id])
   schedule        StaffSchedule? @relation(fields: [scheduleId], references: [id], onDelete: SetNull)
   shiftReports    ShiftReport[]
+  manualAttendanceRequest ManualAttendanceRequest?
 
   @@index([staffId, clockInAt])
   @@index([scheduleId])
@@ -285,6 +304,7 @@ model StaffSchedule {
   shiftTemplate   ShiftTemplate @relation(fields: [shiftTemplateId], references: [id])
   creator         User          @relation("ScheduleCreator", fields: [createdBy], references: [id])
   attendances     Attendance[]
+  manualAttendanceRequests ManualAttendanceRequest[]
 
   @@unique([staffId, shiftTemplateId, date])
   @@index([date, shiftTemplateId])
@@ -328,6 +348,39 @@ model StaffLeave {
   @@index([staffId, startDate, endDate])
 }
 
+/**
+ * Staff request to backfill a past shift they could not clock in/out for
+ * live. The requested date must already have a StaffSchedule (this never
+ * creates one) — approval creates a single Attendance row directly, with no
+ * GPS/photo and no geofence check, since the shift already happened.
+ */
+model ManualAttendanceRequest {
+  id                    String                  @id @default(cuid())
+  staffId               String
+  scheduleId            String
+  date                  DateTime
+  clockInAt             DateTime
+  clockOutAt            DateTime
+  reason                String
+  status                ManualAttendanceStatus  @default(PENDING)
+  reviewedBy            String?
+  reviewedAt            DateTime?
+  rejectionNote         String?
+  resultingAttendanceId String?                 @unique
+  telegramChatId        String?
+  telegramMessageId     String?
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+
+  staff               User           @relation("ManualAttendanceStaff", fields: [staffId], references: [id])
+  reviewer            User?          @relation("ManualAttendanceReviewer", fields: [reviewedBy], references: [id])
+  schedule            StaffSchedule  @relation(fields: [scheduleId], references: [id])
+  resultingAttendance Attendance?    @relation(fields: [resultingAttendanceId], references: [id])
+
+  @@index([staffId, status])
+  @@index([scheduleId])
+}
+
 model Submission {
   id          String           @id @default(cuid())
   userId      String
@@ -346,4 +399,36 @@ model Submission {
 
   @@index([userId, status])
   @@index([type, status])
+}
+
+/**
+ * Preview-then-commit record for copying a month's staff schedule pattern to
+ * the next month. Must be DB-backed (not in-memory/cache): API routes run
+ * stateless on Vercel, and approval via Telegram can happen long after the
+ * preview was generated, possibly on a different serverless instance.
+ */
+model ScheduleCopyOperation {
+  id                String             @id @default(cuid())
+  sourceYear        Int
+  sourceMonth       Int
+  targetYear        Int
+  targetMonth       Int
+  jobType           JobType?
+  status            ScheduleCopyStatus @default(PREVIEW)
+  plan              Json
+  summary           Json
+  snapshot          Json?
+  telegramChatId    String?
+  telegramMessageId String?
+  expiresAt         DateTime
+  createdBy         String
+  committedBy       String?
+  committedAt       DateTime?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  creator           User               @relation("ScheduleCopyCreator", fields: [createdBy], references: [id])
+  committer         User?              @relation("ScheduleCopyCommitter", fields: [committedBy], references: [id])
+
+  @@index([status, expiresAt])
 }

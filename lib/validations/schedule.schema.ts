@@ -28,7 +28,21 @@ export const autoGenerateScheduleSchema = z.object({
   endDate: z.string().datetime("Invalid end date format"),
 });
 
+export const copyScheduleMonthPreviewSchema = z.object({
+  sourceYear: z.number().int().min(2000).max(2100),
+  sourceMonth: z.number().int().min(1).max(12),
+  targetYear: z.number().int().min(2000).max(2100),
+  targetMonth: z.number().int().min(1).max(12),
+  jobType: z.nativeEnum(JobType).optional(),
+});
+
+export const copyScheduleMonthCommitSchema = z.object({
+  operationId: z.string().cuid("Invalid operation ID"),
+});
+
 export type CreateScheduleInput = z.infer<typeof createScheduleSchema>;
 export type BulkCreateScheduleInput = z.infer<typeof bulkCreateScheduleSchema>;
 export type UpdateScheduleInput = z.infer<typeof updateScheduleSchema>;
 export type AutoGenerateScheduleInput = z.infer<typeof autoGenerateScheduleSchema>;
+export type CopyScheduleMonthPreviewInput = z.infer<typeof copyScheduleMonthPreviewSchema>;
+export type CopyScheduleMonthCommitInput = z.infer<typeof copyScheduleMonthCommitSchema>;

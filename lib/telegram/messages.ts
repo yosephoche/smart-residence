@@ -3,6 +3,7 @@ import { formatPaymentMonth } from "@/lib/calculations";
 import { escapeHtml, type InlineKeyboardButton } from "./client";
 import { monthNameId, type MonthlyReportTotals } from "@/lib/reports/monthly-report";
 import type { PaymentNotification } from "@/lib/notifications/types";
+import type { CopyPlanSummary } from "@/services/staffSchedule.service";
 
 /**
  * Server timezone is UTC on Vercel while the residence runs on WITA, so every
@@ -175,4 +176,140 @@ export function buildReportCaption(
 
   lines.push("", `<i>Dibuat ${formatWita(at)} WITA</i>`);
   return lines.join("\n");
+}
+
+export const CALLBACK_COPY_SCHEDULE_APPROVE = "csa";
+export const CALLBACK_COPY_SCHEDULE_CANCEL = "csc";
+
+/** callback_data "csa:<cuid>" is ~29 bytes — well inside Telegram's 64-byte cap. */
+export function buildCopyScheduleKeyboard(operationId: string): InlineKeyboardButton[][] {
+  return [
+    [
+      { text: "✅ Approve & Jalankan", callback_data: `${CALLBACK_COPY_SCHEDULE_APPROVE}:${operationId}` },
+      { text: "❌ Batalkan", callback_data: `${CALLBACK_COPY_SCHEDULE_CANCEL}:${operationId}` },
+    ],
+  ];
+}
+
+export function buildCopySchedulePreviewMessage(
+  sourceYear: number,
+  sourceMonth: number,
+  targetYear: number,
+  targetMonth: number,
+  summary: CopyPlanSummary,
+  expiresAt: Date
+): string {
+  const lines = [
+    "🗓️ <b>Preview Copy Jadwal</b>",
+    "",
+    `Dari: <b>${monthNameId(sourceMonth)} ${sourceYear}</b> → Ke: <b>${monthNameId(targetMonth)} ${targetYear}</b>`,
+    "",
+    `🆕 Akan dibuat: <b>${summary.created}</b>`,
+    `♻️ Akan ditimpa (overwrite): <b>${summary.overwritten}</b>`,
+    `🚫 Slot dikosongkan (cuti): <b>${summary.emptySlotLeave}</b>`,
+  ];
+
+  if (summary.skippedTemplateUnavailable > 0) {
+    lines.push(
+      `⚠️ Dilewati (shift template tidak aktif/terhapus): <b>${summary.skippedTemplateUnavailable}</b>`
+    );
+  }
+
+  if (summary.understaffedWarnings.length > 0) {
+    lines.push(
+      "",
+      `⚠️ <b>${summary.understaffedWarnings.length} shift kekurangan staf</b> akibat slot yang dikosongkan — cek detail di dashboard sebelum approve.`
+    );
+  }
+
+  lines.push(
+    "",
+    `<i>Preview berlaku sampai ${formatWita(expiresAt)} WITA. Data lama di bulan tujuan akan tertimpa — tinjau baik-baik sebelum approve.</i>`
+  );
+
+  return lines.join("\n");
+}
+
+export const CALLBACK_MANUAL_ATTENDANCE_APPROVE = "maa";
+export const CALLBACK_MANUAL_ATTENDANCE_REJECT = "mar";
+
+export interface ManualAttendanceRequestNotification {
+  id: string;
+  staffName: string;
+  jobType: string;
+  date: Date;
+  shiftName: string;
+  clockInAt: Date;
+  clockOutAt: Date;
+  reason: string;
+  createdAt: Date;
+}
+
+/** callback_data "maa:<cuid>" is ~29 bytes — well inside Telegram's 64-byte cap. */
+export function buildManualAttendanceKeyboard(requestId: string): InlineKeyboardButton[][] {
+  return [
+    [
+      { text: "✅ Setujui", callback_data: `${CALLBACK_MANUAL_ATTENDANCE_APPROVE}:${requestId}` },
+      { text: "❌ Tolak", callback_data: `${CALLBACK_MANUAL_ATTENDANCE_REJECT}:${requestId}` },
+    ],
+  ];
+}
+
+export function buildManualAttendanceRequestMessage(
+  notification: ManualAttendanceRequestNotification
+): string {
+  return [
+    "📝 <b>Pengajuan Absen Manual</b>",
+    "",
+    `👤 Staff: <b>${escapeHtml(notification.staffName)}</b> (${escapeHtml(notification.jobType)})`,
+    `📅 Tanggal: <b>${new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Makassar" }).format(notification.date)}</b>`,
+    `🕐 Shift: ${escapeHtml(notification.shiftName)} (${formatWitaTime(notification.clockInAt)}–${formatWitaTime(notification.clockOutAt)} WITA)`,
+    `📝 Alasan: ${escapeHtml(notification.reason)}`,
+    "",
+    `<i>Diajukan ${formatWita(notification.createdAt)} WITA</i>`,
+  ].join("\n");
+}
+
+export function buildManualAttendanceResultMessage(
+  notification: ManualAttendanceRequestNotification,
+  decision: "APPROVED" | "REJECTED",
+  adminName: string,
+  at: Date,
+  rejectionNote?: string
+): string {
+  const lines = [
+    decision === "APPROVED"
+      ? "✅ <b>Absen Manual Disetujui</b>"
+      : "❌ <b>Absen Manual Ditolak</b>",
+    "",
+    `👤 Staff: <b>${escapeHtml(notification.staffName)}</b>`,
+    `📅 Tanggal: <b>${new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Makassar" }).format(notification.date)}</b>`,
+  ];
+
+  if (decision === "REJECTED" && rejectionNote) {
+    lines.push(`📝 Catatan: ${escapeHtml(rejectionNote)}`);
+  }
+
+  lines.push(
+    "",
+    `${decision === "APPROVED" ? "Disetujui" : "Ditolak"} oleh <b>${escapeHtml(adminName)}</b> · ${formatWitaTime(at)} WITA`
+  );
+
+  return lines.join("\n");
+}
+
+export function buildCopyScheduleResultMessage(
+  createdCount: number,
+  updatedCount: number,
+  adminName: string,
+  at: Date
+): string {
+  return [
+    "✅ <b>Copy Jadwal Selesai</b>",
+    "",
+    `🆕 Dibuat: <b>${createdCount}</b>`,
+    `♻️ Ditimpa: <b>${updatedCount}</b>`,
+    "",
+    `Dijalankan oleh <b>${escapeHtml(adminName)}</b> · ${formatWitaTime(at)} WITA`,
+  ].join("\n");
 }

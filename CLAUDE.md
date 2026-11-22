@@ -1,55 +1,85 @@
-# Project Context: IPL Payment System (MVP)
+# Project Context: SmartResidence (IPL & Perumahan Management — Live in Production)
 
-Dokumen ini berfungsi sebagai panduan utama bagi Claude Code dalam mengimplementasikan aplikasi manajemen pembayaran IPL Perumahan.
+Dokumen ini berfungsi sebagai panduan utama bagi Claude Code untuk mengembangkan SmartResidence: aplikasi manajemen perumahan yang menangani pembayaran IPL warga, data rumah/penghuni, kas/keuangan pengurus, absensi & penjadwalan shift staf, dan notifikasi via bot Telegram. Project ini **sudah live di produksi** (bukan lagi MVP) — perlakukan setiap perubahan skema atau migrasi data sebagai berisiko tinggi, dan jangan pernah menghapus data yang sudah ada saat memperbaiki issue.
 
-## 1. Tech Stack (Core)
-- **Frontend:** React/Next.js (Tailwind CSS)
-- **Backend:** Node.js (Express) atau Laravel (Sesuai preferensi framework)
-- **Database:** Supabase
-- **Storage:** Local Storage (Development) / Cloudinary (Production) untuk Bukti Transfer.
-- **Node Version:** run nvm use 22 for node version activate
+> ⚠️ **PERINGATAN DATABASE — TIDAK ADA ENVIRONMENT DEV/STAGING.** Project ini hanya punya satu environment: produksi. Database Supabase yang tersambung (lihat `DATABASE_URL`/`DIRECT_URL` di `.env`) adalah **data warga yang sebenarnya**, bukan data dummy. Jangan pernah menjalankan operasi yang mengubah atau mereset data (migration destructif, `prisma db push --force-reset`, re-seed, bulk update/delete manual, dll) terhadap database ini. Kalau suatu perubahan memang mengharuskan modifikasi data atau skema, **backup dulu** (lewat Supabase dashboard atau `pg_dump` ke `DIRECT_URL`) sebelum menjalankan apa pun, dan konfirmasi ke pemilik project sebelum eksekusi di produksi.
+
+## 1. Tech Stack (Actual)
+- **Framework:** Next.js 15 (App Router) — satu codebase full-stack, React 19 + TypeScript. API routes di `app/api/**`, business logic dipisah ke `services/*.service.ts`.
+- **Auth:** NextAuth v5 (JWT session), digabung dengan `next-intl` middleware di `middleware.ts`. Role-based routing & force-password-change dilakukan di `auth.config.ts`.
+- **Database:** Supabase (PostgreSQL) via Prisma ORM (`prisma/schema.prisma`, `@prisma/client`).
+- **Storage:** Cloudinary untuk bukti transfer & foto absensi (dev maupun produksi — bukan lagi local storage dev-only).
+- **UI:** Tailwind CSS, framer-motion untuk animasi, recharts untuk chart, react-hook-form + zod untuk form/validasi, lucide-react untuk icon.
+- **i18n:** `next-intl` (ID/EN), diterapkan lewat middleware (`localePrefix: 'never'`, URL tetap bersih).
+- **PWA:** `@ducanh2912/next-pwa` — aplikasi bisa di-install sebagai PWA.
+- **Export/report:** `xlsx` untuk laporan keuangan bulanan (unduhan langsung & lewat bot Telegram).
+- **Bot Telegram:** Integrasi terpisah — webhook di `app/api/telegram/webhook`, handler di `lib/telegram/handlers.ts`, setup webhook via script `npm run telegram:setup`. Dipakai admin untuk approve/reject pembayaran langsung dari Telegram dan menarik laporan bulanan on-demand (`/laporan`).
+- **Node Version:** gunakan Node 22 — jalankan `nvm use 22` sebelum menjalankan script apa pun di project ini.
 
 ## 2. Struktur Database (Schema)
 
+Skema lengkap ada di `prisma/schema.prisma` — baca file itu langsung sebagai sumber kebenaran sebelum mengubah apa pun; ringkasan di bawah ini hanya peta cepat, bisa kadaluarsa.
 
-[Image of an entity relationship diagram for a billing system]
+### Core — User, rumah, pembayaran
+- `User`: id, name, email, password, `role` (ADMIN/USER/STAFF), `staffJobType` (SECURITY/CLEANING/GARDENING/MAINTENANCE/OTHER, khusus STAFF), `isFirstLogin` (default true), `isPengurus` (flag tambahan di atas role USER — boleh kelola kas/expense), field link Telegram (`telegramUserId`, `telegramLinkCode`, `telegramLinkExpiresAt`).
+- `HouseType`: id, typeName, price (Decimal), description.
+- `House`: houseNumber, block, houseTypeId (FK), userId (FK, nullable), `isRented`/`renterName` (rumah disewakan), `mergedIntoHouseId` (self-relation — **house merge**: warga dengan beberapa rumah digabung, pembayaran lewat rumah utama).
+- `Payment`: userId, houseId, amountMonths, totalAmount (Decimal, dihitung server-side), proofImagePath, status (PENDING/APPROVED/REJECTED), rejectionNote, approvedBy/approvedAt, `telegramMessageId` (untuk edit pesan notifikasi setelah approve/reject).
+- `PaymentMonth`: pecahan per bulan (year, month) dari satu Payment — dipakai untuk alokasi arrears & exclude periode tertentu dari income.
 
-### Entitas & Atribut:
-- `users`: id, name, email, password, role (admin, user), is_first_login (default: true).
-- `house_types`: id, type_name, price (decimal).
-- `houses`: id, house_number, block, house_type_id (FK), user_id (FK).
-- `payments`: id, user_id (FK), house_id (FK), amount_months, total_amount, proof_path, status (pending, approved, rejected), created_at.
+### Keuangan pengurus (kas)
+- `Expense`: date, category (enum: MAINTENANCE/SECURITY/UTILITIES/CLEANING/LANDSCAPING/ADMINISTRATION/OTHER), amount, description, proofImagePath, createdBy.
+- `Income`: date, category (enum: MONTHLY_FEES/LATE_FEES/GUEST_PARKING/FACILITY_RENTAL/MAINTENANCE_CHARGE/REGISTRATION_FEE/OTHER), amount, description, `paymentId` opsional (income otomatis dari Payment yang di-approve).
+
+### Staf — absensi & shift
+- `Attendance`: clockInAt/clockOutAt, `clockInLat`/`clockInLon` + `clockOutLat`/`clockOutLon` (geofence), `clockInPhoto`/`clockOutPhoto` (wajib foto), `lateMinutes`, link ke `StaffSchedule`.
+- `ShiftTemplate`: jobType, shiftName, startTime/endTime, toleranceMinutes, requiredStaffCount.
+- `StaffSchedule`: penjadwalan staf per tanggal + shift template, dengan creator (admin).
+- `ShiftReport`: laporan isi shift (SHIFT_START/SHIFT_MIDDLE/SHIFT_END) + foto opsional.
+- `StaffLeave`: pengajuan cuti staf (startDate–endDate, reason), status PENDING/APPROVED/REJECTED, review oleh admin.
+
+### Lainnya
+- `Submission`: pengajuan warga — FEEDBACK, SUGGESTION, ACCESS_CARD_REPAIR, ACCESS_CARD_REPLACEMENT — dengan status PENDING/IN_REVIEW/RESOLVED/CLOSED dan review admin.
+- `UrgentContact`: daftar kontak darurat/servis yang dikelola admin, ditampilkan ke warga.
+- `SystemConfig`: key–value (JSON) untuk konfigurasi operasional yang bisa diubah admin tanpa deploy ulang. Key yang sudah ada: `upload_window`, `default_password`, `geofence` (lat/lon/radius kantor), `bank_details`, `residence_info`, `whatsapp_template`, `excluded_income_periods`, `billing_start`, `leave_config`, `telegram_bot`.
 
 ## 3. Aturan Bisnis Penting (Crucial Rules)
-1. **Perhitungan Harga:** Total bayar harus dihitung di backend berdasarkan `house_types.price` * `amount_months`. Jangan mengandalkan kalkulasi sisi client untuk keamanan.
-2. **Autentikasi:** - Admin membuat user.
-   - User pertama kali login wajib diarahkan ke `/change-password`.
-   - Akses dashboard dibatasi berdasarkan `role`.
+1. **Perhitungan Harga:** Total bayar selalu dihitung di backend dari `houseType.price * amountMonths` (lihat `services/payment.service.ts`). Jangan pernah percaya total dari client.
+2. **Autentikasi & Akses:**
+   - Admin membuat user; user pertama kali login wajib diarahkan ke `/change-password` (dicek via `isFirstLogin` di `auth.config.ts`, bukan middleware kustom).
+   - Role ADMIN/USER/STAFF masing-masing diarahkan ke dashboard sendiri (`/admin`, `/user`, `/staff`); akses lintas-role di-redirect otomatis.
+   - `isPengurus` adalah flag tambahan di atas role USER yang membuka akses kelola kas/expense di dashboard user — bukan role terpisah.
 3. **Logika Pembayaran:**
-   - User memilih jumlah bulan (1-12).
-   - User mengunggah file gambar (JPG/PNG).
-   - Admin memvalidasi secara manual. Status default transaksi adalah `pending`.
+   - User memilih bulan yang dibayar (eksplisit per bulan, bukan cuma jumlah bulan) dan mengunggah bukti transfer (JPG/PNG, maksimum 10MB — lihat `lib/constants.ts`).
+   - Jika `billing_start` arrears aktif, alokasi bulan memakai aturan **oldest-first** (tunggakan terlama dilunasi dulu) — lihat `computeCoveredMonths` di `services/payment.service.ts`.
+   - Rumah yang sudah di-merge (`mergedIntoHouseId`) tidak bisa menerima pembayaran langsung; sistem mengarahkan ke rumah utama.
+   - Status pembayaran default `PENDING`; admin approve/reject secara manual, baik dari dashboard web maupun dari bot Telegram (inline button). Approve massal (`bulkApprovePayments`) dan input massal oleh admin (`bulkCreatePayments`, `admin-create` dengan arrears pre-checked) juga didukung.
+   - Payment yang di-approve otomatis membuat baris `Income` terkait, kecuali bulan tersebut masuk `excluded_income_periods`.
+4. **Absensi Staf:** Clock-in/out wajib disertai foto dan lokasi GPS; lokasi divalidasi terhadap `geofence` config (radius dari titik kantor, formula Haversine) — di luar radius ditolak. Keterlambatan dihitung otomatis dari `ShiftTemplate`.
+5. **Jangan menghapus data yang sudah ada** saat memperbaiki issue — tambahkan migrasi/guard, jangan overwrite destructif (lihat juga guard di `prisma/seed.ts` yang mencegah seed menimpa data produksi).
 
-## 4. Prioritas Implementasi (Roadmap)
-1. **Sprint 1: Auth & User Management**
-   - Setup Database & Migrasi.
-   - Fitur Admin: CRUD User & CRUD Rumah.
-   - Fitur Login & Force Change Password.
-2. **Sprint 2: Master Data & Transaction**
-   - Setup CRUD Tipe Rumah & Harga.
-   - User Dashboard: Form upload bukti transfer & pilih jumlah bulan.
-3. **Sprint 3: Approval System**
-   - Admin Dashboard: List transaksi pending.
-   - Fitur Approval/Rejection.
-   - History pembayaran bagi User.
+## 4. Status Implementasi
+
+Project sudah **live di produksi** (Vercel + Supabase + Cloudinary). Fitur yang sudah berjalan:
+- Auth, role-based dashboard (admin/user/staff), force change-password, PWA install.
+- CRUD user, rumah, tipe rumah & harga; import rumah dari file; house merge untuk warga dengan rumah gabungan.
+- Upload & approval bukti bayar IPL (single & bulk), arrears tracking oldest-first, admin-create payment dengan pre-check bulan tertunggak, riwayat pembayaran warga.
+- Kas/keuangan pengurus: input expense & income, laporan bulanan, download XLSX.
+- Absensi staf dengan geofence + foto, penjadwalan shift (template & auto-generate), laporan shift, pengajuan & approval cuti staf.
+- Submission warga (feedback/saran/perbaikan & ganti kartu akses) dengan workflow review admin.
+- Kontak darurat yang dikelola admin.
+- Bot Telegram: link akun admin, notifikasi pembayaran baru, approve/reject langsung dari Telegram, `/pending`, `/stats`, `/laporan [bulan] [tahun]` (laporan XLSX on-demand).
+- i18n ID/EN, generator pesan WhatsApp (template dari `system-config`) untuk reminder manual ke warga, QRIS untuk pembayaran.
+
+Belum ada roadmap sprint formal — perubahan baru masuk langsung sebagai fitur/fix di atas baseline ini. Saat menambah fitur besar, konfirmasi dulu skema/rule terkait ke Inti (backend) sebelum implementasi, dan rencanakan QA ke Jaga sebelum rilis.
 
 ## 5. Instruksi Khusus Claude Code
-- Gunakan pendekatan **Modular Coding**. Pisahkan Controller, Route, dan Service.
-- Pastikan setiap fungsi `upload` memiliki validasi tipe file dan ukuran (max 2MB).
-- Gunakan Middleware untuk mengecek `is_first_login`. Jika `true`, blokir akses ke fitur lain kecuali ganti password.
-- Sertakan penanganan error (error handling) yang jelas untuk setiap API response.
+- Gunakan pendekatan **Modular Coding**: pisahkan API route (`app/api/**/route.ts`), service (`services/*.service.ts`), dan validasi (`lib/validations/*.schema.ts`).
+- Setiap fungsi upload (bukti bayar, foto absensi, dll.) harus validasi tipe file dan ukuran — cek `lib/constants.ts` (`MAX_FILE_SIZE`, `ALLOWED_IMAGE_TYPES`) untuk nilai yang berlaku saat ini, jangan hardcode ulang.
+- Jangan tambah middleware kustom untuk `isFirstLogin` — gating itu sudah ditangani di `auth.config.ts` callback `authorized`; perubahan ke behavior itu harus lewat file yang sama.
+- Sertakan penanganan error yang jelas untuk setiap API response.
 - Jangan menghapus data yang sudah ada jika melakukan fixing issue.
-- Selalu gunakan node version 22, aktifkan melalui nvm command
+- Selalu gunakan Node version 22, aktifkan melalui `nvm use 22` sebelum menjalankan script apa pun (dev, build, atau script di `scripts/`).
 
 ---
 

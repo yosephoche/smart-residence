@@ -278,7 +278,16 @@ export default function AttendancePage() {
           variants={itemVariants}
           className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)] p-4 space-y-4"
         >
-          <h2 className="text-sm font-semibold text-slate-900">Clock In</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-slate-900">Clock In</h2>
+            <button
+              type="button"
+              onClick={() => router.push("/staff/manual-attendance")}
+              className="text-xs font-medium text-blue-600"
+            >
+              Lupa absen kemarin?
+            </button>
+          </div>
 
           {/* Display scheduled shift if exists */}
           {todaySchedule && (
