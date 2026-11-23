@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 
 import { useState, useEffect, useMemo, useRef } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { toast } from "sonner";
 import { JobType } from "@prisma/client";
 import Table, { Column, Pagination } from "@/components/ui/Table";
@@ -11,7 +11,7 @@ import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import Modal, { ConfirmModal } from "@/components/ui/Modal";
 import Input from "@/components/ui/Input";
-import { Plus, Sparkles, Trash2, List, CalendarDays, Download, Printer } from "lucide-react";
+import { Plus, Sparkles, Trash2, List, CalendarDays, Download, Printer, CopyCheck } from "lucide-react";
 import { exportCSV, exportXLSX, mapSchedulesForExport } from "@/lib/utils/export";
 import { usePagination } from "@/lib/hooks/usePagination";
 import ScheduleCalendar, { toDateKey } from "@/components/staff/ScheduleCalendar";
@@ -57,9 +57,30 @@ interface Staff {
   staffJobType: JobType;
 }
 
+interface CopyPlanSummary {
+  created: number;
+  overwritten: number;
+  emptySlotLeave: number;
+  skippedTemplateUnavailable: number;
+  understaffedWarnings: {
+    date: string;
+    shiftTemplateId: string;
+    shiftName: string;
+    required: number;
+    filled: number;
+  }[];
+}
+
+interface CopyPreview {
+  operationId: string;
+  summary: CopyPlanSummary;
+  expiresAt: string;
+}
+
 export default function SchedulePage() {
   const t = useTranslations('staff.schedule');
   const tCommon = useTranslations('common');
+  const locale = useLocale();
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [staff, setStaff] = useState<Staff[]>([]);
   const [shiftTemplates, setShiftTemplates] = useState<ShiftTemplate[]>([]);
@@ -130,6 +151,26 @@ export default function SchedulePage() {
   });
   const [autoGenError, setAutoGenError] = useState("");
   const [generating, setGenerating] = useState(false);
+
+  // Copy-month modal (preview → approve/commit or cancel, reuses existing copy-month API)
+  const [isCopyModalOpen, setIsCopyModalOpen] = useState(false);
+  const [copyStep, setCopyStep] = useState<"form" | "preview">("form");
+  const [copyForm, setCopyForm] = useState(() => {
+    const today = new Date();
+    const next = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+    return {
+      sourceYear: today.getFullYear(),
+      sourceMonth: today.getMonth() + 1,
+      targetYear: next.getFullYear(),
+      targetMonth: next.getMonth() + 1,
+      jobType: "" as JobType | "",
+    };
+  });
+  const [copyPreview, setCopyPreview] = useState<CopyPreview | null>(null);
+  const [copyError, setCopyError] = useState("");
+  const [copyPreviewing, setCopyPreviewing] = useState(false);
+  const [copyCommitting, setCopyCommitting] = useState(false);
+  const [copyCancelling, setCopyCancelling] = useState(false);
 
   // Derived: schedules grouped by date key for calendar view
   const schedulesByDate = useMemo(() => {
@@ -431,6 +472,136 @@ export default function SchedulePage() {
     }
   };
 
+  const resetCopyState = () => {
+    setCopyStep("form");
+    setCopyPreview(null);
+    setCopyError("");
+    const today = new Date();
+    const next = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+    setCopyForm({
+      sourceYear: today.getFullYear(),
+      sourceMonth: today.getMonth() + 1,
+      targetYear: next.getFullYear(),
+      targetMonth: next.getMonth() + 1,
+      jobType: "",
+    });
+  };
+
+  const handleCloseCopyModal = () => {
+    // A preview that was never approved is just an inert row (auto-expires in
+    // 48h anyway) — best-effort cancel it so it doesn't linger as PREVIEW.
+    if (copyStep === "preview" && copyPreview) {
+      fetch("/api/admin/schedules/copy-month/cancel", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ operationId: copyPreview.operationId }),
+      }).catch(() => {});
+    }
+    setIsCopyModalOpen(false);
+    resetCopyState();
+  };
+
+  const handleCopyPreview = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCopyError("");
+
+    if (
+      copyForm.sourceYear === copyForm.targetYear &&
+      copyForm.sourceMonth === copyForm.targetMonth
+    ) {
+      setCopyError(t("copy_source_target_same"));
+      return;
+    }
+
+    setCopyPreviewing(true);
+    try {
+      const res = await fetch("/api/admin/schedules/copy-month/preview", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sourceYear: copyForm.sourceYear,
+          sourceMonth: copyForm.sourceMonth,
+          targetYear: copyForm.targetYear,
+          targetMonth: copyForm.targetMonth,
+          jobType: copyForm.jobType || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to preview schedule copy");
+
+      setCopyPreview(data.preview);
+      setCopyStep("preview");
+    } catch (err: any) {
+      setCopyError(err.message);
+    } finally {
+      setCopyPreviewing(false);
+    }
+  };
+
+  const handleCopyCancelOperation = async () => {
+    if (!copyPreview) return;
+    setCopyCancelling(true);
+    try {
+      await fetch("/api/admin/schedules/copy-month/cancel", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ operationId: copyPreview.operationId }),
+      });
+    } catch {
+      // best-effort — the preview auto-expires in 48h regardless
+    } finally {
+      setCopyCancelling(false);
+      setIsCopyModalOpen(false);
+      resetCopyState();
+    }
+  };
+
+  const handleCopyCommit = async () => {
+    if (!copyPreview) return;
+    setCopyError("");
+    setCopyCommitting(true);
+    try {
+      const res = await fetch("/api/admin/schedules/copy-month/commit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ operationId: copyPreview.operationId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to commit schedule copy");
+
+      toast.success(
+        t("copy_success", {
+          created: data.result.createdCount,
+          updated: data.result.updatedCount,
+        })
+      );
+      await fetchSchedules();
+      setIsCopyModalOpen(false);
+      resetCopyState();
+    } catch (err: any) {
+      setCopyError(err.message);
+    } finally {
+      setCopyCommitting(false);
+    }
+  };
+
+  const monthOptions = useMemo(
+    () =>
+      Array.from({ length: 12 }, (_, i) => ({
+        value: i + 1,
+        label: new Date(2000, i, 1).toLocaleDateString(locale === "id" ? "id-ID" : "en-US", {
+          month: "long",
+        }),
+      })),
+    [locale]
+  );
+  const monthName = (m: number) =>
+    monthOptions.find((o) => o.value === m)?.label ?? String(m);
+  const yearOptions = useMemo(() => {
+    const currentYear = new Date().getFullYear();
+    return Array.from({ length: 5 }, (_, i) => currentYear - 1 + i);
+  }, []);
+
   const handleDeleteSchedule = async (id: string) => {
     try {
       const res = await fetch(`/api/admin/schedules/${id}`, {
@@ -651,6 +822,11 @@ export default function SchedulePage() {
           <Button onClick={() => setIsAutoGenModalOpen(true)} variant="secondary">
             <Sparkles className="w-4 h-4 mr-2" />
             {t('auto_generate')}
+          </Button>
+
+          <Button onClick={() => setIsCopyModalOpen(true)} variant="secondary">
+            <CopyCheck className="w-4 h-4 mr-2" />
+            {t('copy_month')}
           </Button>
 
           {/* Print — only in calendar view */}
@@ -1091,6 +1267,217 @@ export default function SchedulePage() {
             </Button>
           </div>
         </form>
+      </Modal>
+
+      {/* Copy-Month Modal: preview → approve/commit or cancel, reuses existing copy-month API */}
+      <Modal
+        isOpen={isCopyModalOpen}
+        onClose={handleCloseCopyModal}
+        title={t('copy_month_title')}
+        size="lg"
+      >
+        {copyStep === "form" ? (
+          <form onSubmit={handleCopyPreview} className="space-y-4">
+            <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg text-sm">
+              {t('copy_month_help')}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                {t('copy_source_month')}
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <select
+                  value={copyForm.sourceMonth}
+                  onChange={(e) =>
+                    setCopyForm({ ...copyForm, sourceMonth: Number(e.target.value) })
+                  }
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                >
+                  {monthOptions.map((m) => (
+                    <option key={m.value} value={m.value}>
+                      {m.label}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={copyForm.sourceYear}
+                  onChange={(e) =>
+                    setCopyForm({ ...copyForm, sourceYear: Number(e.target.value) })
+                  }
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                >
+                  {yearOptions.map((y) => (
+                    <option key={y} value={y}>
+                      {y}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                {t('copy_target_month')}
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <select
+                  value={copyForm.targetMonth}
+                  onChange={(e) =>
+                    setCopyForm({ ...copyForm, targetMonth: Number(e.target.value) })
+                  }
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                >
+                  {monthOptions.map((m) => (
+                    <option key={m.value} value={m.value}>
+                      {m.label}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={copyForm.targetYear}
+                  onChange={(e) =>
+                    setCopyForm({ ...copyForm, targetYear: Number(e.target.value) })
+                  }
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                >
+                  {yearOptions.map((y) => (
+                    <option key={y} value={y}>
+                      {y}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                {t('copy_job_type_filter')}
+              </label>
+              <select
+                value={copyForm.jobType}
+                onChange={(e) =>
+                  setCopyForm({ ...copyForm, jobType: e.target.value as JobType | "" })
+                }
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              >
+                <option value="">{t('copy_all_job_types')}</option>
+                <option value="SECURITY">{tCommon('job_types.SECURITY')}</option>
+                <option value="CLEANING">{tCommon('job_types.CLEANING')}</option>
+                <option value="GARDENING">{tCommon('job_types.GARDENING')}</option>
+                <option value="MAINTENANCE">{tCommon('job_types.MAINTENANCE')}</option>
+                <option value="OTHER">{tCommon('job_types.OTHER')}</option>
+              </select>
+            </div>
+
+            {copyError && <div className="text-red-600 text-sm">{copyError}</div>}
+
+            <div className="flex gap-3 justify-end">
+              <Button type="button" variant="secondary" onClick={handleCloseCopyModal}>
+                {tCommon('actions.cancel')}
+              </Button>
+              <Button type="submit" disabled={copyPreviewing}>
+                {copyPreviewing ? t('copy_previewing') : t('copy_preview')}
+              </Button>
+            </div>
+          </form>
+        ) : (
+          copyPreview && (
+            <div className="space-y-4">
+              <p className="text-sm text-slate-600">
+                {t('copy_preview_range', {
+                  sourceMonth: monthName(copyForm.sourceMonth),
+                  sourceYear: copyForm.sourceYear,
+                  targetMonth: monthName(copyForm.targetMonth),
+                  targetYear: copyForm.targetYear,
+                })}
+              </p>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-4 py-3">
+                  <p className="text-xs font-medium text-emerald-600 uppercase tracking-wide">
+                    {t('copy_created')}
+                  </p>
+                  <p className="text-2xl font-bold text-emerald-700 mt-1">
+                    {copyPreview.summary.created}
+                  </p>
+                </div>
+                <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
+                  <p className="text-xs font-medium text-amber-600 uppercase tracking-wide">
+                    {t('copy_overwritten')}
+                  </p>
+                  <p className="text-2xl font-bold text-amber-700 mt-1">
+                    {copyPreview.summary.overwritten}
+                  </p>
+                </div>
+                <div className="bg-slate-50 border border-slate-200 rounded-lg px-4 py-3">
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+                    {t('copy_empty_leave')}
+                  </p>
+                  <p className="text-2xl font-bold text-slate-700 mt-1">
+                    {copyPreview.summary.emptySlotLeave}
+                  </p>
+                </div>
+                {copyPreview.summary.skippedTemplateUnavailable > 0 && (
+                  <div className="bg-rose-50 border border-rose-200 rounded-lg px-4 py-3">
+                    <p className="text-xs font-medium text-rose-600 uppercase tracking-wide">
+                      {t('copy_skipped_template')}
+                    </p>
+                    <p className="text-2xl font-bold text-rose-700 mt-1">
+                      {copyPreview.summary.skippedTemplateUnavailable}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {copyPreview.summary.understaffedWarnings.length > 0 && (
+                <div className="bg-amber-50 border border-amber-200 text-amber-700 px-4 py-3 rounded-lg text-sm space-y-2">
+                  <p className="font-medium">
+                    {t('copy_understaffed_warning', {
+                      count: copyPreview.summary.understaffedWarnings.length,
+                    })}
+                  </p>
+                  <ul className="list-disc list-inside space-y-1 max-h-32 overflow-y-auto">
+                    {copyPreview.summary.understaffedWarnings.map((w, i) => (
+                      <li key={i}>
+                        {new Date(w.date).toLocaleDateString(locale === "id" ? "id-ID" : "en-US", {
+                          day: "2-digit",
+                          month: "short",
+                        })}{" "}
+                        — {w.shiftName} ({w.filled}/{w.required})
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              <p className="text-xs text-slate-400">{t('copy_expires_hint')}</p>
+
+              {copyError && <div className="text-red-600 text-sm">{copyError}</div>}
+
+              <div className="flex gap-3 justify-end">
+                <Button type="button" variant="secondary" onClick={() => setCopyStep("form")}>
+                  {t('copy_back_to_form')}
+                </Button>
+                <Button
+                  type="button"
+                  variant="danger"
+                  onClick={handleCopyCancelOperation}
+                  disabled={copyCommitting || copyCancelling}
+                >
+                  {copyCancelling ? t('copy_cancelling') : t('copy_cancel_operation')}
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleCopyCommit}
+                  disabled={copyCommitting || copyCancelling}
+                >
+                  {copyCommitting ? t('copy_committing') : t('copy_approve_commit')}
+                </Button>
+              </div>
+            </div>
+          )
+        )}
       </Modal>
 
       {/* Delete Confirmation Modal */}
