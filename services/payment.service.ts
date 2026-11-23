@@ -18,10 +18,15 @@ export async function getPayments({
   status,
   userId,
   date,
+  page,
+  pageSize,
 }: {
   status?: string;
   userId?: string;
   date?: string;
+  // Optional, non-breaking pagination: omit both to keep the previous unbounded behavior.
+  page?: number;
+  pageSize?: number;
 } = {}) {
   let dateFilter: Record<string, unknown> = {};
   if (date) {
@@ -44,6 +49,7 @@ export async function getPayments({
       paymentMonths: paymentMonthsInclude,
     },
     orderBy: { createdAt: "desc" },
+    ...(pageSize ? { take: pageSize, skip: (Math.max(page ?? 1, 1) - 1) * pageSize } : {}),
   });
 }
 

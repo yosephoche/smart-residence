@@ -31,6 +31,9 @@ export async function GET(req: NextRequest) {
     const endDate = searchParams.get("endDate")
       ? new Date(searchParams.get("endDate")!)
       : undefined;
+    // Optional, non-breaking pagination: only applied when the caller explicitly asks for it.
+    const page = searchParams.get("page") ? Number(searchParams.get("page")) : undefined;
+    const pageSize = searchParams.get("pageSize") ? Number(searchParams.get("pageSize")) : undefined;
 
     const attendances = await getAllAttendanceEnhanced({
       staffId,
@@ -38,6 +41,8 @@ export async function GET(req: NextRequest) {
       startDate,
       endDate,
       lateOnly,
+      page,
+      pageSize,
     });
 
     return NextResponse.json({

@@ -301,6 +301,9 @@ export async function getAllAttendanceEnhanced(filters?: {
   startDate?: Date;
   endDate?: Date;
   lateOnly?: boolean;
+  // Optional, non-breaking pagination: omit both to keep the previous unbounded behavior.
+  page?: number;
+  pageSize?: number;
 }) {
   const where: any = {};
 
@@ -355,6 +358,9 @@ export async function getAllAttendanceEnhanced(filters?: {
         },
       },
     },
+    ...(filters?.pageSize
+      ? { take: filters.pageSize, skip: (Math.max(filters.page ?? 1, 1) - 1) * filters.pageSize }
+      : {}),
   });
 
   return attendances;
