@@ -1072,49 +1072,59 @@ export async function copyScheduleCommit(id: string, approvedBy: string) {
 
   const toWrite = fresh.entries.filter((e) => e.action === "CREATE" || e.action === "UPDATE");
 
-  const result = await prisma.$transaction(async (tx) => {
-    const snapshot: {
-      scheduleId: string;
-      staffId: string;
-      date: string;
-      previousShiftTemplateId: string;
-    }[] = [];
+  // Reads happen before the transaction opens: Supabase's pooled DATABASE_URL
+  // runs PgBouncer in transaction mode, which can reassign the underlying
+  // connection between round-trips of a held interactive transaction and
+  // invalidate it ("Transaction not found"). A single batch $transaction([...])
+  // below sends all writes as one request instead, which PgBouncer handles.
+  const snapshot: {
+    scheduleId: string;
+    staffId: string;
+    date: string;
+    previousShiftTemplateId: string;
+  }[] = [];
 
-    let createdCount = 0;
-    let updatedCount = 0;
-
-    for (const entry of toWrite) {
-      if (entry.action === "UPDATE" && entry.existingScheduleId) {
-        const before = await tx.staffSchedule.findUnique({ where: { id: entry.existingScheduleId } });
-        if (before) {
-          snapshot.push({
-            scheduleId: before.id,
-            staffId: before.staffId,
-            date: before.date.toISOString(),
-            previousShiftTemplateId: before.shiftTemplateId,
-          });
-        }
-        // Update in place (same row id) — never delete+recreate, or any
-        // Attendance pointing at this schedule would be orphaned (SetNull).
-        await tx.staffSchedule.update({
-          where: { id: entry.existingScheduleId },
-          data: { shiftTemplateId: entry.shiftTemplateId, createdBy: approvedBy },
+  for (const entry of toWrite) {
+    if (entry.action === "UPDATE" && entry.existingScheduleId) {
+      const before = await prisma.staffSchedule.findUnique({ where: { id: entry.existingScheduleId } });
+      if (before) {
+        snapshot.push({
+          scheduleId: before.id,
+          staffId: before.staffId,
+          date: before.date.toISOString(),
+          previousShiftTemplateId: before.shiftTemplateId,
         });
-        updatedCount++;
-      } else {
-        await tx.staffSchedule.create({
-          data: {
-            staffId: entry.staffId,
-            shiftTemplateId: entry.shiftTemplateId,
-            date: new Date(entry.date),
-            createdBy: approvedBy,
-          },
-        });
-        createdCount++;
       }
     }
+  }
 
-    const updatedOperation = await tx.scheduleCopyOperation.update({
+  let createdCount = 0;
+  let updatedCount = 0;
+
+  const writeOps = toWrite.map((entry) => {
+    if (entry.action === "UPDATE" && entry.existingScheduleId) {
+      updatedCount++;
+      // Update in place (same row id) — never delete+recreate, or any
+      // Attendance pointing at this schedule would be orphaned (SetNull).
+      return prisma.staffSchedule.update({
+        where: { id: entry.existingScheduleId },
+        data: { shiftTemplateId: entry.shiftTemplateId, createdBy: approvedBy },
+      });
+    }
+    createdCount++;
+    return prisma.staffSchedule.create({
+      data: {
+        staffId: entry.staffId,
+        shiftTemplateId: entry.shiftTemplateId,
+        date: new Date(entry.date),
+        createdBy: approvedBy,
+      },
+    });
+  });
+
+  const txResults = await prisma.$transaction([
+    ...writeOps,
+    prisma.scheduleCopyOperation.update({
       where: { id },
       data: {
         status: "COMMITTED",
@@ -1122,10 +1132,9 @@ export async function copyScheduleCommit(id: string, approvedBy: string) {
         committedAt: new Date(),
         snapshot: snapshot as any,
       },
-    });
+    }),
+  ]);
+  const updatedOperation = txResults[txResults.length - 1];
 
-    return { createdCount, updatedCount, operation: updatedOperation };
-  });
-
-  return { alreadyCommitted: false as const, ...result };
+  return { alreadyCommitted: false as const, createdCount, updatedCount, operation: updatedOperation as any };
 }
