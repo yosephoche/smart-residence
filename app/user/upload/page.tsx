@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useMemo } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import {
   UploadCloud,
   Image as ImageIcon,
@@ -316,23 +316,23 @@ export default function UploadScreen() {
   }
 
   return (
-    <motion.div
+    <m.div
       className="px-4 pt-2 pb-4 space-y-4"
       variants={containerVariants}
       initial="hidden"
       animate="visible"
     >
       {/* Header */}
-      <motion.div variants={itemVariants}>
+      <m.div variants={itemVariants}>
         <h1 className="text-xl font-bold text-slate-900">Upload Bukti Bayar</h1>
         <p className="text-sm text-slate-400 mt-0.5">
           Upload bukti pembayaran IPL bulanan Anda
         </p>
-      </motion.div>
+      </m.div>
 
       {/* House Selector — shown when user has multiple houses and none selected */}
       {houses.length > 1 && !selectedHouseId && (
-        <motion.div
+        <m.div
           variants={itemVariants}
           className="bg-white rounded-2xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)]"
         >
@@ -361,12 +361,12 @@ export default function UploadScreen() {
               <ChevronRight className="w-4 h-4 text-slate-400" />
             </button>
           ))}
-        </motion.div>
+        </m.div>
       )}
 
       {/* Ganti Rumah back button */}
       {houses.length > 1 && selectedHouseId && (
-        <motion.div variants={itemVariants}>
+        <m.div variants={itemVariants}>
           <button
             onClick={() => {
               setSelectedHouseId(null);
@@ -378,14 +378,14 @@ export default function UploadScreen() {
             <ChevronRight className="w-3.5 h-3.5 rotate-180" />
             Ganti Rumah
           </button>
-        </motion.div>
+        </m.div>
       )}
 
       {selectedHouseId && (<>
       {/* Pending Payment Blocker */}
       <AnimatePresence>
         {pendingPayment && (
-          <motion.div
+          <m.div
             key="pending-blocker"
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
@@ -420,13 +420,13 @@ export default function UploadScreen() {
                 )}
               </div>
             </div>
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
 
       {/* Arrears Warning */}
       {hasArrears && !pendingPayment && (
-        <motion.div variants={itemVariants}>
+        <m.div variants={itemVariants}>
           <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
             <div className="flex items-center gap-2 mb-2">
               <AlertCircle className="w-4 h-4 text-amber-500" />
@@ -451,11 +451,11 @@ export default function UploadScreen() {
               Pembayaran akan menutupi bulan tertunggak terlebih dahulu.
             </p>
           </div>
-        </motion.div>
+        </m.div>
       )}
 
       {/* Month Amount Stepper */}
-      <motion.div variants={itemVariants}>
+      <m.div variants={itemVariants}>
         <div className="bg-white rounded-2xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)]">
           <div className="flex items-center gap-2 mb-3">
             <CalendarRange className="w-4 h-4 text-slate-400" />
@@ -502,11 +502,11 @@ export default function UploadScreen() {
             </div>
           </div>
         </div>
-      </motion.div>
+      </m.div>
 
       {/* Month Selector — hidden when arrears mode allocates months automatically */}
       {!arrears?.enabled && (
-        <motion.div
+        <m.div
           variants={itemVariants}
           className="bg-white rounded-2xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)]"
         >
@@ -532,12 +532,12 @@ export default function UploadScreen() {
               </button>
             ))}
           </div>
-        </motion.div>
+        </m.div>
       )}
 
       {/* Covered Months Preview */}
       {coveredMonths.length > 0 && (
-        <motion.div variants={itemVariants}>
+        <m.div variants={itemVariants}>
           <div className="bg-blue-50 rounded-2xl p-4">
             <div className="flex items-center gap-2 mb-2">
               <CheckCircle2 className="w-4 h-4 text-blue-600" />
@@ -572,12 +572,12 @@ export default function UploadScreen() {
               })}
             </div>
           </div>
-        </motion.div>
+        </m.div>
       )}
 
       {/* Overlap Warning */}
       {hasOverlap && (
-        <motion.div variants={itemVariants}>
+        <m.div variants={itemVariants}>
           <div className="bg-red-50 rounded-2xl p-4 flex items-start gap-3">
             <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
             <div>
@@ -591,11 +591,11 @@ export default function UploadScreen() {
               </p>
             </div>
           </div>
-        </motion.div>
+        </m.div>
       )}
 
       {/* Payment Info */}
-      <motion.div
+      <m.div
         variants={itemVariants}
         className="bg-white rounded-2xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)]"
       >
@@ -643,10 +643,10 @@ export default function UploadScreen() {
             </span>
           </div>
         </div>
-      </motion.div>
+      </m.div>
 
       {/* Show QRIS Button */}
-      <motion.div variants={itemVariants}>
+      <m.div variants={itemVariants}>
         <button
           onClick={() => setShowQris(true)}
           className="w-full flex items-center justify-center gap-2.5 py-3.5 rounded-2xl border-2 border-blue-200 bg-blue-50 text-blue-700 font-semibold text-sm hover:bg-blue-100 active:scale-[0.98] transition-all duration-150"
@@ -654,10 +654,10 @@ export default function UploadScreen() {
           <QrCode className="w-5 h-5" />
           Lihat QRIS
         </button>
-      </motion.div>
+      </m.div>
 
       {/* Upload Area */}
-      <motion.div variants={itemVariants}>
+      <m.div variants={itemVariants}>
         <input
           ref={fileInputRef}
           type="file"
@@ -668,7 +668,7 @@ export default function UploadScreen() {
 
         <AnimatePresence mode="wait">
           {!selectedFile ? (
-            <motion.button
+            <m.button
               key="upload-area"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -692,9 +692,9 @@ export default function UploadScreen() {
                   JPG, PNG • Maks 5MB
                 </p>
               </div>
-            </motion.button>
+            </m.button>
           ) : (
-            <motion.div
+            <m.div
               key="file-preview"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -718,16 +718,16 @@ export default function UploadScreen() {
                   <X className="w-4 h-4 text-slate-400" />
                 </button>
               </div>
-            </motion.div>
+            </m.div>
           )}
         </AnimatePresence>
-      </motion.div>
+      </m.div>
 
       {/* Submit Button */}
-      <motion.div variants={itemVariants}>
+      <m.div variants={itemVariants}>
         <AnimatePresence mode="wait">
           {isSubmitted ? (
-            <motion.div
+            <m.div
               key="success"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -748,9 +748,9 @@ export default function UploadScreen() {
                   </p>
                 )}
               </div>
-            </motion.div>
+            </m.div>
           ) : (
-            <motion.button
+            <m.button
               key="submit"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -771,16 +771,16 @@ export default function UploadScreen() {
                 : pendingPayment
                   ? "Menunggu Verifikasi..."
                   : "Kirim Bukti Bayar"}
-            </motion.button>
+            </m.button>
           )}
         </AnimatePresence>
-      </motion.div>
+      </m.div>
       </>)}
 
       {/* QRIS Modal */}
       <AnimatePresence>
         {showQris && (
-          <motion.div
+          <m.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -788,13 +788,13 @@ export default function UploadScreen() {
             className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-4"
           >
             {/* Backdrop */}
-            <motion.div
+            <m.div
               className="absolute inset-0 bg-black/60 backdrop-blur-sm"
               onClick={() => setShowQris(false)}
             />
 
             {/* Modal card */}
-            <motion.div
+            <m.div
               initial={{ opacity: 0, scale: 0.9, y: 40 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 40 }}
@@ -826,6 +826,7 @@ export default function UploadScreen() {
                     src="/images/qris.jpeg"
                     alt="QRIS Sakura Village"
                     fill
+                    sizes="(max-width: 384px) 100vw, 384px"
                     className="object-contain"
                     priority
                   />
@@ -846,10 +847,10 @@ export default function UploadScreen() {
                   Tutup
                 </button>
               </div>
-            </motion.div>
-          </motion.div>
+            </m.div>
+          </m.div>
         )}
       </AnimatePresence>
-    </motion.div>
+    </m.div>
   );
 }

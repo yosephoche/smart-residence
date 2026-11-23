@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import SessionWrapper from "@/components/layouts/SessionWrapper";
+import MotionProvider from "@/components/layouts/MotionProvider";
 import { NextIntlClientProvider } from 'next-intl';
 import { getUserLocale } from '@/services/locale.service';
 import { Toaster } from 'sonner';
@@ -49,7 +50,9 @@ export default async function RootLayout({
     <html lang={locale}>
       <body className={inter.className}>
         <NextIntlClientProvider locale={locale} messages={messages}>
-          <SessionWrapper>{children}</SessionWrapper>
+          <SessionWrapper>
+            <MotionProvider>{children}</MotionProvider>
+          </SessionWrapper>
           <Toaster richColors position="top-right" />
         </NextIntlClientProvider>
       </body>

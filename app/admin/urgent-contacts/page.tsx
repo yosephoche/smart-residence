@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 
 import { useState, useEffect, useMemo } from "react";
 import { useTranslations } from "next-intl";
@@ -319,7 +319,7 @@ export default function UrgentContactsPage() {
   };
 
   return (
-    <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-6">
+    <m.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -521,6 +521,6 @@ export default function UrgentContactsPage() {
         variant="danger"
         isLoading={isDeleting}
       />
-    </motion.div>
+    </m.div>
   );
 }

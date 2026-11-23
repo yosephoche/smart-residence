@@ -4,7 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { motion } from "framer-motion";
+import { m, motion } from "framer-motion";
 import { Home, Clock, FileText, User, AlertCircle, CalendarRange } from "lucide-react";
 
 interface TabItem {
@@ -108,7 +108,7 @@ const StaffBottomNav: React.FC = () => {
                   }}
                 />
               )}
-              <motion.div
+              <m.div
                 animate={{
                   scale: isActive ? 1 : 0.9,
                   color: isActive ? "#2563EB" : "#94A3B8",
@@ -119,7 +119,7 @@ const StaffBottomNav: React.FC = () => {
                 className="flex items-center justify-center"
               >
                 <Icon className="w-5 h-5" />
-              </motion.div>
+              </m.div>
               <span
                 className={`text-[10px] font-medium transition-colors duration-200 ${
                   isActive ? "text-blue-600" : "text-slate-400"

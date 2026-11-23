@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useTranslations, useLocale } from "next-intl";
@@ -782,7 +782,7 @@ export default function SchedulePage() {
   };
 
   return (
-    <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-6">
+    <m.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
@@ -1503,6 +1503,6 @@ export default function SchedulePage() {
         confirmText={bulkDeleting ? "Menghapus..." : "Hapus"}
         cancelText={tCommon('actions.cancel')}
       />
-    </motion.div>
+    </m.div>
   );
 }

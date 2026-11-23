@@ -1,21 +1,20 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
+import nextDynamic from "next/dynamic";
 import { Card, CardHeader, CardContent } from "@/components/ui/Card";
 import StatCard from "@/components/ui/StatCard";
 import { Skeleton } from "@/components/ui/Loading";
-import { formatCurrency } from "@/lib/utils";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Legend,
-} from "recharts";
+
+const MonthlyTrendChart = nextDynamic(() => import("@/components/admin/MonthlyTrendChart"), {
+  ssr: false,
+  loading: () => <div className="h-full animate-pulse bg-slate-100 rounded-lg" />,
+});
+const CategoryBreakdownChart = nextDynamic(() => import("@/components/admin/CategoryBreakdownChart"), {
+  ssr: false,
+  loading: () => <div className="h-full animate-pulse bg-slate-100 rounded-lg" />,
+});
 
 interface MonthlyTrend {
   month: number;
@@ -39,8 +38,6 @@ const CATEGORY_LABELS: Record<string, string> = {
   ADMINISTRATION: "Administrasi",
   OTHER: "Lainnya",
 };
-
-const currencyFormatter = (value: number) => formatCurrency(value);
 
 export const dynamic = "force-dynamic";
 
@@ -109,7 +106,7 @@ export default function AdminDashboardPage() {
   };
 
   return (
-    <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-8">
+    <m.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-8">
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Dashboard</h1>
@@ -168,36 +165,7 @@ export default function AdminDashboardPage() {
         </CardHeader>
         <CardContent>
           <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={monthlyTrend} barGap={2} barCategoryGap="20%">
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
-                <XAxis
-                  dataKey="label"
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fontSize: 11, fill: "#94A3B8" }}
-                  dy={4}
-                />
-                <YAxis hide />
-                <Tooltip
-                  formatter={(value: number | undefined) => currencyFormatter(value ?? 0)}
-                  labelStyle={{ fontWeight: 600, color: "#0F172A" }}
-                  contentStyle={{
-                    borderRadius: 8,
-                    border: "1px solid #E2E8F0",
-                    fontSize: 12,
-                  }}
-                />
-                <Legend
-                  iconType="circle"
-                  iconSize={8}
-                  wrapperStyle={{ fontSize: 11, paddingTop: 8 }}
-                  formatter={(value) => (value === "income" ? "Pemasukan" : "Pengeluaran")}
-                />
-                <Bar dataKey="income" name="income" fill="#3B82F6" radius={[4, 4, 0, 0]} maxBarSize={16} />
-                <Bar dataKey="expense" name="expense" fill="#F87171" radius={[4, 4, 0, 0]} maxBarSize={16} />
-              </BarChart>
-            </ResponsiveContainer>
+            <MonthlyTrendChart data={monthlyTrend} />
           </div>
         </CardContent>
       </Card>
@@ -208,42 +176,11 @@ export default function AdminDashboardPage() {
           <CardHeader>Pengeluaran per Kategori</CardHeader>
           <CardContent>
             <div style={{ height: Math.max(160, categoryChartData.length * 44) }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={categoryChartData}
-                  layout="vertical"
-                  barCategoryGap="25%"
-                  margin={{ left: 8, right: 16 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#F1F5F9" />
-                  <XAxis
-                    type="number"
-                    hide
-                  />
-                  <YAxis
-                    type="category"
-                    dataKey="name"
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fontSize: 12, fill: "#64748B" }}
-                    width={96}
-                  />
-                  <Tooltip
-                    formatter={(value: number | undefined) => currencyFormatter(value ?? 0)}
-                    labelStyle={{ fontWeight: 600, color: "#0F172A" }}
-                    contentStyle={{
-                      borderRadius: 8,
-                      border: "1px solid #E2E8F0",
-                      fontSize: 12,
-                    }}
-                  />
-                  <Bar dataKey="amount" name="Pengeluaran" fill="#F59E0B" radius={[0, 4, 4, 0]} maxBarSize={20} />
-                </BarChart>
-              </ResponsiveContainer>
+              <CategoryBreakdownChart data={categoryChartData} />
             </div>
           </CardContent>
         </Card>
       )}
-    </motion.div>
+    </m.div>
   );
 }

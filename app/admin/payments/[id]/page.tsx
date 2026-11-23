@@ -243,6 +243,7 @@ export default function PaymentDetailPage() {
                   src={payment.proofImagePath}
                   alt="Payment proof"
                   fill
+                  sizes="(max-width: 896px) 100vw, 896px"
                   className="object-contain group-hover:scale-105 transition-transform"
                   onError={(e) => {
                     (e.target as HTMLImageElement).style.display = "none";

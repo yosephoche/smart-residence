@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import {
   Plus,
   ClipboardList,
@@ -111,26 +111,26 @@ export default function UserSubmissionsPage() {
   }
 
   return (
-    <motion.div
+    <m.div
       className="px-4 pt-2 pb-4 space-y-4"
       variants={containerVariants}
       initial="hidden"
       animate="visible"
     >
       {/* Header */}
-      <motion.div variants={itemVariants}>
+      <m.div variants={itemVariants}>
         <h1 className="text-xl font-bold text-slate-900">
           Pengaduan & Permintaan
         </h1>
         <p className="text-sm text-slate-400 mt-0.5">
           Kirim feedback atau permintaan layanan
         </p>
-      </motion.div>
+      </m.div>
 
       {/* New Submission Button */}
       <AnimatePresence>
         {!showForm && (
-          <motion.div
+          <m.div
             variants={itemVariants}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
@@ -143,14 +143,14 @@ export default function UserSubmissionsPage() {
               <Plus className="w-4 h-4" />
               Buat Pengaduan / Permintaan
             </button>
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
 
       {/* Form */}
       <AnimatePresence>
         {showForm && (
-          <motion.div
+          <m.div
             key="form"
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
@@ -164,12 +164,12 @@ export default function UserSubmissionsPage() {
               }}
               onCancel={() => setShowForm(false)}
             />
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
 
       {/* History List */}
-      <motion.div
+      <m.div
         variants={itemVariants}
         className="bg-white rounded-2xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)]"
       >
@@ -204,7 +204,7 @@ export default function UserSubmissionsPage() {
               const cfg = SUBMISSION_STATUS_CONFIG[s.status];
               const Icon = STATUS_ICONS[s.status];
               return (
-                <motion.button
+                <m.button
                   key={s.id}
                   initial={{ opacity: 0, x: -8 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -238,17 +238,17 @@ export default function UserSubmissionsPage() {
                   >
                     {cfg.label}
                   </span>
-                </motion.button>
+                </m.button>
               );
             })}
           </div>
         )}
-      </motion.div>
+      </m.div>
 
       {/* Detail Bottom Sheet */}
       <AnimatePresence>
         {selectedSubmission && (
-          <motion.div
+          <m.div
             key="overlay"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -256,7 +256,7 @@ export default function UserSubmissionsPage() {
             className="fixed inset-0 z-50 bg-black/40 flex items-end"
             onClick={() => setSelectedSubmission(null)}
           >
-            <motion.div
+            <m.div
               initial={{ y: "100%" }}
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
@@ -320,10 +320,10 @@ export default function UserSubmissionsPage() {
                   <span>Ditinjau oleh {selectedSubmission.reviewer.name}</span>
                 )}
               </div>
-            </motion.div>
-          </motion.div>
+            </m.div>
+          </m.div>
         )}
       </AnimatePresence>
-    </motion.div>
+    </m.div>
   );
 }

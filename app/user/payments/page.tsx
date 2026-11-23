@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { Wallet, X, CheckCircle, Clock, XCircle, AlertCircle, Upload as UploadIcon } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/lib/utils';
@@ -140,20 +140,20 @@ export default function PaymentsScreen() {
 
   return (
     <>
-      <motion.div
+      <m.div
         className="px-4 pt-2 pb-4 space-y-4"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
       >
         {/* Header */}
-        <motion.div variants={itemVariants}>
+        <m.div variants={itemVariants}>
           <h1 className="text-xl font-bold text-slate-900">Pembayaran</h1>
           <p className="text-sm text-slate-400 mt-0.5">Riwayat pembayaran IPL Anda</p>
-        </motion.div>
+        </m.div>
 
         {/* Summary Card */}
-        <motion.div variants={itemVariants} className="bg-blue-600 rounded-2xl p-4 text-white">
+        <m.div variants={itemVariants} className="bg-blue-600 rounded-2xl p-4 text-white">
           <p className="text-xs text-blue-200 font-medium">
             Total Dibayar {filterMonth !== 0 && filterYear !== 0
               ? `${INDONESIAN_MONTHS[filterMonth - 1]} ${filterYear}`
@@ -165,11 +165,11 @@ export default function PaymentsScreen() {
               {paidCount} transaksi lunas
             </span>
           </div>
-        </motion.div>
+        </m.div>
 
         {/* Arrears Summary */}
         {arrearsList.length > 0 && (
-          <motion.div variants={itemVariants} className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
+          <m.div variants={itemVariants} className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
             <div className="flex items-center gap-2 mb-3">
               <AlertCircle className="w-4 h-4 text-amber-500" />
               <p className="text-xs font-medium text-amber-600 uppercase tracking-wider">Tunggakan Pembayaran</p>
@@ -205,11 +205,11 @@ export default function PaymentsScreen() {
               <UploadIcon className="w-4 h-4" />
               Bayar Sekarang
             </button>
-          </motion.div>
+          </m.div>
         )}
 
         {/* Filter Row */}
-        <motion.div variants={itemVariants} className="flex items-center gap-2">
+        <m.div variants={itemVariants} className="flex items-center gap-2">
           <select
             value={filterYear}
             onChange={(e) => setFilterYear(Number(e.target.value))}
@@ -242,10 +242,10 @@ export default function PaymentsScreen() {
               Semua
             </button>
           )}
-        </motion.div>
+        </m.div>
 
         {/* Payment List */}
-        <motion.div
+        <m.div
           variants={itemVariants}
           className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)] overflow-hidden"
         >
@@ -266,7 +266,7 @@ export default function PaymentsScreen() {
               const multiMonth = (payment.paymentMonths?.length ?? 0) > 1;
 
               return (
-                <motion.button
+                <m.button
                   key={payment.id}
                   initial={{ opacity: 0, x: -8 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -298,12 +298,12 @@ export default function PaymentsScreen() {
                       {config.label}
                     </span>
                   </div>
-                </motion.button>
+                </m.button>
               );
             })
           )}
-        </motion.div>
-      </motion.div>
+        </m.div>
+      </m.div>
 
       {/* Bottom Sheet Detail */}
       <AnimatePresence>
@@ -315,7 +315,7 @@ export default function PaymentsScreen() {
           return (
             <>
               {/* Backdrop */}
-              <motion.div
+              <m.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
@@ -325,7 +325,7 @@ export default function PaymentsScreen() {
               />
 
               {/* Sheet */}
-              <motion.div
+              <m.div
                 initial={{ y: '100%' }}
                 animate={{ y: 0 }}
                 exit={{ y: '100%' }}
@@ -408,6 +408,7 @@ export default function PaymentsScreen() {
                             src={payment.proofImagePath}
                             alt="Bukti transfer"
                             fill
+                            sizes="(max-width: 448px) 100vw, 448px"
                             className="object-cover"
                             unoptimized
                           />
@@ -427,12 +428,12 @@ export default function PaymentsScreen() {
                     </div>
                   )}
                 </div>
-              </motion.div>
+              </m.div>
 
               {/* Fullscreen image overlay */}
               <AnimatePresence>
                 {imageFullscreen && payment.proofImagePath && (
-                  <motion.div
+                  <m.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
@@ -447,11 +448,12 @@ export default function PaymentsScreen() {
                         src={payment.proofImagePath}
                         alt="Bukti transfer"
                         fill
+                        sizes="(max-width: 512px) 100vw, 512px"
                         className="object-contain"
                         unoptimized
                       />
                     </div>
-                  </motion.div>
+                  </m.div>
                 )}
               </AnimatePresence>
             </>

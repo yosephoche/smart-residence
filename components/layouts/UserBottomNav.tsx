@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { motion } from 'framer-motion';
+import { m, motion } from 'framer-motion';
 import { Home, CreditCard, Upload, User, Wallet } from 'lucide-react';
 
 interface TabItem {
@@ -71,7 +71,7 @@ const UserBottomNav: React.FC = () => {
                   transition={{ type: 'spring', stiffness: 400, damping: 30 }}
                 />
               )}
-              <motion.div
+              <m.div
                 animate={{
                   scale: isActive ? 1 : 0.9,
                   color: isActive ? '#2563EB' : '#94A3B8',
@@ -80,7 +80,7 @@ const UserBottomNav: React.FC = () => {
                 className="flex items-center justify-center"
               >
                 <Icon className="w-5 h-5" />
-              </motion.div>
+              </m.div>
               <span
                 className={`text-[10px] font-medium transition-colors duration-200 ${
                   isActive ? 'text-blue-600' : 'text-slate-400'

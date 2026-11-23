@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { Search, Home, User, DollarSign, AlertCircle, CheckCircle } from "lucide-react";
 import { usePagination } from "@/lib/hooks/usePagination";
 import { Pagination } from "@/components/ui/Table";
@@ -147,22 +147,22 @@ export default function UnpaidResidentsPage() {
   }
 
   return (
-    <motion.div
+    <m.div
       className="px-4 pt-2 pb-4 space-y-4"
       variants={containerVariants}
       initial="hidden"
       animate="visible"
     >
       {/* Title */}
-      <motion.div variants={itemVariants}>
+      <m.div variants={itemVariants}>
         <h1 className="text-xl font-bold text-slate-900">Pembayaran IPL Warga</h1>
         <p className="text-sm text-slate-400 mt-0.5">
           Status pembayaran IPL penghuni bulan ini
         </p>
-      </motion.div>
+      </m.div>
 
       {/* Search Bar */}
-      <motion.div variants={itemVariants} className="relative">
+      <m.div variants={itemVariants} className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
         <input
           type="text"
@@ -171,10 +171,10 @@ export default function UnpaidResidentsPage() {
           onChange={(e) => setSearchQuery(e.target.value)}
           className="w-full pl-10 pr-4 py-3 text-sm border-2 border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500"
         />
-      </motion.div>
+      </m.div>
 
       {/* Tab Bar */}
-      <motion.div
+      <m.div
         variants={itemVariants}
         className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)] overflow-hidden"
       >
@@ -245,10 +245,10 @@ export default function UnpaidResidentsPage() {
             </div>
           </button>
         </div>
-      </motion.div>
+      </m.div>
 
       {/* List Section */}
-      <motion.div variants={itemVariants}>
+      <m.div variants={itemVariants}>
         {/* Section label */}
         <div className="flex items-center gap-2 mb-3">
           {activeTab === "unpaid" ? (
@@ -268,7 +268,7 @@ export default function UnpaidResidentsPage() {
             {paginatedData.map((item, index) => {
               const isUnpaid = activeTab === "unpaid";
               return (
-                <motion.div
+                <m.div
                   key={item.id}
                   initial={{ opacity: 0, x: -8 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -332,7 +332,7 @@ export default function UnpaidResidentsPage() {
                       </div>
                     </div>
                   </div>
-                </motion.div>
+                </m.div>
               );
             })}
           </div>
@@ -385,7 +385,7 @@ export default function UnpaidResidentsPage() {
             />
           </div>
         )}
-      </motion.div>
-    </motion.div>
+      </m.div>
+    </m.div>
   );
 }

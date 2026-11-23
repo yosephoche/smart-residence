@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { Clock, FileText, AlertCircle, CheckCircle, XCircle } from "lucide-react";
 
 interface ActiveShift {
@@ -144,22 +144,22 @@ export default function StaffDashboard() {
   }
 
   return (
-    <motion.div
+    <m.div
       className="px-4 pt-2 pb-4 space-y-4"
       variants={containerVariants}
       initial="hidden"
       animate="visible"
     >
       {/* Greeting Section */}
-      <motion.div variants={itemVariants}>
+      <m.div variants={itemVariants}>
         <p className="text-sm text-slate-500">{getGreeting()} 👋</p>
         <h1 className="text-xl font-bold text-slate-900">
           {session?.user?.name || "Staff"}
         </h1>
-      </motion.div>
+      </m.div>
 
       {/* Active Shift Status */}
-      <motion.div
+      <m.div
         variants={itemVariants}
         className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)] p-4"
       >
@@ -237,10 +237,10 @@ export default function StaffDashboard() {
             </p>
           </div>
         )}
-      </motion.div>
+      </m.div>
 
       {/* Quick Actions */}
-      <motion.div variants={itemVariants} className="grid grid-cols-2 gap-3">
+      <m.div variants={itemVariants} className="grid grid-cols-2 gap-3">
         <button
           onClick={() => router.push("/staff/reports")}
           className="bg-blue-600 text-white rounded-2xl p-4 text-left active:scale-[0.98] transition-transform duration-150"
@@ -310,10 +310,10 @@ export default function StaffDashboard() {
             </div>
           )}
         </div>
-      </motion.div>
+      </m.div>
 
       {/* Recent Attendance */}
-      <motion.div
+      <m.div
         variants={itemVariants}
         className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)] p-4"
       >
@@ -323,7 +323,7 @@ export default function StaffDashboard() {
         {attendanceHistory.length > 0 ? (
           <div className="space-y-2">
             {attendanceHistory.map((record, index) => (
-              <motion.div
+              <m.div
                 key={record.id}
                 initial={{ opacity: 0, x: -8 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -352,7 +352,7 @@ export default function StaffDashboard() {
                     </span>
                   )}
                 </div>
-              </motion.div>
+              </m.div>
             ))}
           </div>
         ) : (
@@ -360,7 +360,7 @@ export default function StaffDashboard() {
             Belum ada riwayat absensi
           </p>
         )}
-      </motion.div>
-    </motion.div>
+      </m.div>
+    </m.div>
   );
 }

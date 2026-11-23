@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import {
   Wallet, Plus, Pencil, Trash2, X, ChevronDown,
   Calendar, Receipt, ImagePlus, Check, Loader2, Download,
@@ -238,7 +238,7 @@ export default function KasPage() {
   if (status === "authenticated" && !session?.user?.isPengurus && session?.user?.role !== "ADMIN") return null;
 
   return (
-    <motion.div
+    <m.div
       className="px-4 pt-2 pb-4 space-y-4"
       variants={containerVariants}
       initial="hidden"
@@ -247,7 +247,7 @@ export default function KasPage() {
       {/* Toast */}
       <AnimatePresence>
         {toast && (
-          <motion.div
+          <m.div
             key="toast"
             initial={{ opacity: 0, y: -12, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -258,12 +258,12 @@ export default function KasPage() {
           >
             {toast.type === "success" ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}
             {toast.msg}
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
 
       {/* Header */}
-      <motion.div variants={itemVariants} className="flex items-center justify-between">
+      <m.div variants={itemVariants} className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-slate-900">Kas Pengeluaran</h1>
           <p className="text-sm text-slate-400 mt-0.5">Kelola pengeluaran perumahan</p>
@@ -284,20 +284,20 @@ export default function KasPage() {
             Tambah
           </button>
         </div>
-      </motion.div>
+      </m.div>
 
       {/* Summary card */}
-      <motion.div variants={itemVariants} className="bg-blue-600 rounded-2xl p-4 text-white">
+      <m.div variants={itemVariants} className="bg-blue-600 rounded-2xl p-4 text-white">
         <div className="flex items-center gap-2 mb-1">
           <Wallet className="w-4 h-4 text-blue-200" />
           <p className="text-xs text-blue-200 font-medium uppercase tracking-wider">Total Pengeluaran</p>
         </div>
         <p className="text-2xl font-bold tracking-tight">{formatCurrency(totalFiltered)}</p>
         <p className="text-xs text-blue-200 mt-1">{filteredExpenses.length} transaksi</p>
-      </motion.div>
+      </m.div>
 
       {/* Filters */}
-      <motion.div variants={itemVariants} className="bg-white rounded-2xl p-3 shadow-[0_1px_3px_rgba(0,0,0,0.04)] space-y-2.5">
+      <m.div variants={itemVariants} className="bg-white rounded-2xl p-3 shadow-[0_1px_3px_rgba(0,0,0,0.04)] space-y-2.5">
         <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-none -mx-0.5 px-0.5">
           <button
             onClick={() => setFilterMonth(0)}
@@ -347,10 +347,10 @@ export default function KasPage() {
             <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400 pointer-events-none" />
           </div>
         </div>
-      </motion.div>
+      </m.div>
 
       {/* List */}
-      <motion.div variants={itemVariants} className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04)] overflow-hidden">
+      <m.div variants={itemVariants} className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04)] overflow-hidden">
         {isLoading ? (
           <div className="p-4 space-y-3">
             {[...Array(3)].map((_, i) => (
@@ -370,7 +370,7 @@ export default function KasPage() {
             {filteredExpenses.map((expense, index) => {
               const cat = CAT_MAP[expense.category];
               return (
-                <motion.div
+                <m.div
                   key={expense.id}
                   initial={{ opacity: 0, x: -8 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -406,18 +406,18 @@ export default function KasPage() {
                       </button>
                     </div>
                   </div>
-                </motion.div>
+                </m.div>
               );
             })}
           </div>
         )}
-      </motion.div>
+      </m.div>
 
       {/* Bottom Sheet Form */}
       <AnimatePresence>
         {showForm && (
           <>
-            <motion.div
+            <m.div
               key="backdrop"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -426,7 +426,7 @@ export default function KasPage() {
               className="fixed inset-0 bg-black/50 z-[55]"
               onClick={closeForm}
             />
-            <motion.div
+            <m.div
               key="sheet"
               initial={{ y: "100%" }}
               animate={{ y: 0 }}
@@ -639,7 +639,7 @@ export default function KasPage() {
                   )}
                 </button>
               </div>
-            </motion.div>
+            </m.div>
           </>
         )}
       </AnimatePresence>
@@ -648,7 +648,7 @@ export default function KasPage() {
       <AnimatePresence>
         {showDownloadSheet && (
           <>
-            <motion.div
+            <m.div
               key="dl-backdrop"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -657,7 +657,7 @@ export default function KasPage() {
               className="fixed inset-0 bg-black/50 z-[55]"
               onClick={() => setShowDownloadSheet(false)}
             />
-            <motion.div
+            <m.div
               key="dl-sheet"
               initial={{ y: "100%" }}
               animate={{ y: 0 }}
@@ -745,7 +745,7 @@ export default function KasPage() {
                   )}
                 </button>
               </div>
-            </motion.div>
+            </m.div>
           </>
         )}
       </AnimatePresence>
@@ -754,7 +754,7 @@ export default function KasPage() {
       <AnimatePresence>
         {deleteConfirmId && (
           <>
-            <motion.div
+            <m.div
               key="del-backdrop"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -762,7 +762,7 @@ export default function KasPage() {
               className="fixed inset-0 bg-black/50 z-[55]"
               onClick={() => setDeleteConfirmId(null)}
             />
-            <motion.div
+            <m.div
               key="del-dialog"
               initial={{ opacity: 0, scale: 0.92, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -791,10 +791,10 @@ export default function KasPage() {
                   </button>
                 </div>
               </div>
-            </motion.div>
+            </m.div>
           </>
         )}
       </AnimatePresence>
-    </motion.div>
+    </m.div>
   );
 }

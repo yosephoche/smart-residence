@@ -93,6 +93,7 @@ export default function PaymentCard({ payment, houseNumber }: PaymentCardProps) 
               src={payment.proofImagePath}
               alt="Payment proof thumbnail"
               fill
+              sizes="(max-width: 448px) 100vw, 448px"
               className="object-cover"
               onError={(e) => {
                 (e.target as HTMLImageElement).style.display = "none";
@@ -133,6 +134,7 @@ export default function PaymentCard({ payment, houseNumber }: PaymentCardProps) 
             src={payment.proofImagePath}
             alt="Payment proof"
             fill
+            sizes="(max-width: 672px) 100vw, 672px"
             className="object-contain"
             onError={(e) => {
               (e.target as HTMLImageElement).style.display = "none";

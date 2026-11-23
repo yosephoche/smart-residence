@@ -9,7 +9,7 @@ import FileUpload from "@/components/ui/FileUpload";
 import { formatCurrency } from "@/lib/utils";
 import { calculateTotalPayment, getMonthOptions, computeNextStartMonth, computeCoveredMonths, selectPaymentMonths, formatPaymentMonth } from "@/lib/calculations";
 import { useTranslations } from "next-intl";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 
 interface ArrearsInfo {
@@ -307,7 +307,7 @@ export default function PaymentUploadForm({
       {/* QRIS Modal */}
       <AnimatePresence>
         {showQris && (
-          <motion.div
+          <m.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -315,13 +315,13 @@ export default function PaymentUploadForm({
             className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4"
           >
             {/* Backdrop */}
-            <motion.div
+            <m.div
               className="absolute inset-0 bg-black/60 backdrop-blur-sm"
               onClick={() => setShowQris(false)}
             />
 
             {/* Modal card */}
-            <motion.div
+            <m.div
               initial={{ opacity: 0, scale: 0.9, y: 40 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 40 }}
@@ -354,6 +354,7 @@ export default function PaymentUploadForm({
                     src="/images/qris.jpeg"
                     alt="QRIS Sakura Village"
                     fill
+                    sizes="(max-width: 384px) 100vw, 384px"
                     className="object-contain"
                     priority
                   />
@@ -375,8 +376,8 @@ export default function PaymentUploadForm({
                   Tutup
                 </button>
               </div>
-            </motion.div>
-          </motion.div>
+            </m.div>
+          </m.div>
         )}
       </AnimatePresence>
     </form>

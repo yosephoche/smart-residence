@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
@@ -229,7 +229,7 @@ export default function AdminManualAttendancePage() {
   };
 
   return (
-    <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-6">
+    <m.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
@@ -289,6 +289,6 @@ export default function AdminManualAttendancePage() {
           )}
         </>
       )}
-    </motion.div>
+    </m.div>
   );
 }
