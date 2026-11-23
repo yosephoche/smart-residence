@@ -206,7 +206,7 @@ export default function AdminIncomePage() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 space-y-3">
+      <div className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)] p-4 space-y-3">
         <div className="bg-slate-50 rounded-xl p-3">
           <div className="flex flex-wrap gap-3 items-end">
             {/* Kategori */}

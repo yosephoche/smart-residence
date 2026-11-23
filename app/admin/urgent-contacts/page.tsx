@@ -348,18 +348,18 @@ export default function UrgentContactsPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-white rounded-xl border-2 border-slate-200 p-4 shadow-sm">
+        <div className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)] p-4">
           <p className="text-sm font-medium text-slate-600">Total Kontak</p>
           <p className="text-3xl font-bold text-slate-900 mt-1">{contacts.length}</p>
         </div>
-        <div className="bg-success-50 rounded-xl border-2 border-success-200 p-4 shadow-sm">
+        <div className="bg-success-50 rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)] p-4">
           <p className="text-sm font-medium text-success-700">Kontak Aktif</p>
           <p className="text-3xl font-bold text-success-900 mt-1">{activeCount}</p>
         </div>
       </div>
 
       {/* Search */}
-      <div className="bg-white rounded-xl border-2 border-slate-200 p-4">
+      <div className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)] p-4">
         <Input
           placeholder="Cari berdasarkan nama, tipe layanan, atau nomor..."
           value={searchQuery}
@@ -401,7 +401,7 @@ export default function UrgentContactsPage() {
       {/* Add / Edit Modal */}
       {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
+          <div className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)] w-full max-w-md">
             <div className="p-6 border-b border-slate-200">
               <h2 className="text-lg font-semibold text-slate-900">
                 {editingContact ? "Edit Kontak" : "Tambah Kontak Darurat"}
