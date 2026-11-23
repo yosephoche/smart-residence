@@ -306,7 +306,7 @@ export default function HousesPage() {
           <Skeleton className="h-24 rounded-xl" />
           <Skeleton className="h-24 rounded-xl" />
         </div>
-        <div className="bg-white rounded-xl border-2 border-slate-200 p-4 space-y-4">
+        <div className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)] p-4 space-y-4">
           <Skeleton className="h-10 w-full" />
           <Skeleton className="h-5 w-40" />
         </div>
@@ -395,22 +395,22 @@ export default function HousesPage() {
 
       {/* Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white rounded-xl border-2 border-slate-200 p-4 shadow-sm">
+        <div className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)] p-4">
           <p className="text-sm font-medium text-slate-600">{t('total_houses')}</p>
           <p className="text-3xl font-bold text-slate-900 mt-1">{houses.length}</p>
         </div>
-        <div className="bg-success-50 rounded-xl border-2 border-success-200 p-4 shadow-sm">
+        <div className="bg-success-50 rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)] p-4">
           <p className="text-sm font-medium text-success-700">{t('occupied')}</p>
           <p className="text-3xl font-bold text-success-900 mt-1">{occupiedCount}</p>
         </div>
-        <div className="bg-slate-50 rounded-xl border-2 border-slate-200 p-4 shadow-sm">
+        <div className="bg-slate-50 rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)] p-4">
           <p className="text-sm font-medium text-slate-700">{t('vacant')}</p>
           <p className="text-3xl font-bold text-slate-900 mt-1">{vacantCount}</p>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 space-y-3">
+      <div className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)] p-4 space-y-3">
         <div className="bg-slate-50 rounded-xl p-3">
           <div className="flex flex-col md:flex-row gap-3 items-start">
             {/* Search */}

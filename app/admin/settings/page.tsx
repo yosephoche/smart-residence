@@ -231,7 +231,7 @@ export default function SettingsPage() {
       )}
 
       {/* Residence Info Configuration */}
-      <div className="bg-white rounded-lg shadow border border-slate-200">
+      <div className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)]">
         <div className="p-6 border-b border-slate-200">
           <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
             <Building2 className="w-5 h-5" />
@@ -267,7 +267,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Upload Window Configuration */}
-      <div className="bg-white rounded-lg shadow border border-slate-200 mt-6">
+      <div className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)] mt-6">
         <div className="p-6 border-b border-slate-200">
           <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
             <Settings className="w-5 h-5" />
@@ -321,7 +321,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Default Password Configuration */}
-      <div className="bg-white rounded-lg shadow border border-slate-200 mt-6">
+      <div className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)] mt-6">
         <div className="p-6 border-b border-slate-200">
           <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
             <Key className="w-5 h-5" />
@@ -373,7 +373,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Geofence Configuration */}
-      <div className="bg-white rounded-lg shadow border border-slate-200 mt-6">
+      <div className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)] mt-6">
         <div className="p-6 border-b border-slate-200">
           <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
             <MapPin className="w-5 h-5" />
@@ -429,7 +429,7 @@ export default function SettingsPage() {
       </div>
 
       {/* WhatsApp Message Template Configuration */}
-      <div className="bg-white rounded-lg shadow border border-slate-200 mt-6">
+      <div className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)] mt-6">
         <div className="p-6 border-b border-slate-200">
           <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
             <MessageSquare className="w-5 h-5" />
@@ -483,7 +483,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Excluded Income Periods Configuration */}
-      <div className="bg-white rounded-lg shadow border border-slate-200 mt-6">
+      <div className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)] mt-6">
         <div className="p-6 border-b border-slate-200">
           <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
             <CalendarX className="w-5 h-5" />
@@ -524,7 +524,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Billing Start / Arrears Configuration */}
-      <div className="bg-white rounded-lg shadow border border-slate-200 mt-6">
+      <div className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)] mt-6">
         <div className="p-6 border-b border-slate-200">
           <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
             <CalendarClock className="w-5 h-5" />
@@ -571,7 +571,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Leave Configuration */}
-      <div className="bg-white rounded-lg shadow border border-slate-200 mt-6">
+      <div className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)] mt-6">
         <div className="p-6 border-b border-slate-200">
           <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
             <CalendarRange className="w-5 h-5" />
@@ -618,7 +618,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Bank Details Configuration */}
-      <div className="bg-white rounded-lg shadow border border-slate-200 mt-6">
+      <div className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)] mt-6">
         <div className="p-6 border-b border-slate-200">
           <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
             <CreditCard className="w-5 h-5" />
@@ -662,7 +662,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Telegram Bot Notification Configuration */}
-      <div className="bg-white rounded-lg shadow border border-slate-200 mt-6">
+      <div className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)] mt-6">
         <div className="p-6 border-b border-slate-200">
           <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
             <Send className="w-5 h-5" />

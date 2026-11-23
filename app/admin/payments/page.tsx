@@ -1,12 +1,13 @@
 "use client";
 
-import { m } from "framer-motion";
+import { m, motion, AnimatePresence } from "framer-motion";
 
 import { useState, useMemo, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
+import { Search, SlidersHorizontal, ChevronDown, X } from "lucide-react";
 import Table, { Column, Pagination } from "@/components/ui/Table";
 import PaymentStatusBadge from "@/components/payments/PaymentStatusBadge";
 import { Skeleton } from "@/components/ui/Loading";
@@ -68,11 +69,15 @@ export default function AdminPaymentsPage() {
 
   // Resident & month/year filters
   const [filterUserId, setFilterUserId] = useState("");
-  const [filterYear, setFilterYear] = useState(new Date().getFullYear());
-  const [filterMonth, setFilterMonth] = useState(new Date().getMonth() + 1);
+  const [filterYear, setFilterYear] = useState(0);
+  const [filterMonth, setFilterMonth] = useState(0);
   const [filterBlock, setFilterBlock] = useState("");
   const [filterHouseNumber, setFilterHouseNumber] = useState("");
   const debouncedHouseNumber = useDebounce(filterHouseNumber, 300);
+
+  // Periode mode (mutual exclusive: Per Bulan vs Tanggal Tertentu) + collapsible filter panel
+  const [periodMode, setPeriodMode] = useState<"month" | "date">("month");
+  const [filterPanelOpen, setFilterPanelOpen] = useState(false);
 
   // Houses view (Paid / Unpaid pills)
   const [housesViewMode, setHousesViewMode] = useState<"PAID" | "UNPAID" | null>(null);
@@ -309,6 +314,18 @@ export default function AdminPaymentsPage() {
     };
   }, [payments, filterMonth, filterYear]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Active filter chips — only filters the user manually set, not view-mode defaults
+  const activeChips = useMemo(() => {
+    return [
+      filterUserId !== "" && { key: "user", label: `Penghuni: ${users.find(u => u.id === filterUserId)?.name ?? "—"}`, clear: () => setFilterUserId("") },
+      housesViewMode === null && filterMonth !== 0 && { key: "month", label: INDONESIAN_MONTHS[filterMonth - 1], clear: () => setFilterMonth(0) },
+      housesViewMode === null && filterYear !== 0 && { key: "year", label: String(filterYear), clear: () => setFilterYear(0) },
+      filterBlock !== "" && { key: "block", label: `Blok ${filterBlock}`, clear: () => setFilterBlock("") },
+      filterHouseNumber !== "" && { key: "house", label: `No. ${filterHouseNumber}`, clear: () => setFilterHouseNumber("") },
+      filterDate !== "" && { key: "date", label: filterDate, clear: () => setFilterDate("") },
+    ].filter(Boolean) as { key: string; label: string; clear: () => void }[];
+  }, [filterUserId, filterMonth, filterYear, filterBlock, filterHouseNumber, filterDate, housesViewMode, users]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // --- Handlers ---
   const handleStatusFilter = (value: "ALL" | "PENDING" | "APPROVED" | "REJECTED") => {
     setStatusFilter(value);
@@ -320,8 +337,21 @@ export default function AdminPaymentsPage() {
     const now = new Date();
     if (filterMonth === 0) setFilterMonth(now.getMonth() + 1);
     if (filterYear  === 0) setFilterYear(now.getFullYear());
+    setPeriodMode("month");
+    setFilterDate("");
     setHousesViewMode(mode);
     setStatusFilter("ALL");
+  };
+
+  const switchToMonthMode = () => {
+    setPeriodMode("month");
+    setFilterDate("");
+  };
+
+  const switchToDateMode = () => {
+    setPeriodMode("date");
+    setFilterMonth(0);
+    setFilterYear(0);
   };
 
   const handleCreatePayment = async (formData: FormData) => {
@@ -788,24 +818,24 @@ export default function AdminPaymentsPage() {
 
       {/* Stats cards */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-        <div className="bg-white rounded-xl border-2 border-slate-200 p-4 shadow-sm">
+        <div className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)] p-4">
           <p className="text-sm font-medium text-slate-600 mb-1">{t('total_payments')}</p>
           <p className="text-3xl font-bold text-slate-900">{monthlyStats.total}</p>
           <p className="text-xs text-slate-400 mt-1">{monthlyStats.periodLabel}</p>
         </div>
-        <div className="bg-warning-50 rounded-xl border-2 border-warning-200 p-4 shadow-sm">
+        <div className="bg-warning-50 rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)] p-4">
           <p className="text-sm font-medium text-warning-700 mb-1">{t('pending')}</p>
           <p className="text-3xl font-bold text-warning-900">{stats.pending}</p>
         </div>
-        <div className="bg-success-50 rounded-xl border-2 border-success-200 p-4 shadow-sm">
+        <div className="bg-success-50 rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)] p-4">
           <p className="text-sm font-medium text-success-700 mb-1">{t('approved')}</p>
           <p className="text-3xl font-bold text-success-900">{stats.approved}</p>
         </div>
-        <div className="bg-danger-50 rounded-xl border-2 border-danger-200 p-4 shadow-sm">
+        <div className="bg-danger-50 rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)] p-4">
           <p className="text-sm font-medium text-danger-700 mb-1">{t('rejected')}</p>
           <p className="text-3xl font-bold text-danger-900">{stats.rejected}</p>
         </div>
-        <div className="bg-primary-50 rounded-xl border-2 border-primary-200 p-4 shadow-sm">
+        <div className="bg-primary-50 rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)] p-4">
           <p className="text-sm font-medium text-primary-700 mb-1">Total Pendapatan</p>
           <p className="text-xl font-bold text-primary-900">{formatCurrency(monthlyStats.totalRevenue)}</p>
           <p className="text-xs text-primary-400 mt-1">{monthlyStats.periodLabel}</p>
@@ -813,11 +843,11 @@ export default function AdminPaymentsPage() {
       </div>
 
       {/* Filter bar + Export */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm space-y-3 p-4">
+      <div className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)] p-4 space-y-3">
 
-        {/* Row 1 — Segmented tab control */}
+        {/* Row 1 — Status approval tabs (underline style) + action buttons */}
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-1 bg-slate-100 rounded-xl p-1">
+          <div className="flex items-center gap-4 border-b border-slate-100 overflow-x-auto">
             {[
               { value: "ALL" as const, label: t('all_payments'), count: stats.total },
               { value: "PENDING" as const, label: t('pending_review'), count: stats.pending },
@@ -829,18 +859,23 @@ export default function AdminPaymentsPage() {
                 <button
                   key={tab.value}
                   onClick={() => handleStatusFilter(tab.value)}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                    isActive
-                      ? "bg-white text-slate-900 shadow-sm"
-                      : "text-slate-500 hover:text-slate-700"
+                  className={`relative flex items-center gap-1.5 pb-2.5 text-sm font-medium whitespace-nowrap transition-colors ${
+                    isActive ? "text-blue-600" : "text-slate-400 hover:text-slate-600"
                   }`}
                 >
                   {tab.label}
                   <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
-                    isActive ? "bg-blue-600 text-white" : "bg-slate-200 text-slate-500"
+                    isActive ? "bg-blue-50 text-blue-600" : "bg-slate-100 text-slate-400"
                   }`}>
                     {tab.count}
                   </span>
+                  {isActive && (
+                    <motion.div
+                      layoutId="payments-status-underline"
+                      className="absolute left-0 right-0 -bottom-px h-[2px] bg-blue-600 rounded-full"
+                      transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                    />
+                  )}
                 </button>
               );
             })}
@@ -888,224 +923,272 @@ export default function AdminPaymentsPage() {
                 </div>
               )}
             </div>
+
+            <button
+              onClick={() => setFilterPanelOpen((o) => !o)}
+              className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg border transition-colors ${
+                filterPanelOpen
+                  ? "bg-blue-50 border-blue-200 text-blue-700"
+                  : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"
+              }`}
+            >
+              <SlidersHorizontal className="w-4 h-4" />
+              Filter
+              {activeChips.length > 0 && (
+                <span className="text-[10px] font-bold bg-blue-600 text-white px-1.5 py-0.5 rounded-full leading-none">
+                  {activeChips.length}
+                </span>
+              )}
+              <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${filterPanelOpen ? "rotate-180" : ""}`} />
+            </button>
           </div>
         </div>
 
-        {/* Row 2 — Houses view toggle (Lunas / Belum Bayar) */}
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-medium text-slate-400">Tampilkan:</span>
-          <button
-            onClick={() => {
-              if (housesViewMode === "PAID") { setHousesViewMode(null); setStatusFilter("ALL"); }
-              else enterHousesMode("PAID");
-            }}
-            className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full transition-all ${
-              housesViewMode === "PAID"
-                ? "bg-emerald-600 text-white"
-                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-            }`}
-          >
-            {t('paid')}
-            {allHousesWithStatus.length > 0 && (
-              <span className={`text-[10px] font-bold px-1 py-0.5 rounded-full ${
-                housesViewMode === "PAID" ? "bg-white/20 text-white" : "bg-slate-200 text-slate-500"
-              }`}>{paidCount}</span>
-            )}
-          </button>
-          <button
-            onClick={() => {
-              if (housesViewMode === "UNPAID") { setHousesViewMode(null); setStatusFilter("ALL"); }
-              else enterHousesMode("UNPAID");
-            }}
-            className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full transition-all ${
-              housesViewMode === "UNPAID"
-                ? "bg-amber-500 text-white"
-                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-            }`}
-          >
-            {t('unpaid')}
-            {allHousesWithStatus.length > 0 && (
-              <span className={`text-[10px] font-bold px-1 py-0.5 rounded-full ${
-                housesViewMode === "UNPAID" ? "bg-white/20 text-white" : "bg-slate-200 text-slate-500"
-              }`}>{unpaidCount}</span>
-            )}
-          </button>
-        </div>
+        {/* Collapsible filter panel */}
+        <AnimatePresence initial={false}>
+          {filterPanelOpen && (
+            <m.div
+              key="filter-panel"
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
+              className="overflow-hidden"
+            >
+              <div className="space-y-3 pt-1">
 
-        {/* Row 3 — Filter area */}
-        <div className="bg-slate-50 rounded-xl p-3 space-y-3">
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                {/* Status Bayar — separate 3-option segmented control, blue when active */}
+                <div>
+                  <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5 block">
+                    Status Bayar
+                  </label>
+                  <div className="flex items-center gap-1 bg-slate-100 rounded-xl p-1">
+                    {[
+                      { value: null, label: "Semua" },
+                      { value: "PAID" as const, label: t('paid'), count: paidCount },
+                      { value: "UNPAID" as const, label: t('unpaid'), count: unpaidCount },
+                    ].map((opt) => {
+                      const isActive = housesViewMode === opt.value;
+                      return (
+                        <button
+                          key={String(opt.value)}
+                          onClick={() => {
+                            if (opt.value === null) { setHousesViewMode(null); setStatusFilter("ALL"); }
+                            else enterHousesMode(opt.value);
+                          }}
+                          className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                            isActive ? "bg-blue-600 text-white shadow-sm" : "text-slate-500 hover:text-slate-700"
+                          }`}
+                        >
+                          {opt.label}
+                          {opt.value !== null && allHousesWithStatus.length > 0 && (
+                            <span className={`text-[10px] font-bold px-1 py-0.5 rounded-full ${
+                              isActive ? "bg-white/20 text-white" : "bg-slate-200 text-slate-500"
+                            }`}>{opt.count}</span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
 
-            {/* Penghuni */}
-            <div className="lg:col-span-2">
-              <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5 block">Penghuni</label>
-              <select
-                value={filterUserId}
-                onChange={(e) => setFilterUserId(e.target.value)}
-                className={`w-full px-3 py-2 text-sm rounded-lg border transition-colors focus:outline-none focus:ring-2 focus:ring-blue-100 ${
-                  filterUserId !== ""
-                    ? "border-blue-400 bg-blue-50 text-blue-700 font-medium"
-                    : "border-slate-200 bg-white text-slate-700"
-                }`}
-              >
-                <option value="">{t('all_residents')}</option>
-                {users
-                  .filter((u) => u.role !== "admin")
-                  .map((u) => (
-                    <option key={u.id} value={u.id}>{u.name}</option>
-                  ))}
-              </select>
-            </div>
+                {/* Cari — resident / blok / house number */}
+                <div className="bg-slate-50 rounded-2xl p-3 space-y-3">
+                  <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Cari</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="col-span-2">
+                      <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5 block">Penghuni</label>
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+                        <select
+                          value={filterUserId}
+                          onChange={(e) => setFilterUserId(e.target.value)}
+                          className={`w-full pl-8 pr-3 py-2 text-sm rounded-lg border transition-colors focus:outline-none focus:ring-2 focus:ring-blue-100 ${
+                            filterUserId !== ""
+                              ? "border-blue-400 bg-blue-50 text-blue-700 font-medium"
+                              : "border-slate-200 bg-white text-slate-700"
+                          }`}
+                        >
+                          <option value="">{t('all_residents')}</option>
+                          {users
+                            .filter((u) => u.role !== "admin")
+                            .map((u) => (
+                              <option key={u.id} value={u.id}>{u.name}</option>
+                            ))}
+                        </select>
+                      </div>
+                    </div>
 
-            {/* Bulan */}
-            <div>
-              <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5 block">Bulan</label>
-              <select
-                value={filterMonth}
-                onChange={(e) => setFilterMonth(Number(e.target.value))}
-                className={`w-full px-3 py-2 text-sm rounded-lg border transition-colors focus:outline-none focus:ring-2 focus:ring-blue-100 ${
-                  filterMonth !== 0
-                    ? "border-blue-400 bg-blue-50 text-blue-700 font-medium"
-                    : "border-slate-200 bg-white text-slate-700"
-                }`}
-              >
-                {housesViewMode === null && <option value={0}>{t('all_months')}</option>}
-                {INDONESIAN_MONTHS.map((name, i) => (
-                  <option key={i + 1} value={i + 1}>{name}</option>
-                ))}
-              </select>
-            </div>
+                    <div>
+                      <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5 block">Blok</label>
+                      <select
+                        value={filterBlock}
+                        onChange={(e) => setFilterBlock(e.target.value)}
+                        className={`w-full px-3 py-2 text-sm rounded-lg border transition-colors focus:outline-none focus:ring-2 focus:ring-blue-100 ${
+                          filterBlock !== ""
+                            ? "border-blue-400 bg-blue-50 text-blue-700 font-medium"
+                            : "border-slate-200 bg-white text-slate-700"
+                        }`}
+                      >
+                        <option value="">Semua Blok</option>
+                        {availableBlocks.map((b) => (
+                          <option key={b} value={b}>{b}</option>
+                        ))}
+                      </select>
+                    </div>
 
-            {/* Tahun */}
-            <div>
-              <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5 block">Tahun</label>
-              <select
-                value={filterYear}
-                onChange={(e) => setFilterYear(Number(e.target.value))}
-                className={`w-full px-3 py-2 text-sm rounded-lg border transition-colors focus:outline-none focus:ring-2 focus:ring-blue-100 ${
-                  filterYear !== 0
-                    ? "border-blue-400 bg-blue-50 text-blue-700 font-medium"
-                    : "border-slate-200 bg-white text-slate-700"
-                }`}
-              >
-                {housesViewMode === null && <option value={0}>{t('all_years')}</option>}
-                {availableYears.map((y) => (
-                  <option key={y} value={y}>{y}</option>
-                ))}
-              </select>
-            </div>
+                    <div>
+                      <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5 block">No. Rumah</label>
+                      <input
+                        type="text"
+                        placeholder="Cari..."
+                        value={filterHouseNumber}
+                        onChange={(e) => setFilterHouseNumber(e.target.value)}
+                        className={`w-full px-3 py-2 text-sm rounded-lg border transition-colors focus:outline-none focus:ring-2 focus:ring-blue-100 ${
+                          filterHouseNumber !== ""
+                            ? "border-blue-400 bg-blue-50 text-blue-700 font-medium placeholder:text-blue-300"
+                            : "border-slate-200 bg-white text-slate-700"
+                        }`}
+                      />
+                    </div>
+                  </div>
+                </div>
 
-            {/* Blok */}
-            <div>
-              <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5 block">Blok</label>
-              <select
-                value={filterBlock}
-                onChange={(e) => setFilterBlock(e.target.value)}
-                className={`w-full px-3 py-2 text-sm rounded-lg border transition-colors focus:outline-none focus:ring-2 focus:ring-blue-100 ${
-                  filterBlock !== ""
-                    ? "border-blue-400 bg-blue-50 text-blue-700 font-medium"
-                    : "border-slate-200 bg-white text-slate-700"
-                }`}
-              >
-                <option value="">Semua Blok</option>
-                {availableBlocks.map((b) => (
-                  <option key={b} value={b}>{b}</option>
-                ))}
-              </select>
-            </div>
+                {/* Periode — mutually exclusive Per Bulan / Tanggal Tertentu */}
+                <div className="bg-slate-50 rounded-2xl p-3 space-y-3">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Periode</p>
+                    {housesViewMode === null && (
+                      <div className="flex items-center gap-1 bg-white rounded-lg p-0.5 border border-slate-200">
+                        <button
+                          onClick={switchToMonthMode}
+                          className={`px-2.5 py-1 text-[11px] font-semibold rounded-md transition-colors ${
+                            periodMode === "month" ? "bg-blue-600 text-white" : "text-slate-500 hover:text-slate-700"
+                          }`}
+                        >
+                          Per Bulan
+                        </button>
+                        <button
+                          onClick={switchToDateMode}
+                          className={`px-2.5 py-1 text-[11px] font-semibold rounded-md transition-colors ${
+                            periodMode === "date" ? "bg-blue-600 text-white" : "text-slate-500 hover:text-slate-700"
+                          }`}
+                        >
+                          Tanggal Tertentu
+                        </button>
+                      </div>
+                    )}
+                  </div>
 
-            {/* No. Rumah */}
-            <div>
-              <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5 block">No. Rumah</label>
-              <input
-                type="text"
-                placeholder="Cari..."
-                value={filterHouseNumber}
-                onChange={(e) => setFilterHouseNumber(e.target.value)}
-                className={`w-full px-3 py-2 text-sm rounded-lg border transition-colors focus:outline-none focus:ring-2 focus:ring-blue-100 ${
-                  filterHouseNumber !== ""
-                    ? "border-blue-400 bg-blue-50 text-blue-700 font-medium placeholder:text-blue-300"
-                    : "border-slate-200 bg-white text-slate-700"
-                }`}
-              />
-            </div>
+                  {(housesViewMode !== null || periodMode === "month") ? (
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5 block">Bulan</label>
+                        <select
+                          value={filterMonth}
+                          onChange={(e) => setFilterMonth(Number(e.target.value))}
+                          className={`w-full px-3 py-2 text-sm rounded-lg border transition-colors focus:outline-none focus:ring-2 focus:ring-blue-100 ${
+                            filterMonth !== 0
+                              ? "border-blue-400 bg-blue-50 text-blue-700 font-medium"
+                              : "border-slate-200 bg-white text-slate-700"
+                          }`}
+                        >
+                          {housesViewMode === null && <option value={0}>{t('all_months')}</option>}
+                          {INDONESIAN_MONTHS.map((name, i) => (
+                            <option key={i + 1} value={i + 1}>{name}</option>
+                          ))}
+                        </select>
+                      </div>
 
-            {/* Tanggal — only in payments view */}
-            {housesViewMode === null && (
-              <div className="col-span-2 md:col-span-1 lg:col-span-6">
-                <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5 block">Tanggal Spesifik</label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="date"
-                    value={filterDate}
-                    onChange={(e) => setFilterDate(e.target.value)}
-                    max={new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString().slice(0, 10)}
-                    className={`px-3 py-2 text-sm rounded-lg border transition-colors focus:outline-none focus:ring-2 focus:ring-blue-100 ${
-                      filterDate !== ""
-                        ? "border-blue-400 bg-blue-50 text-blue-700 font-medium"
-                        : "border-slate-200 bg-white text-slate-700"
-                    }`}
-                  />
-                  <button
-                    onClick={() =>
-                      setFilterDate(new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString().slice(0, 10))
-                    }
-                    className="px-3 py-2 text-xs font-semibold text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 whitespace-nowrap transition-colors"
-                  >
-                    Hari Ini
-                  </button>
-                  {filterDate !== "" && (
-                    <button
-                      onClick={() => setFilterDate("")}
-                      className="text-slate-400 hover:text-slate-600 flex items-center transition-colors"
-                      title="Hapus filter tanggal"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
+                      <div>
+                        <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5 block">Tahun</label>
+                        <select
+                          value={filterYear}
+                          onChange={(e) => setFilterYear(Number(e.target.value))}
+                          className={`w-full px-3 py-2 text-sm rounded-lg border transition-colors focus:outline-none focus:ring-2 focus:ring-blue-100 ${
+                            filterYear !== 0
+                              ? "border-blue-400 bg-blue-50 text-blue-700 font-medium"
+                              : "border-slate-200 bg-white text-slate-700"
+                          }`}
+                        >
+                          {housesViewMode === null && <option value={0}>{t('all_years')}</option>}
+                          {availableYears.map((y) => (
+                            <option key={y} value={y}>{y}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="date"
+                        value={filterDate}
+                        onChange={(e) => setFilterDate(e.target.value)}
+                        max={new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString().slice(0, 10)}
+                        className={`flex-1 px-3 py-2 text-sm rounded-lg border transition-colors focus:outline-none focus:ring-2 focus:ring-blue-100 ${
+                          filterDate !== ""
+                            ? "border-blue-400 bg-blue-50 text-blue-700 font-medium"
+                            : "border-slate-200 bg-white text-slate-700"
+                        }`}
+                      />
+                      <button
+                        onClick={() =>
+                          setFilterDate(new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString().slice(0, 10))
+                        }
+                        className="px-3 py-2 text-xs font-semibold text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 whitespace-nowrap transition-colors"
+                      >
+                        Hari Ini
+                      </button>
+                      {filterDate !== "" && (
+                        <button
+                          onClick={() => setFilterDate("")}
+                          className="text-slate-400 hover:text-slate-600 flex items-center transition-colors"
+                          title="Hapus filter tanggal"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
                   )}
                 </div>
               </div>
-            )}
-          </div>
+            </m.div>
+          )}
+        </AnimatePresence>
 
-          {/* Active filter chips */}
-          {(() => {
-            const chips = [
-              filterUserId !== "" && { key: "user", label: `Penghuni: ${users.find(u => u.id === filterUserId)?.name ?? "—"}`, clear: () => setFilterUserId("") },
-              filterMonth !== 0 && { key: "month", label: INDONESIAN_MONTHS[filterMonth - 1], clear: () => setFilterMonth(0) },
-              filterYear !== 0 && { key: "year", label: String(filterYear), clear: () => setFilterYear(0) },
-              filterBlock !== "" && { key: "block", label: `Blok ${filterBlock}`, clear: () => setFilterBlock("") },
-              filterHouseNumber !== "" && { key: "house", label: `No. ${filterHouseNumber}`, clear: () => setFilterHouseNumber("") },
-              filterDate !== "" && { key: "date", label: filterDate, clear: () => setFilterDate("") },
-            ].filter(Boolean) as { key: string; label: string; clear: () => void }[];
-
-            if (chips.length === 0) return null;
-
-            const clearAll = housesViewMode === null
-              ? () => { setFilterUserId(""); setFilterYear(0); setFilterMonth(0); setFilterDate(""); setFilterBlock(""); setFilterHouseNumber(""); }
-              : () => { setFilterUserId(""); setFilterBlock(""); setFilterHouseNumber(""); setFilterMonth(new Date().getMonth() + 1); setFilterYear(new Date().getFullYear()); lastFetchedKey.current = ""; };
-
-            return (
-              <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-200">
-                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Filter aktif:</span>
-                {chips.map((chip) => (
-                  <span key={chip.key} className="flex items-center gap-1 text-[11px] font-semibold bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full">
-                    {chip.label}
-                    <button onClick={chip.clear} className="hover:text-blue-900 ml-0.5 leading-none">✕</button>
-                  </span>
-                ))}
-                <button
-                  onClick={clearAll}
-                  className="text-[11px] text-slate-400 hover:text-red-500 underline underline-offset-2 ml-1 transition-colors"
-                >
-                  {t('clear_filter')}
+        {/* Active filter chips — only for manually-set filters */}
+        {activeChips.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100">
+            <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Filter aktif:</span>
+            {activeChips.map((chip) => (
+              <span key={chip.key} className="flex items-center gap-1 text-[11px] font-semibold bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full">
+                {chip.label}
+                <button onClick={chip.clear} className="hover:text-blue-900 ml-0.5 leading-none">
+                  <X className="w-3 h-3" />
                 </button>
-              </div>
-            );
-          })()}
-        </div>
+              </span>
+            ))}
+            <button
+              onClick={() => {
+                setFilterUserId("");
+                setFilterBlock("");
+                setFilterHouseNumber("");
+                if (housesViewMode === null) {
+                  setFilterYear(0);
+                  setFilterMonth(0);
+                  setFilterDate("");
+                } else {
+                  setFilterMonth(new Date().getMonth() + 1);
+                  setFilterYear(new Date().getFullYear());
+                  lastFetchedKey.current = "";
+                }
+              }}
+              className="text-[11px] text-slate-400 hover:text-red-500 underline underline-offset-2 ml-1 transition-colors"
+            >
+              {t('clear_filter')}
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Bulk action bar */}

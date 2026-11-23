@@ -215,7 +215,7 @@ export default function HouseTypesPage() {
           <Skeleton className="h-24 rounded-xl" />
           <Skeleton className="h-24 rounded-xl" />
         </div>
-        <div className="bg-white rounded-xl border-2 border-slate-200 p-4 space-y-4">
+        <div className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)] p-4 space-y-4">
           <Skeleton className="h-10 w-full" />
           <Skeleton className="h-5 w-40" />
         </div>
@@ -271,18 +271,18 @@ export default function HouseTypesPage() {
 
       {/* Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-white rounded-xl border-2 border-slate-200 p-4 shadow-sm">
+        <div className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)] p-4">
           <p className="text-sm font-medium text-slate-600">{t('total_types')}</p>
           <p className="text-3xl font-bold text-slate-900 mt-1">{houseTypes.length}</p>
         </div>
-        <div className="bg-success-50 rounded-xl border-2 border-success-200 p-4 shadow-sm">
+        <div className="bg-success-50 rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)] p-4">
           <p className="text-sm font-medium text-success-700">{t('houses_using_types')}</p>
           <p className="text-3xl font-bold text-success-900 mt-1">{houses.length}</p>
         </div>
       </div>
 
       {/* Search */}
-      <div className="bg-white rounded-xl border-2 border-slate-200 p-4">
+      <div className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)] p-4">
         <Input
           placeholder={t('search_placeholder')}
           value={searchQuery}
