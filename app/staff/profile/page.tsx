@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import {
@@ -168,14 +168,14 @@ export default function StaffProfilePage() {
 
   return (
     <>
-      <motion.div
+      <m.div
         className="px-4 pt-2 pb-4 space-y-4"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
       >
         {/* Profile Header */}
-        <motion.div
+        <m.div
           variants={itemVariants}
           className="bg-white rounded-2xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)] flex items-center gap-4"
         >
@@ -190,12 +190,12 @@ export default function StaffProfilePage() {
             </h2>
             <p className="text-sm text-slate-400 truncate">{user.email}</p>
           </div>
-        </motion.div>
+        </m.div>
 
         {/* Success Toast */}
         <AnimatePresence>
           {showPhoneSuccess && (
-            <motion.div
+            <m.div
               initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
@@ -207,12 +207,12 @@ export default function StaffProfilePage() {
                 </svg>
               </div>
               <p className="text-sm font-medium text-emerald-700">Nomor HP berhasil disimpan</p>
-            </motion.div>
+            </m.div>
           )}
         </AnimatePresence>
 
         {/* User Info Card */}
-        <motion.div
+        <m.div
           variants={itemVariants}
           className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)] overflow-hidden"
         >
@@ -288,10 +288,10 @@ export default function StaffProfilePage() {
               <p className="text-sm font-medium text-slate-800">{user.role}</p>
             </div>
           </div>
-        </motion.div>
+        </m.div>
 
         {/* Actions Card */}
-        <motion.div
+        <m.div
           variants={itemVariants}
           className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)] overflow-hidden"
         >
@@ -312,10 +312,10 @@ export default function StaffProfilePage() {
             subtitle="Perbarui nomor WhatsApp Anda"
             onClick={handleOpenPhoneEdit}
           />
-        </motion.div>
+        </m.div>
 
         {/* Logout Button */}
-        <motion.div variants={itemVariants}>
+        <m.div variants={itemVariants}>
           <button
             onClick={handleLogout}
             disabled={isLoggingOut}
@@ -333,15 +333,15 @@ export default function StaffProfilePage() {
               </>
             )}
           </button>
-        </motion.div>
-      </motion.div>
+        </m.div>
+      </m.div>
 
       {/* Phone Edit Bottom Sheet */}
       <AnimatePresence>
         {showPhoneEdit && (
           <>
             {/* Backdrop */}
-            <motion.div
+            <m.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -350,7 +350,7 @@ export default function StaffProfilePage() {
             />
 
             {/* Sheet */}
-            <motion.div
+            <m.div
               initial={{ y: "100%" }}
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
@@ -414,7 +414,7 @@ export default function StaffProfilePage() {
                   )}
                 </button>
               </div>
-            </motion.div>
+            </m.div>
           </>
         )}
       </AnimatePresence>

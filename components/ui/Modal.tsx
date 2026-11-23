@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import Button from "./Button";
 
@@ -63,7 +63,7 @@ export default function Modal({
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           {/* Backdrop */}
-          <motion.div
+          <m.div
             key="modal-backdrop"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -74,7 +74,7 @@ export default function Modal({
           />
 
           {/* Modal panel */}
-          <motion.div
+          <m.div
             key="modal-panel"
             ref={modalRef}
             initial={{ opacity: 0, scale: 0.96, y: 8 }}
@@ -118,7 +118,7 @@ export default function Modal({
                 {footer}
               </div>
             )}
-          </motion.div>
+          </m.div>
         </div>
       )}
     </AnimatePresence>

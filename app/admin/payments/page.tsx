@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 
 import { useState, useMemo, useEffect, useRef } from "react";
 import Link from "next/link";
@@ -631,6 +631,7 @@ export default function AdminPaymentsPage() {
               src={payment.proofImagePath}
               alt={t('payment_proof_thumbnail')}
               fill
+              sizes="64px"
               className="object-cover group-hover:scale-105 transition-transform"
               onError={(e) => {
                 (e.target as HTMLImageElement).style.display = "none";
@@ -751,7 +752,7 @@ export default function AdminPaymentsPage() {
   };
 
   return (
-    <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-6">
+    <m.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-6">
       {/* Success alert */}
       {successMessage && (
         <Alert
@@ -1262,6 +1263,6 @@ export default function AdminPaymentsPage() {
         isCopiedUnpaid={isCopiedUnpaid}
         onCopy={handleCopyWA}
       />
-    </motion.div>
+    </m.div>
   );
 }

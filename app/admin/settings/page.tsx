@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
@@ -193,7 +193,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <motion.div variants={containerVariants} initial="hidden" animate="visible" className="p-6 max-w-4xl">
+    <m.div variants={containerVariants} initial="hidden" animate="visible" className="p-6 max-w-4xl">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
           <Settings className="w-7 h-7" />
@@ -719,6 +719,6 @@ export default function SettingsPage() {
           </p>
         </div>
       </div>
-    </motion.div>
+    </m.div>
   );
 }

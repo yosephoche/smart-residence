@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { Camera, MapPin, Clock, CheckCircle } from "lucide-react";
 import CameraCapture from "@/components/ui/CameraCapture";
 import Button from "@/components/ui/Button";
@@ -252,29 +252,29 @@ export default function AttendancePage() {
   }
 
   return (
-    <motion.div
+    <m.div
       className="px-4 pt-2 pb-4 space-y-4"
       variants={containerVariants}
       initial="hidden"
       animate="visible"
     >
-      <motion.div variants={itemVariants}>
+      <m.div variants={itemVariants}>
         <h1 className="text-xl font-bold text-slate-900">Absensi</h1>
         <p className="text-sm text-slate-400 mt-0.5">Clock in dan clock out shift Anda</p>
-      </motion.div>
+      </m.div>
 
       {error && (
-        <motion.div
+        <m.div
           variants={itemVariants}
           className="bg-red-50 border border-red-200 rounded-2xl p-4"
         >
           <p className="text-sm text-red-800">{error}</p>
-        </motion.div>
+        </m.div>
       )}
 
       {/* Clock In Form (when not clocked in) */}
       {!activeShift && (
-        <motion.div
+        <m.div
           variants={itemVariants}
           className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)] p-4 space-y-4"
         >
@@ -411,12 +411,12 @@ export default function AttendancePage() {
             <Clock className="w-5 h-5 mr-2" />
             Clock In
           </Button>
-        </motion.div>
+        </m.div>
       )}
 
       {/* Clock Out Form (when clocked in) */}
       {activeShift && (
-        <motion.div
+        <m.div
           variants={itemVariants}
           className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)] p-4 space-y-4"
         >
@@ -517,7 +517,7 @@ export default function AttendancePage() {
             <Clock className="w-5 h-5 mr-2" />
             Clock Out
           </Button>
-        </motion.div>
+        </m.div>
       )}
 
       {/* Camera Modals */}
@@ -540,6 +540,6 @@ export default function AttendancePage() {
           onClose={() => setShowClockOutCamera(false)}
         />
       )}
-    </motion.div>
+    </m.div>
   );
 }

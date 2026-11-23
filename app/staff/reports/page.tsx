@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { FileText, Image as ImageIcon, CheckCircle, Clock, AlertCircle } from "lucide-react";
 import { useTranslations } from 'next-intl';
 import Button from "@/components/ui/Button";
@@ -190,21 +190,21 @@ export default function ShiftReportsPage() {
   }
 
   return (
-    <motion.div
+    <m.div
       className="px-4 pt-2 pb-4 space-y-4"
       variants={containerVariants}
       initial="hidden"
       animate="visible"
     >
-      <motion.div variants={itemVariants}>
+      <m.div variants={itemVariants}>
         <h1 className="text-xl font-bold text-slate-900">Laporan Shift</h1>
         <p className="text-sm text-slate-400 mt-0.5">
           Kirim laporan berkala selama shift Anda
         </p>
-      </motion.div>
+      </m.div>
 
       {/* Submit Report Form */}
-      <motion.div
+      <m.div
         variants={itemVariants}
         className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)] p-4"
       >
@@ -304,10 +304,10 @@ export default function ShiftReportsPage() {
             Kirim Laporan
           </Button>
         </form>
-      </motion.div>
+      </m.div>
 
       {/* Recent Reports */}
-      <motion.div
+      <m.div
         variants={itemVariants}
         className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)] p-4"
       >
@@ -318,7 +318,7 @@ export default function ShiftReportsPage() {
         {reports.length > 0 ? (
           <div className="space-y-3">
             {reports.map((report, index) => (
-              <motion.div
+              <m.div
                 key={report.id}
                 initial={{ opacity: 0, x: -8 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -352,7 +352,7 @@ export default function ShiftReportsPage() {
                     </p>
                   </div>
                 )}
-              </motion.div>
+              </m.div>
             ))}
           </div>
         ) : (
@@ -364,7 +364,7 @@ export default function ShiftReportsPage() {
             </p>
           </div>
         )}
-      </motion.div>
-    </motion.div>
+      </m.div>
+    </m.div>
   );
 }

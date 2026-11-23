@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { Menu } from "lucide-react";
 import { useAuth } from "@/lib/auth-client";
 import AdminSidebar from "@/components/layouts/AdminSidebar";
@@ -63,7 +63,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
         {sidebarOpen && (
           <>
             {/* Backdrop */}
-            <motion.div
+            <m.div
               key="sidebar-backdrop"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -73,7 +73,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
               onClick={() => setSidebarOpen(false)}
             />
             {/* Sidebar panel */}
-            <motion.div
+            <m.div
               key="sidebar-panel"
               initial={{ x: -256 }}
               animate={{ x: 0 }}
@@ -82,7 +82,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
               className="fixed top-0 left-0 h-screen z-40 md:hidden"
             >
               <AdminSidebar onClose={() => setSidebarOpen(false)} />
-            </motion.div>
+            </m.div>
           </>
         )}
       </AnimatePresence>

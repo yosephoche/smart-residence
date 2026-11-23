@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 
 import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
@@ -321,7 +321,7 @@ export default function UsersPage() {
   };
 
   return (
-    <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-6">
+    <m.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 tracking-tight">{t('title')}</h1>
@@ -434,6 +434,6 @@ export default function UsersPage() {
         variant="danger"
         isLoading={isResettingPassword}
       />
-    </motion.div>
+    </m.div>
   );
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import {
   User as UserIcon,
@@ -196,14 +196,14 @@ export default function ProfileScreen() {
   const house = profile?.houses[0];
 
   return (
-    <motion.div
+    <m.div
       className="px-4 pt-2 pb-4 space-y-4"
       variants={containerVariants}
       initial="hidden"
       animate="visible"
     >
       {/* Profile Header */}
-      <motion.div
+      <m.div
         variants={itemVariants}
         className="bg-white rounded-2xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)] flex items-center gap-4"
       >
@@ -221,10 +221,10 @@ export default function ProfileScreen() {
             Aktif
           </span>
         </div>
-      </motion.div>
+      </m.div>
 
       {/* House Details */}
-      <motion.div
+      <m.div
         variants={itemVariants}
         className="bg-white rounded-2xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)]"
       >
@@ -269,7 +269,7 @@ export default function ProfileScreen() {
               <p className="text-[11px] text-slate-400">No. Telepon</p>
               <AnimatePresence mode="wait">
                 {isEditingPhone ? (
-                  <motion.div
+                  <m.div
                     key="edit"
                     initial={{ opacity: 0, y: -4 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -299,9 +299,9 @@ export default function ProfileScreen() {
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>
-                  </motion.div>
+                  </m.div>
                 ) : (
-                  <motion.div
+                  <m.div
                     key="display"
                     initial={{ opacity: 0, y: 4 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -316,7 +316,7 @@ export default function ProfileScreen() {
                     >
                       <Pencil className="w-3 h-3" />
                     </button>
-                  </motion.div>
+                  </m.div>
                 )}
               </AnimatePresence>
             </div>
@@ -333,10 +333,10 @@ export default function ProfileScreen() {
             </div>
           </div>
         </div>
-      </motion.div>
+      </m.div>
 
       {/* Menu Items */}
-      <motion.div
+      <m.div
         variants={itemVariants}
         className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)] overflow-hidden"
       >
@@ -364,10 +364,10 @@ export default function ProfileScreen() {
           subtitle="Kirim feedback atau permintaan kartu akses"
           onClick={() => router.push('/user/submissions')}
         />
-      </motion.div>
+      </m.div>
 
       {/* Logout */}
-      <motion.div variants={itemVariants}>
+      <m.div variants={itemVariants}>
         <button
           onClick={handleLogout}
           className="w-full bg-white rounded-2xl p-4 flex items-center justify-center gap-2 text-red-500 font-semibold text-sm shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)] active:scale-[0.98] transition-transform duration-150"
@@ -375,11 +375,11 @@ export default function ProfileScreen() {
           <LogOut className="w-4 h-4" />
           Keluar
         </button>
-      </motion.div>
+      </m.div>
 
-      <motion.div variants={itemVariants}>
+      <m.div variants={itemVariants}>
         <p className="text-center text-[11px] text-slate-300 mt-2">IPL Manager v1.0.0</p>
-      </motion.div>
-    </motion.div>
+      </m.div>
+    </m.div>
   );
 }

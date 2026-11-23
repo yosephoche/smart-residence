@@ -22,6 +22,7 @@ export function ImageModal({ isOpen, onClose, imageSrc, altText = "Image" }: Ima
             src={imageSrc}
             alt={altText}
             fill
+            sizes="(max-width: 896px) 100vw, 896px"
             className="object-contain"
             onError={() => setImageError(true)}
           />

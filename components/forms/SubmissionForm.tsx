@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { MessageSquare, AlertCircle, CheckCircle } from "lucide-react";
 import {
   SUBMISSION_TYPES,
@@ -147,7 +147,7 @@ export default function SubmissionForm({
           </button>
           <AnimatePresence mode="wait">
             {submitSuccess ? (
-              <motion.div
+              <m.div
                 key="success"
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -155,16 +155,16 @@ export default function SubmissionForm({
               >
                 <CheckCircle className="w-4 h-4" />
                 Terkirim!
-              </motion.div>
+              </m.div>
             ) : (
-              <motion.button
+              <m.button
                 key="submit"
                 type="submit"
                 disabled={submitting || !type}
                 className="flex-1 py-3 text-sm font-semibold text-white bg-blue-600 rounded-2xl active:scale-[0.98] transition-transform duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {submitting ? "Mengirim..." : "Kirim"}
-              </motion.button>
+              </m.button>
             )}
           </AnimatePresence>
         </div>

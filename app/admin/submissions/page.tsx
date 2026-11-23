@@ -3,7 +3,7 @@
 export const dynamic = "force-dynamic";
 
 import { useState, useEffect, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import {
   MessageSquare,
   Search,
@@ -366,14 +366,14 @@ export default function AdminSubmissionsPage() {
       <AnimatePresence>
         {reviewingId && reviewingSubmission && (
           <>
-            <motion.div
+            <m.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="fixed inset-0 z-40 bg-black/30"
               onClick={() => setReviewingId(null)}
             />
-            <motion.div
+            <m.div
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
@@ -460,7 +460,7 @@ export default function AdminSubmissionsPage() {
               <div className="p-4 border-t border-slate-100">
                 <AnimatePresence mode="wait">
                   {reviewSuccess ? (
-                    <motion.div
+                    <m.div
                       key="success"
                       initial={{ opacity: 0, scale: 0.95 }}
                       animate={{ opacity: 1, scale: 1 }}
@@ -468,9 +468,9 @@ export default function AdminSubmissionsPage() {
                     >
                       <CheckCircle className="w-4 h-4" />
                       Tersimpan!
-                    </motion.div>
+                    </m.div>
                   ) : (
-                    <motion.button
+                    <m.button
                       key="save"
                       onClick={handleSaveReview}
                       disabled={actionLoading || !reviewStatus}
@@ -478,11 +478,11 @@ export default function AdminSubmissionsPage() {
                     >
                       <Save className="w-4 h-4" />
                       {actionLoading ? "Menyimpan..." : "Simpan"}
-                    </motion.button>
+                    </m.button>
                   )}
                 </AnimatePresence>
               </div>
-            </motion.div>
+            </m.div>
           </>
         )}
       </AnimatePresence>

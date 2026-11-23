@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import {
   TrendingUp,
   TrendingDown,
@@ -157,20 +157,20 @@ export default function FinancePage() {
   }
 
   return (
-    <motion.div
+    <m.div
       className="px-4 pt-2 pb-4 space-y-4"
       variants={containerVariants}
       initial="hidden"
       animate="visible"
     >
       {/* Header */}
-      <motion.div variants={itemVariants}>
+      <m.div variants={itemVariants}>
         <h1 className="text-xl font-bold text-slate-900">Detail Keuangan</h1>
         <p className="text-sm text-slate-400 mt-0.5">Riwayat transaksi keuangan</p>
-      </motion.div>
+      </m.div>
 
       {/* Summary Cards */}
-      <motion.div variants={itemVariants} className="grid grid-cols-3 gap-2">
+      <m.div variants={itemVariants} className="grid grid-cols-3 gap-2">
         {/* Total Income */}
         <div className="bg-emerald-50 rounded-xl p-3">
           <div className="flex items-center gap-1 mb-1">
@@ -205,10 +205,10 @@ export default function FinancePage() {
             {formatCurrency(Math.abs(totals.net))}
           </p>
         </div>
-      </motion.div>
+      </m.div>
 
       {/* Filter Section */}
-      <motion.div
+      <m.div
         variants={itemVariants}
         className="bg-white rounded-2xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)]"
       >
@@ -252,10 +252,10 @@ export default function FinancePage() {
           endDate={endDate}
           onDateChange={handleDateChange}
         />
-      </motion.div>
+      </m.div>
 
       {/* Transaction List */}
-      <motion.div
+      <m.div
         variants={itemVariants}
         className="bg-white rounded-2xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)]"
       >
@@ -292,7 +292,7 @@ export default function FinancePage() {
         ) : (
           <div className="space-y-0">
             {paginatedData.map((transaction, index) => (
-              <motion.div
+              <m.div
                 key={transaction.id}
                 initial={{ opacity: 0, x: -8 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -327,15 +327,15 @@ export default function FinancePage() {
                 {index < paginatedData.length - 1 && (
                   <div className="border-b border-slate-50" />
                 )}
-              </motion.div>
+              </m.div>
             ))}
           </div>
         )}
-      </motion.div>
+      </m.div>
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <motion.div variants={itemVariants} className="flex items-center justify-center gap-2">
+        <m.div variants={itemVariants} className="flex items-center justify-center gap-2">
           <button
             onClick={() => handlePageChange(currentPage - 1)}
             disabled={currentPage === 1}
@@ -353,8 +353,8 @@ export default function FinancePage() {
           >
             Next
           </button>
-        </motion.div>
+        </m.div>
       )}
-    </motion.div>
+    </m.div>
   );
 }

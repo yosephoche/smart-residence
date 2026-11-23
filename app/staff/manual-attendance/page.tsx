@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { ClipboardList, CheckCircle, Clock, XCircle, AlertCircle, Plus, ChevronLeft } from "lucide-react";
 
 const containerVariants = {
@@ -138,14 +138,14 @@ export default function StaffManualAttendancePage() {
   };
 
   return (
-    <motion.div
+    <m.div
       className="px-4 pt-2 pb-4 space-y-4"
       variants={containerVariants}
       initial="hidden"
       animate="visible"
     >
       {/* Header */}
-      <motion.div variants={itemVariants} className="flex items-center gap-2">
+      <m.div variants={itemVariants} className="flex items-center gap-2">
         <button onClick={() => router.push("/staff/attendance")} className="text-slate-400">
           <ChevronLeft className="w-5 h-5" />
         </button>
@@ -155,11 +155,11 @@ export default function StaffManualAttendancePage() {
             Untuk shift 1-2 hari lalu yang terlewat absen langsung
           </p>
         </div>
-      </motion.div>
+      </m.div>
 
       {/* Request Button */}
       {!showForm && (
-        <motion.div variants={itemVariants}>
+        <m.div variants={itemVariants}>
           <button
             onClick={() => setShowForm(true)}
             className="w-full bg-blue-600 text-white rounded-2xl p-4 flex items-center justify-center gap-2.5 font-semibold text-sm active:scale-[0.98] transition-transform duration-150"
@@ -167,13 +167,13 @@ export default function StaffManualAttendancePage() {
             <Plus className="w-4 h-4" />
             Ajukan Absen Manual
           </button>
-        </motion.div>
+        </m.div>
       )}
 
       {/* Form */}
       <AnimatePresence>
         {showForm && (
-          <motion.div
+          <m.div
             key="form"
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
@@ -271,7 +271,7 @@ export default function StaffManualAttendancePage() {
 
                 <AnimatePresence mode="wait">
                   {submitSuccess ? (
-                    <motion.div
+                    <m.div
                       key="success"
                       initial={{ opacity: 0, scale: 0.95 }}
                       animate={{ opacity: 1, scale: 1 }}
@@ -280,26 +280,26 @@ export default function StaffManualAttendancePage() {
                     >
                       <CheckCircle className="w-4 h-4" />
                       Terkirim!
-                    </motion.div>
+                    </m.div>
                   ) : (
-                    <motion.button
+                    <m.button
                       key="submit"
                       type="submit"
                       disabled={submitting}
                       className="flex-1 py-3 text-sm font-semibold text-white bg-blue-600 rounded-2xl disabled:opacity-50 active:scale-[0.98] transition-transform duration-150"
                     >
                       {submitting ? "Mengirim..." : "Ajukan"}
-                    </motion.button>
+                    </m.button>
                   )}
                 </AnimatePresence>
               </div>
             </form>
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
 
       {/* History */}
-      <motion.div
+      <m.div
         variants={itemVariants}
         className="bg-white rounded-2xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)]"
       >
@@ -327,7 +327,7 @@ export default function StaffManualAttendancePage() {
               const cfg = statusConfig[req.status];
               const Icon = cfg.icon;
               return (
-                <motion.div
+                <m.div
                   key={req.id}
                   initial={{ opacity: 0, x: -8 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -370,12 +370,12 @@ export default function StaffManualAttendancePage() {
                   >
                     {cfg.label}
                   </span>
-                </motion.div>
+                </m.div>
               );
             })}
           </div>
         )}
-      </motion.div>
-    </motion.div>
+      </m.div>
+    </m.div>
   );
 }

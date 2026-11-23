@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import {
   Home as HomeIcon,
   CheckCircle,
@@ -21,7 +22,14 @@ import { useAuth } from "@/lib/auth-client";
 import { Card } from "@/components/ui/Card";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { formatPaymentMonth } from "@/lib/calculations";
-import { FinancialChart } from "./FinancialChart";
+
+const FinancialChart = dynamic(
+  () => import("./FinancialChart").then((mod) => mod.FinancialChart),
+  {
+    ssr: false,
+    loading: () => <div className="h-[120px] -mx-1 animate-pulse bg-slate-100 rounded-lg" />,
+  }
+);
 
 interface House {
   id: string;
@@ -256,28 +264,28 @@ export function HomeScreen() {
   }
 
   return (
-    <motion.div
+    <m.div
       className="px-4 pt-2 pb-4 space-y-4"
       variants={containerVariants}
       initial="hidden"
       animate="visible"
     >
       {/* Greeting */}
-      <motion.div variants={itemVariants}>
+      <m.div variants={itemVariants}>
         <p className="text-sm text-slate-500">{getGreeting()} 👋</p>
         <h1 className="text-xl font-bold text-slate-900 mt-0.5">
           {user?.name}
         </h1>
-      </motion.div>
+      </m.div>
 
       {/* House Info Cards — one per house */}
       {houses.length === 0 ? (
-        <motion.div
+        <m.div
           variants={itemVariants}
           className="bg-white rounded-2xl p-8 text-center"
         >
           <p className="text-slate-500">Tidak ada rumah yang ditetapkan</p>
-        </motion.div>
+        </m.div>
       ) : (
         houses.map((h, index) => {
           const houseStatus = resolveHouseStatus(h);
@@ -297,7 +305,7 @@ export function HomeScreen() {
                 UNPAID: { label: "Belum Bayar", color: "text-red-600", bg: "bg-red-50" },
               }[houseStatus];
           return (
-            <motion.div
+            <m.div
               key={h.id}
               variants={itemVariants}
               initial={{ opacity: 0, x: -8 }}
@@ -342,14 +350,14 @@ export function HomeScreen() {
                   {houseStatusConfig.label}
                 </span>
               </div>
-            </motion.div>
+            </m.div>
           );
         })
       )}
 
       {/* Arrears (Tunggakan) Warning */}
       {houses.some((h) => (arrearsByHouse[h.id]?.unpaidMonths.length ?? 0) > 0) && (
-        <motion.div
+        <m.div
           variants={itemVariants}
           className="bg-amber-50 border border-amber-200 rounded-2xl p-4"
         >
@@ -395,11 +403,11 @@ export function HomeScreen() {
             <UploadIcon className="w-4 h-4" />
             Bayar Tunggakan
           </button>
-        </motion.div>
+        </m.div>
       )}
 
       {/* On-Duty Security Staff */}
-      <motion.div
+      <m.div
         variants={itemVariants}
         className="bg-white rounded-2xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)]"
       >
@@ -487,10 +495,10 @@ export function HomeScreen() {
             })}
           </div>
         )}
-      </motion.div>
+      </m.div>
 
       {/* Financial Summary */}
-      <motion.div
+      <m.div
         variants={itemVariants}
         className="bg-white rounded-2xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)]"
       >
@@ -540,10 +548,10 @@ export function HomeScreen() {
             <span className="text-[10px] text-slate-400">Pengeluaran</span>
           </div>
         </div>
-      </motion.div>
+      </m.div>
 
       {/* Upload Button */}
-      <motion.div variants={itemVariants}>
+      <m.div variants={itemVariants}>
         {anyHousePending ? (
           <div className="w-full bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-amber-100 flex items-center justify-center flex-shrink-0">
@@ -567,10 +575,10 @@ export function HomeScreen() {
             Upload Bukti Bayar IPL
           </button>
         ) : null}
-      </motion.div>
+      </m.div>
 
       {/* Recent Payments */}
-      <motion.div
+      <m.div
         variants={itemVariants}
         className="bg-white rounded-2xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)]"
       >
@@ -650,11 +658,11 @@ export function HomeScreen() {
             </p>
           )}
         </div>
-      </motion.div>
+      </m.div>
 
       {/* Urgent Contacts */}
       {urgentContacts.length > 0 && (
-        <motion.div
+        <m.div
           variants={itemVariants}
           className="bg-white rounded-2xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)]"
         >
@@ -704,8 +712,8 @@ export function HomeScreen() {
               </div>
             ))}
           </div>
-        </motion.div>
+        </m.div>
       )}
-    </motion.div>
+    </m.div>
   );
 }

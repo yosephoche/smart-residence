@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { CalendarRange, CheckCircle, Clock, XCircle, AlertCircle, Plus } from "lucide-react";
 
 const containerVariants = {
@@ -127,25 +127,25 @@ export default function StaffLeavePage() {
   const minDate = config ? getMinDate(config.minAdvanceDays) : getMinDate(7);
 
   return (
-    <motion.div
+    <m.div
       className="px-4 pt-2 pb-4 space-y-4"
       variants={containerVariants}
       initial="hidden"
       animate="visible"
     >
       {/* Header */}
-      <motion.div variants={itemVariants}>
+      <m.div variants={itemVariants}>
         <h1 className="text-xl font-bold text-slate-900">Pengajuan Cuti</h1>
         <p className="text-sm text-slate-400 mt-0.5">
           {config
             ? `Maks. ${config.maxDaysPerRequest} hari · Ajukan minimal ${config.minAdvanceDays} hari sebelumnya`
             : "Memuat konfigurasi..."}
         </p>
-      </motion.div>
+      </m.div>
 
       {/* Request Button */}
       {!showForm && (
-        <motion.div variants={itemVariants}>
+        <m.div variants={itemVariants}>
           <button
             onClick={() => setShowForm(true)}
             className="w-full bg-blue-600 text-white rounded-2xl p-4 flex items-center justify-center gap-2.5 font-semibold text-sm active:scale-[0.98] transition-transform duration-150"
@@ -153,13 +153,13 @@ export default function StaffLeavePage() {
             <Plus className="w-4 h-4" />
             Ajukan Cuti Baru
           </button>
-        </motion.div>
+        </m.div>
       )}
 
       {/* Form */}
       <AnimatePresence>
         {showForm && (
-          <motion.div
+          <m.div
             key="form"
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
@@ -241,7 +241,7 @@ export default function StaffLeavePage() {
 
                 <AnimatePresence mode="wait">
                   {submitSuccess ? (
-                    <motion.div
+                    <m.div
                       key="success"
                       initial={{ opacity: 0, scale: 0.95 }}
                       animate={{ opacity: 1, scale: 1 }}
@@ -250,26 +250,26 @@ export default function StaffLeavePage() {
                     >
                       <CheckCircle className="w-4 h-4" />
                       Terkirim!
-                    </motion.div>
+                    </m.div>
                   ) : (
-                    <motion.button
+                    <m.button
                       key="submit"
                       type="submit"
                       disabled={submitting}
                       className="flex-1 py-3 text-sm font-semibold text-white bg-blue-600 rounded-2xl disabled:opacity-50 active:scale-[0.98] transition-transform duration-150"
                     >
                       {submitting ? "Mengirim..." : "Ajukan Cuti"}
-                    </motion.button>
+                    </m.button>
                   )}
                 </AnimatePresence>
               </div>
             </form>
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
 
       {/* Leave History */}
-      <motion.div
+      <m.div
         variants={itemVariants}
         className="bg-white rounded-2xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)]"
       >
@@ -297,7 +297,7 @@ export default function StaffLeavePage() {
               const cfg = statusConfig[leave.status];
               const Icon = cfg.icon;
               return (
-                <motion.div
+                <m.div
                   key={leave.id}
                   initial={{ opacity: 0, x: -8 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -337,12 +337,12 @@ export default function StaffLeavePage() {
                   >
                     {cfg.label}
                   </span>
-                </motion.div>
+                </m.div>
               );
             })}
           </div>
         )}
-      </motion.div>
-    </motion.div>
+      </m.div>
+    </m.div>
   );
 }

@@ -179,6 +179,7 @@ export default function FileUpload({
                   src={previewUrl}
                   alt="Preview"
                   fill
+                  sizes="(max-width: 448px) 100vw, 448px"
                   className="object-contain"
                 />
               </div>
