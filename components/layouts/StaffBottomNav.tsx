@@ -4,7 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { m } from "framer-motion";
+import { m, motion } from "framer-motion";
 import { Home, Clock, FileText, User, AlertCircle, CalendarRange } from "lucide-react";
 
 interface TabItem {
@@ -98,7 +98,7 @@ const StaffBottomNav: React.FC = () => {
               className="relative flex flex-col items-center gap-0.5 py-1 px-2 min-w-[52px]"
             >
               {isActive && (
-                <m.div
+                <motion.div
                   layoutId="staff-tab-indicator"
                   className="absolute -top-2 left-0 right-0 mx-auto w-8 h-1 bg-blue-600 rounded-full"
                   transition={{
