@@ -870,7 +870,7 @@ export default function SchedulePage() {
 
       {/* Date Range Filter — table view only */}
       {viewMode === "table" && (
-        <div className="bg-white p-4 rounded-lg border border-slate-200 space-y-4">
+        <div className="bg-white p-4 rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)] space-y-4">
           <h3 className="font-semibold text-slate-900">{t('date_range')}</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input

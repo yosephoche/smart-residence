@@ -252,7 +252,7 @@ export default function AdminLeavePage() {
       </div>
 
       {/* Filter Row */}
-      <div className="bg-white rounded-lg border border-slate-200 p-4">
+      <div className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)] p-4">
         <div className="flex items-center gap-4">
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">

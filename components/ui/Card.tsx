@@ -23,8 +23,8 @@ export function Card({
   return (
     <div
       className={cn(
-        "bg-white rounded-xl border-2 border-slate-200 shadow-sm transition-all duration-200",
-        hover && "hover:shadow-md hover:border-slate-300",
+        "bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)] transition-shadow duration-200",
+        hover && "hover:shadow-md",
         paddings[padding],
         className
       )}
