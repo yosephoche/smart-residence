@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { getMonthlyIncomes } from "@/services/income.service";
-import { getMonthlyExpenses } from "@/services/expense.service";
+import { getMonthlyTotalsInRange as getMonthlyIncomeTotalsInRange } from "@/services/income.service";
+import { getMonthlyTotalsInRange as getMonthlyExpenseTotalsInRange } from "@/services/expense.service";
 import { serializePrismaJson } from "@/lib/utils/prisma-serializer";
 
 // GET /api/user/financial-summary - Get last 6 months income/expense data for chart
@@ -31,18 +31,23 @@ export const GET = auth(async (req) => {
       targets.push({ year: targetYear, month: targetMonth });
     }
 
-    // All 12 queries in parallel (not 6 sequential pairs)
-    const results = await Promise.all(
-      targets.map(({ year, month }) =>
-        Promise.all([getMonthlyIncomes(year, month), getMonthlyExpenses(year, month)])
-      )
-    );
+    // Range spans the 6 target months; one bucketed query per table instead of 12 aggregates
+    const rangeStart = new Date(targets[0].year, targets[0].month - 1, 1);
+    const rangeEnd = new Date(targets[5].year, targets[5].month, 0, 23, 59, 59);
 
-    const monthsData = targets.map(({ month }, index) => ({
-      month: monthNames[month - 1],
-      income: Number(results[index][0]) || 0,
-      expense: Number(results[index][1]) || 0,
-    }));
+    const [incomeTotals, expenseTotals] = await Promise.all([
+      getMonthlyIncomeTotalsInRange(rangeStart, rangeEnd),
+      getMonthlyExpenseTotalsInRange(rangeStart, rangeEnd),
+    ]);
+
+    const monthsData = targets.map(({ year, month }) => {
+      const key = `${year}-${month}`;
+      return {
+        month: monthNames[month - 1],
+        income: incomeTotals.get(key) ?? 0,
+        expense: expenseTotals.get(key) ?? 0,
+      };
+    });
 
     return NextResponse.json(serializePrismaJson(monthsData));
   } catch (error) {

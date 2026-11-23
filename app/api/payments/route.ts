@@ -19,6 +19,9 @@ export const GET = auth(async (req) => {
   const url = new URL(req.url);
   const status = url.searchParams.get("status") ?? undefined;
   const date = url.searchParams.get("date") ?? undefined;
+  // Optional, non-breaking pagination: only applied when the caller explicitly asks for it.
+  const page = url.searchParams.get("page") ? Number(url.searchParams.get("page")) : undefined;
+  const pageSize = url.searchParams.get("pageSize") ? Number(url.searchParams.get("pageSize")) : undefined;
 
   if (date && !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
     return NextResponse.json(
@@ -33,7 +36,7 @@ export const GET = auth(async (req) => {
       ? session.user.id
       : (url.searchParams.get("userId") ?? undefined);
 
-  const payments = await getPayments({ status, userId, date });
+  const payments = await getPayments({ status, userId, date, page, pageSize });
   return NextResponse.json(serializePrismaJson(payments));
 });
 

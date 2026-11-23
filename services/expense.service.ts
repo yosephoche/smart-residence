@@ -100,6 +100,20 @@ export async function getMonthlyExpenses(year: number, month: number) {
   return Number(result._sum.amount ?? 0);
 }
 
+// Get total expenses per month across an arbitrary date range, bucketed as "year-month" (1 query)
+export async function getMonthlyTotalsInRange(startDate: Date, endDate: Date): Promise<Map<string, number>> {
+  const records = await prisma.expense.findMany({
+    where: { date: { gte: startDate, lte: endDate } },
+    select: { date: true, amount: true },
+  });
+  const totals = new Map<string, number>();
+  for (const r of records) {
+    const key = `${r.date.getFullYear()}-${r.date.getMonth() + 1}`;
+    totals.set(key, (totals.get(key) ?? 0) + Number(r.amount));
+  }
+  return totals;
+}
+
 // Get all-time total expenses
 export async function getTotalExpenses() {
   const result = await prisma.expense.aggregate({
