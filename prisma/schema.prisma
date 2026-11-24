@@ -151,6 +151,9 @@ model House {
   mergedInto        House?     @relation("HouseMerge", fields: [mergedIntoHouseId], references: [id])
   mergedHouses      House[]    @relation("HouseMerge")
   payments          Payment[]
+
+  @@index([userId])
+  @@index([mergedIntoHouseId])
 }
 
 model Payment {
@@ -196,6 +199,8 @@ model Expense {
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
   creator         User            @relation(fields: [createdBy], references: [id])
+
+  @@index([date])
 }
 
 model Income {
@@ -211,6 +216,8 @@ model Income {
   updatedAt   DateTime       @updatedAt
   creator     User           @relation(fields: [createdBy], references: [id])
   payment     Payment?       @relation(fields: [paymentId], references: [id])
+
+  @@index([date])
 }
 
 model SystemConfig {
@@ -255,6 +262,7 @@ model Attendance {
 
   @@index([staffId, clockInAt])
   @@index([scheduleId])
+  @@index([clockInAt])
 }
 
 model ShiftReport {
